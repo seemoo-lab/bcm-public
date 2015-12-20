@@ -27,6 +27,7 @@
 #include <linux/notifier.h>
 #include <linux/suspend.h>
 #include <linux/slab.h>
+#include <linux/module.h>
 
 static bool suspend_abort;
 static char abort_reason[MAX_SUSPEND_ABORT_LEN];
@@ -487,6 +488,7 @@ int check_wakeup_reason(int irq)
 	spin_unlock(&resume_reason_lock);
 	return found;
 }
+EXPORT_SYMBOL(check_wakeup_reason);
 
 static bool build_leaf_nodes(struct wakeup_irq_node *n, void *_p)
 {
