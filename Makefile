@@ -2,20 +2,60 @@ CC=$(shell pwd)/buildtools/arm-eabi-4.7/bin/arm-eabi-
 CROSS_COMPILE=$(shell pwd)/buildtools/arm-eabi-4.7/bin/arm-eabi-
 ARCH=arm
 SUBARCH=arm
+MKBOOT=$(shell pwd)/buildtools/mkboot/
 
 all: tools
 
-.PHONY: cleanall cleanbuildtools kernel
+.PHONY: cleanall cleanbuildtools cleanboot kernel bcmdhd
 
 
-cleanall: cleanbuildtools
+cleanall: cleanbuildtools cleanboot
 
 
 
 kernel: kernel/arch/arm/boot/zImage-dtb
 
-kernel/arch/arm/boot/zImage-dtb:
+kernel/arch/arm/boot/zImage-dtb: kernel/.config
 	cd kernel && make
+
+
+
+bcmdhd: kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko
+
+kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko : kernel/drivers/net/wireless/bcmdhd/*.c kernel/drivers/net/wireless/bcmdhd/*.h
+	cd kernel && make modules
+
+
+
+boot.img: kernel/arch/arm/boot/Image kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko
+	rm -Rf bootimg_tmp
+	mkdir bootimg_tmp
+	cd bootimg_tmp && \
+	   $(MKBOOT)unmkbootimg -i ../bootimg_src/boot.img && \
+	   rm kernel && cp ../kernel/arch/arm/boot/zImage-dtb kernel
+	mkdir bootimg_tmp/ramdisk && \
+	   cd bootimg_tmp/ramdisk && \
+	   gzip -dc ../ramdisk.cpio.gz | cpio -i && \
+	   sed -i '/service wpa_supplicant/,+11 s/^/#/' init.hammerhead.rc && \
+	   sed -i '/service p2p_supplicant/,+14 s/^/#/' init.hammerhead.rc
+	mkdir bootimg_tmp/ramdisk/nexmon
+	cp kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko bootimg_tmp/ramdisk/nexmon/
+	cp bootimg_src/firmware/fw_bcmdhd.bin bootimg_tmp/ramdisk/nexmon/
+	cp bootimg_src/firmware/bcmdhd.cal bootimg_tmp/ramdisk/nexmon/
+	mkdir bootimg_tmp/ramdisk/nexmon/bin
+	$(MKBOOT)mkbootfs bootimg_tmp/ramdisk | gzip > bootimg_tmp/newramdisk.cpio.gz
+	$(MKBOOT)mkbootimg --base 0 --pagesize 2048 --kernel_offset 0x00008000 \
+	   --ramdisk_offset 0x02900000 --second_offset 0x00f00000 --tags_offset 0x02700000 \
+	   --cmdline 'console=ttyHSL0,115200,n8 androidboot.hardware=hammerhead user_debug=31 maxcpus=2 msm_watchdog_v2.enable=1' \
+	   --kernel bootimg_tmp/kernel --ramdisk bootimg_tmp/newramdisk.cpio.gz -o boot.img
+
+cleanboot:
+	rm -f boot.img
+
+
+boot: boot.img
+	adb reboot bootloader
+	fastboot boot boot.img
 
 
 
