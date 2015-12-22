@@ -35,9 +35,7 @@ boot.img: kernel/arch/arm/boot/Image kernel/drivers/net/wireless/bcmdhd/bcmdhd.k
 	   rm kernel && cp ../kernel/arch/arm/boot/zImage-dtb kernel
 	mkdir bootimg_tmp/ramdisk && \
 	   cd bootimg_tmp/ramdisk && \
-	   gzip -dc ../ramdisk.cpio.gz | cpio -i && \
-	   sed -i '/service wpa_supplicant/,+11 s/^/#/' init.hammerhead.rc && \
-	   sed -i '/service p2p_supplicant/,+14 s/^/#/' init.hammerhead.rc
+	   gzip -dc ../ramdisk.cpio.gz | cpio -i
 	mkdir bootimg_tmp/ramdisk/nexmon
 	cp kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko bootimg_tmp/ramdisk/nexmon/
 	cp bootimg_src/firmware/fw_bcmdhd.bin bootimg_tmp/ramdisk/nexmon/
