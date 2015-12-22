@@ -35,12 +35,16 @@ boot.img: kernel/arch/arm/boot/Image kernel/drivers/net/wireless/bcmdhd/bcmdhd.k
 	   rm kernel && cp ../kernel/arch/arm/boot/zImage-dtb kernel
 	mkdir bootimg_tmp/ramdisk && \
 	   cd bootimg_tmp/ramdisk && \
-	   gzip -dc ../ramdisk.cpio.gz | cpio -i
+	   gzip -dc ../ramdisk.cpio.gz | cpio -i && \
+	   sed -i '/service wpa_supplicant/,+11 s/^/#/' init.hammerhead.rc && \
+	   sed -i '/service p2p_supplicant/,+14 s/^/#/' init.hammerhead.rc
 	mkdir bootimg_tmp/ramdisk/nexmon
 	cp kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko bootimg_tmp/ramdisk/nexmon/
 	cp bootimg_src/firmware/fw_bcmdhd.bin bootimg_tmp/ramdisk/nexmon/
 	cp bootimg_src/firmware/bcmdhd.cal bootimg_tmp/ramdisk/nexmon/
 	mkdir bootimg_tmp/ramdisk/nexmon/bin
+	cp bootimg_src/bin/airodump-ng bootimg_tmp/ramdisk/nexmon/bin
+	cp bootimg_src/bin/tcpdump bootimg_tmp/ramdisk/nexmon/bin
 	$(MKBOOT)mkbootfs bootimg_tmp/ramdisk | gzip > bootimg_tmp/newramdisk.cpio.gz
 	$(MKBOOT)mkbootimg --base 0 --pagesize 2048 --kernel_offset 0x00008000 \
 	   --ramdisk_offset 0x02900000 --second_offset 0x00f00000 --tags_offset 0x02700000 \
