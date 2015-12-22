@@ -1981,14 +1981,20 @@ dhd_rx_frame(dhd_pub_t *dhdp, int ifidx, void *pktbuf, int numpkt, uint8 chan,
 			dhd->pub.rx_multicast++;
 		}
 
-		skb->data = eth;
-		skb->len = len;
+        /* NexMon */
+        if (chan != 15) {
+            skb->data = eth;
+            skb->len = len;
+        }
 
 #ifdef WLMEDIA_HTSF
 		dhd_htsf_addrxts(dhdp, pktbuf);
 #endif
-		/* Strip header, count, deliver upward */
-		skb_pull(skb, ETH_HLEN);
+        /* NexMon */
+        if (chan != 15) {
+            /* Strip header, count, deliver upward */
+            skb_pull(skb, ETH_HLEN);
+        }
 
 		/* Process special event packets and then discard them */
 		memset(&event, 0, sizeof(event));
