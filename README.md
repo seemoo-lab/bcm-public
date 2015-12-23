@@ -4,6 +4,10 @@
 
 NexMon enables the monitor mode of the bcm4339 Wi-Fi chip on the Nexus 5.
 
+## WARNING
+
+Our software may damage your hardware and may void your hardware’s warranty! You use our tools at your own risk and responsibility! If you don't like these terms, don't use nexmon!
+
 ## What this Repo contains
 
 * A bootable boot ROM for Android
