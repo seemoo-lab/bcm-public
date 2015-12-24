@@ -32,3 +32,7 @@ Our software may damage your hardware and may void your hardware’s warranty! Y
 * `insmod /nexmon/bcmdhd.ko`
 * `ifconfig wlan0 up`
 * do whatever you want, e.g. run tcpdump: `/nexmon/bin/tcpdump -i wlan0 -s0`
+
+## Read our paper
+
+Feel free to read and reference our paper on the development of this project [NexMon: A Cookbook for Firmware Modifications on Smartphones to Enable Monitor Mode](https://dev.seemoo.tu-darmstadt.de/bcm/bcm-public/raw/master/papers/nexmon-arxiv-submission.pdf)
