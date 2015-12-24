@@ -5028,6 +5028,9 @@ dhd_free(dhd_pub_t *dhdp)
 	}
 }
 
+extern int useriface_netlink_init(void);
+extern void useriface_netlink_exit(void);
+
 static void __exit
 dhd_module_cleanup(void)
 {
@@ -5043,6 +5046,8 @@ dhd_module_cleanup(void)
 
 	/* Call customer gpio to turn off power with WL_REG_ON signal */
 	dhd_customer_gpio_wlan_ctrl(WLAN_POWER_OFF);
+
+	useriface_netlink_exit();
 }
 
 
@@ -5164,6 +5169,8 @@ dhd_module_init(void)
 #if defined(WL_CFG80211)
 	wl_android_post_init();
 #endif /* defined(WL_CFG80211) */
+
+	useriface_netlink_init();
 
 	return error;
 
