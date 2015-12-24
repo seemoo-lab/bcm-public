@@ -8,32 +8,6 @@
 #include "radiotap.h"
 #include "nexmon.h"
 
-void
-hexdump(unsigned char *msg, int msglen) {
-    int i, col; 
-    char buf[80];
-
-    ASSERT(strlen(pfx) + 49 <= sizeof(buf));
-
-    col = 0; 
-
-    for (i = 0; i < msglen; i++, col++) {
-        if (col % 16 == 0)
-        {
-            sprintf(buf, "size %i: ", msglen);
-            //strcpy(buf, pfx);
-        }
-        sprintf(buf + strlen(buf), "%02x", msg[i]);
-        if ((col + 1) % 16 == 0)
-            printf("%s\n", buf);
-        else
-            sprintf(buf + strlen(buf), " ");
-    }    
-
-    if (col % 16 != 0)
-        printf("%s\n", buf);
-}
-
 struct sk_buff *nexmon_decode(struct sk_buff* skb)
 {
 	char *data;
