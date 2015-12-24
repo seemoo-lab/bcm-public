@@ -44,6 +44,9 @@ boot.img: kernel/arch/arm/boot/Image kernel/drivers/net/wireless/bcmdhd/bcmdhd.k
 	cp bootimg_src/firmware/bcmdhd.cal bootimg_tmp/ramdisk/nexmon/
 	mkdir bootimg_tmp/ramdisk/nexmon/bin
 	cp bootimg_src/bin/tcpdump bootimg_tmp/ramdisk/nexmon/bin
+	cp --preserve=links bootimg_src/bin/iwmulticall bootimg_tmp/ramdisk/nexmon/bin
+	cp --preserve=links bootimg_src/bin/iwconfig bootimg_tmp/ramdisk/nexmon/bin
+	cp --preserve=links bootimg_src/bin/iwpriv bootimg_tmp/ramdisk/nexmon/bin
 	$(MKBOOT)mkbootfs bootimg_tmp/ramdisk | gzip > bootimg_tmp/newramdisk.cpio.gz
 	$(MKBOOT)mkbootimg --base 0 --pagesize 2048 --kernel_offset 0x00008000 \
 	   --ramdisk_offset 0x02900000 --second_offset 0x00f00000 --tags_offset 0x02700000 \
