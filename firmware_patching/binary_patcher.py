@@ -183,7 +183,7 @@ detour5 = GenericPatch4(0x1d3a4c, 0x29214F4F)
 
 #Android 6
 patch_firmware(FW_FILE, 
-    "fw_bcmdhd_patched.bin", [
+    "../bootimg_src/firmware/fw_bcmdhd.bin", [
         detour1,
         detour2,
         detour3,
