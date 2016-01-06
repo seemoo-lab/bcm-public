@@ -33,6 +33,9 @@ Our software may damage your hardware and may void your hardware’s warranty! Y
 * `ifconfig wlan0 up`
 * do whatever you want, e.g. run tcpdump: `/nexmon/bin/tcpdump -i wlan0 -s0`
 
+## Caveats
+* The current patch is unable to handle aggregated frames (A-MSDU's). This makes it impossible to receive frames in a 802.11n/802.11ac enabled environment. 
+
 ## Read our paper
 
 Feel free to read and reference our paper on the development of this project [NexMon: A Cookbook for Firmware Modifications on Smartphones to Enable Monitor Mode](https://dev.seemoo.tu-darmstadt.de/bcm/bcm-public/raw/master/papers/nexmon-arxiv-submission.pdf)
