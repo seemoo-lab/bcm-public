@@ -55,7 +55,7 @@ MKBOOT=$(shell pwd)/buildtools/mkboot/
 
 all: tools
 
-.PHONY: cleanall cleanbuildtools cleanboot kernel bcmdhd
+.PHONY: cleanall cleanbuildtools cleanboot kernel bcmdhd reloadnex
 
 
 cleanall: cleanbuildtools cleanboot
@@ -78,7 +78,7 @@ kernel/drivers/net/wireless/nexdhd/nexdhd.ko : kernel/drivers/net/wireless/nexdh
 	cd kernel && make modules
 
 
-boot.img: kernel/arch/arm/boot/Image kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko kernel/drivers/net/wireless/nexdhd/nexdhd.ko
+boot.img: kernel/arch/arm/boot/Image kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko kernel/drivers/net/wireless/nexdhd/nexdhd.ko 
 	rm -Rf bootimg_tmp
 	mkdir bootimg_tmp
 	cd bootimg_tmp && \
@@ -95,11 +95,7 @@ boot.img: kernel/arch/arm/boot/Image kernel/drivers/net/wireless/bcmdhd/bcmdhd.k
 	cp bootimg_src/firmware/fw_bcmdhd.bin bootimg_tmp/ramdisk/nexmon/
 	cp bootimg_src/firmware/bcmdhd.cal bootimg_tmp/ramdisk/nexmon/
 	mkdir bootimg_tmp/ramdisk/nexmon/bin
-	cp bootimg_src/bin/tcpdump bootimg_tmp/ramdisk/nexmon/bin
-	cp --preserve=links bootimg_src/bin/iwmulticall bootimg_tmp/ramdisk/nexmon/bin
-	cp --preserve=links bootimg_src/bin/iwconfig bootimg_tmp/ramdisk/nexmon/bin
-	cp --preserve=links bootimg_src/bin/iwpriv bootimg_tmp/ramdisk/nexmon/bin
-	cp bootimg_src/src/netlinktest/libs/armeabi/netlinktest bootimg_tmp/ramdisk/nexmon/bin
+	cp --preserve=links bootimg_src/bin/* bootimg_tmp/ramdisk/nexmon/bin
 	$(MKBOOT)mkbootfs bootimg_tmp/ramdisk | gzip > bootimg_tmp/newramdisk.cpio.gz
 	$(MKBOOT)mkbootimg --base 0 --pagesize 2048 --kernel_offset 0x00008000 \
 	   --ramdisk_offset 0x02900000 --second_offset 0x00f00000 --tags_offset 0x02700000 \
@@ -113,6 +109,10 @@ cleanboot:
 boot: boot.img
 	adb reboot bootloader
 	fastboot boot boot.img
+
+reloadnex: kernel/drivers/net/wireless/nexdhd/nexdhd.ko
+	adb push kernel/drivers/net/wireless/nexdhd/nexdhd.ko /sdcard/
+	adb shell "su -c 'rmmod nexdhd; rmmod bcmdhd; insmod /sdcard/nexdhd.ko; lsmod'"
 
 
 
