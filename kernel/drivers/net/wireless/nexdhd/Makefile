@@ -7,7 +7,7 @@
 
 DHDCFLAGS = -Wall -Wstrict-prototypes -lnl -Dlinux -DBCMDRIVER                \
 	-DBCMDONGLEHOST -DUNRELEASEDCHIP -DBCMDMA32 -DBCMFILEIMAGE            \
-	-DDHD_DEBUG -DSDTEST -DBDC                                \
+	-DDHDTHREAD -DDHD_DEBUG -DSDTEST -DBDC                                \
 	-DDHD_BCMEVENTS -DSHOW_EVENTS -DPROP_TXSTATUS -DBCMDBG                \
 	-DCUSTOMER_HW2 -DOOB_INTR_ONLY -DHW_OOB                               \
 	-DMMC_SDIO_ABORT -DBCMSDIO -DBCMLXSDMMC -DBCMPLATFORM_BUS -DWLP2P     \
