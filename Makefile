@@ -71,10 +71,10 @@ kernel/arch/arm/boot/zImage-dtb: kernel/.config
 
 bcmdhd: kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko
 
-kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko : kernel/drivers/net/wireless/bcmdhd/*
+kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko : kernel/drivers/net/wireless/bcmdhd/*.h kernel/drivers/net/wireless/bcmdhd/*.c kernel/drivers/net/wireless/bcmdhd/Makefile
 	cd kernel && make modules
 
-kernel/drivers/net/wireless/nexdhd/nexdhd.ko : kernel/drivers/net/wireless/nexdhd/*
+kernel/drivers/net/wireless/nexdhd/nexdhd.ko : kernel/drivers/net/wireless/nexdhd/*.h kernel/drivers/net/wireless/nexdhd/*.c kernel/drivers/net/wireless/nexdhd/Makefile
 	cd kernel && make modules
 
 
