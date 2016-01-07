@@ -55,7 +55,7 @@ MKBOOT=$(shell pwd)/buildtools/mkboot/
 
 all: tools
 
-.PHONY: cleanall cleanbuildtools cleanboot kernel bcmdhd reloadnex
+.PHONY: cleanall cleanbuildtools cleanboot kernel bcmdhd reloadnex su
 
 
 cleanall: cleanbuildtools cleanboot
@@ -77,6 +77,9 @@ kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko : kernel/drivers/net/wireless/bcmdh
 kernel/drivers/net/wireless/nexdhd/nexdhd.ko : kernel/drivers/net/wireless/nexdhd/*.h kernel/drivers/net/wireless/nexdhd/*.c kernel/drivers/net/wireless/nexdhd/Makefile
 	cd kernel && make modules
 
+su: su.img
+	adb push su.img /sdcard/
+	adb shell "su -c 'mv /sdcard/su.img /data/su.img'"
 
 boot.img: kernel/arch/arm/boot/Image kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko kernel/drivers/net/wireless/nexdhd/nexdhd.ko 
 	rm -Rf bootimg_tmp
