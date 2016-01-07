@@ -80,6 +80,8 @@ kernel/drivers/net/wireless/nexdhd/nexdhd.ko : kernel/drivers/net/wireless/nexdh
 su: su.img
 	adb push su.img /sdcard/
 	adb shell "su -c 'mv /sdcard/su.img /data/su.img'"
+	adb push SuperSU.apk /sdcard/
+	adb shell "su -c 'mv /sdcard/SuperSU.apk /data/SuperSU.apk'"
 
 boot.img: kernel/arch/arm/boot/Image kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko kernel/drivers/net/wireless/nexdhd/nexdhd.ko 
 	rm -Rf bootimg_tmp
