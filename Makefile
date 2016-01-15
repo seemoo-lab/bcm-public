@@ -74,6 +74,9 @@ bcmdhd: kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko
 kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko : kernel/drivers/net/wireless/bcmdhd/*.h kernel/drivers/net/wireless/bcmdhd/*.c kernel/drivers/net/wireless/bcmdhd/Makefile
 	cd kernel && make modules
 
+kernel/drivers/net/wireless/nexmon/nexmon.ko : kernel/drivers/net/wireless/nexmon/*.h kernel/drivers/net/wireless/nexmon/*.c kernel/drivers/net/wireless/nexmon/Makefile
+	cd kernel && make modules
+
 kernel/drivers/net/wireless/nexdhd/nexdhd.ko : kernel/drivers/net/wireless/nexdhd/*.h kernel/drivers/net/wireless/nexdhd/*.c kernel/drivers/net/wireless/nexdhd/Makefile
 	cd kernel && make modules
 
@@ -83,7 +86,7 @@ su: su.img
 	adb push SuperSU.apk /sdcard/
 	adb shell "su -c 'mv /sdcard/SuperSU.apk /data/SuperSU.apk'"
 
-boot.img: kernel/arch/arm/boot/Image kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko kernel/drivers/net/wireless/nexdhd/nexdhd.ko 
+boot.img: kernel/arch/arm/boot/Image kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko kernel/drivers/net/wireless/nexmon/nexmon.ko  kernel/drivers/net/wireless/nexdhd/nexdhd.ko 
 	rm -Rf bootimg_tmp
 	mkdir bootimg_tmp
 	cd bootimg_tmp && \
@@ -96,9 +99,15 @@ boot.img: kernel/arch/arm/boot/Image kernel/drivers/net/wireless/bcmdhd/bcmdhd.k
 	   sed -i '/service p2p_supplicant/,+14 s/^/#/' init.hammerhead.rc
 	mkdir bootimg_tmp/ramdisk/nexmon
 	cp kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko bootimg_tmp/ramdisk/nexmon/
+	cp kernel/drivers/net/wireless/nexmon/nexmon.ko bootimg_tmp/ramdisk/nexmon/
 	cp kernel/drivers/net/wireless/nexdhd/nexdhd.ko bootimg_tmp/ramdisk/nexmon/
-	cp bootimg_src/firmware/fw_bcmdhd.bin bootimg_tmp/ramdisk/nexmon/
-	cp bootimg_src/firmware/bcmdhd.cal bootimg_tmp/ramdisk/nexmon/
+	mkdir bootimg_tmp/ramdisk/nexmon/firmware
+	cp bootimg_src/firmware/fw_bcmdhd.orig.bin bootimg_tmp/ramdisk/nexmon/firmware/fw_bcmdhd.bin
+	cp bootimg_src/firmware/fw_nexmon.bin bootimg_tmp/ramdisk/nexmon/firmware/fw_nexmon.bin
+	cp bootimg_src/firmware/fw_nexdhd.bin bootimg_tmp/ramdisk/nexmon/firmware/fw_nexdhd.bin
+	cp bootimg_src/firmware/bcmdhd.cal bootimg_tmp/ramdisk/nexmon/firmware/bcmdhd.cal
+	cp bootimg_src/firmware/bcmdhd.cal bootimg_tmp/ramdisk/nexmon/firmware/nexmon.cal
+	cp bootimg_src/firmware/bcmdhd.cal bootimg_tmp/ramdisk/nexmon/firmware/nexdhd.cal
 	mkdir bootimg_tmp/ramdisk/nexmon/bin
 	cp --preserve=links bootimg_src/bin/* bootimg_tmp/ramdisk/nexmon/bin
 	$(MKBOOT)mkbootfs bootimg_tmp/ramdisk | gzip > bootimg_tmp/newramdisk.cpio.gz
@@ -117,7 +126,7 @@ boot: boot.img
 
 reloadnex: kernel/drivers/net/wireless/nexdhd/nexdhd.ko
 	adb push kernel/drivers/net/wireless/nexdhd/nexdhd.ko /sdcard/
-	adb shell "su -c 'rmmod nexdhd; rmmod bcmdhd; insmod /sdcard/nexdhd.ko; lsmod'"
+	adb shell "su -c 'rmmod nexdhd; rmmod bcmdhd; rmmod nexmon; insmod /sdcard/nexdhd.ko; lsmod'"
 
 
 

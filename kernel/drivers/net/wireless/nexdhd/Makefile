@@ -23,7 +23,7 @@ DHDCFLAGS = -Wall -Wstrict-prototypes -lnl -Dlinux -DBCMDRIVER                \
 	-Idrivers/net/wireless/nexdhd	-Idrivers/net/wireless/nexdhd/include   \
 	-Idrivers/net/wireless/nexdhd/common/include
 
-DHDOFILES = aiutils.o bcmsdh_sdmmc_linux.o nexmon.o dhd_linux.o siutils.o bcmutils.o   \
+DHDOFILES = aiutils.o bcmsdh_sdmmc_linux.o nexmon_decode.o dhd_linux.o siutils.o bcmutils.o   \
 	dhd_linux_sched.o dhd_pno.o dhd_sdio.o bcmwifi_channels.o bcmevent.o hndpmu.o   \
 	bcmsdh.o dhd_cdc.o bcmsdh_linux.o dhd_common.o dhd_wlfc.o dhd_ip.o linux_osl.o \
 	bcmsdh_sdmmc.o dhd_custom_gpio.o sbutils.o wldev_common.o wl_android.o useriface_netlink.o
@@ -44,7 +44,7 @@ DHDCFLAGS += -DCUSTOM_ROAM_DELTA_SETTING=10
 DHDCFLAGS += -DCUSTOM_KEEP_ALIVE_SETTING=28000
 DHDCFLAGS += -DCUSTOM_PNO_EVENT_LOCK_xTIME=10
 endif
-ifneq ($(CONFIG_NEXDHD_USE_SCHED_SCAN),)
+ifneq ($(CONFIG_NEXDHD_DHD_USE_SCHED_SCAN),)
 DHDCFLAGS += -DWL_SCHED_SCAN
 endif
 EXTRA_CFLAGS = $(DHDCFLAGS)
@@ -66,7 +66,7 @@ DHDCFLAGS += -DCUSTOM_TDLS_IDLE_MODE_SETTING=40000
 #########################
 # Chip dependent feature
 #########################
-ifneq ($(CONFIG_NEX4339),)
+ifneq ($(CONFIG_NEXDHD_BCM4339),)
 DHDCFLAGS += -DCUSTOM_GLOM_SETTING=8 -DCUSTOM_RXCHAIN=1
 DHDCFLAGS += -DUSE_DYNAMIC_F2_BLKSIZE -DDYNAMIC_F2_BLKSIZE_FOR_NONLEGACY=128
 DHDCFLAGS += -DBCMSDIOH_TXGLOM -DCUSTOM_TXGLOM=1 -DBCMSDIOH_TXGLOM_HIGHSPEED

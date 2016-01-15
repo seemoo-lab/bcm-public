@@ -502,10 +502,10 @@ dhd_prot_attach(dhd_pub_t *dhd)
 	return 0;
 
 fail:
-#ifndef CONFIG_NEXDHD_USE_STATIC_BUF
+#ifndef CONFIG_NEXDHD_DHD_USE_STATIC_BUF
 	if (cdc != NULL)
 		MFREE(dhd->osh, cdc, sizeof(dhd_prot_t));
-#endif /* CONFIG_NEXDHD_USE_STATIC_BUF */
+#endif /* CONFIG_NEXDHD_DHD_USE_STATIC_BUF */
 	return BCME_NOMEM;
 }
 
@@ -518,9 +518,9 @@ dhd_prot_detach(dhd_pub_t *dhd)
 	if (dhd->plat_deinit)
 		dhd->plat_deinit((void *)dhd);
 #endif
-#ifndef CONFIG_NEXDHD_USE_STATIC_BUF
+#ifndef CONFIG_NEXDHD_DHD_USE_STATIC_BUF
 	MFREE(dhd->osh, dhd->prot, sizeof(dhd_prot_t));
-#endif /* CONFIG_NEXDHD_USE_STATIC_BUF */
+#endif /* CONFIG_NEXDHD_DHD_USE_STATIC_BUF */
 	dhd->prot = NULL;
 }
 

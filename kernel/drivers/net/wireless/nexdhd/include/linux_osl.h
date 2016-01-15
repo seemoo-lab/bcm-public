@@ -272,13 +272,13 @@ extern int osl_error(int bcmerror);
 #define PKTLIST_DUMP(osh, buf)
 #define PKTDBG_TRACE(osh, pkt, bit)
 #define	PKTFREE(osh, skb, send)		osl_pktfree((osh), (skb), (send))
-#ifdef CONFIG_NEXDHD_USE_STATIC_BUF
+#ifdef CONFIG_NEXDHD_DHD_USE_STATIC_BUF
 #define	PKTGET_STATIC(osh, len, send)		osl_pktget_static((osh), (len))
 #define	PKTFREE_STATIC(osh, skb, send)		osl_pktfree_static((osh), (skb), (send))
 #else
 #define	PKTGET_STATIC	PKTGET
 #define	PKTFREE_STATIC	PKTFREE
-#endif /* CONFIG_NEXDHD_USE_STATIC_BUF */
+#endif /* CONFIG_NEXDHD_DHD_USE_STATIC_BUF */
 #define	PKTDATA(osh, skb)		(((struct sk_buff*)(skb))->data)
 #define	PKTLEN(osh, skb)		(((struct sk_buff*)(skb))->len)
 #define PKTHEADROOM(osh, skb)		(PKTDATA(osh, skb)-(((struct sk_buff*)(skb))->head))

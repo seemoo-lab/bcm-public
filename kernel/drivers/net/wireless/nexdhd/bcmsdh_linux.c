@@ -139,22 +139,22 @@ bcmsdh_chipmatch(uint16 vendor, uint16 device)
 #if defined(BCMPLATFORM_BUS)
 #if defined(BCMLXSDMMC)
 /* forward declarations */
-int nexsdh_probe(struct device *dev);
-int nexsdh_remove(struct device *dev);
+int nexdhd_bcmsdh_probe(struct device *dev);
+int nexdhd_bcmsdh_remove(struct device *dev);
 
-EXPORT_SYMBOL(nexsdh_probe);
-EXPORT_SYMBOL(nexsdh_remove);
+EXPORT_SYMBOL(nexdhd_bcmsdh_probe);
+EXPORT_SYMBOL(nexdhd_bcmsdh_remove);
 
 #else
 /* forward declarations */
-static int __devinit nexsdh_probe(struct device *dev);
-static int __devexit nexsdh_remove(struct device *dev);
+static int __devinit nexdhd_bcmsdh_probe(struct device *dev);
+static int __devexit nexdhd_bcmsdh_remove(struct device *dev);
 #endif
 
 #if !defined(BCMLXSDMMC)
 static
 #endif
-int nexsdh_probe(struct device *dev)
+int nexdhd_bcmsdh_probe(struct device *dev)
 {
 	osl_t *osh = NULL;
 	bcmsdh_hc_t *sdhc = NULL, *sdhc_org = sdhcinfo;
@@ -291,7 +291,7 @@ int bcmsdh_set_get_wake(int flag)
 #if !defined(BCMLXSDMMC)
 static
 #endif
-int nexsdh_remove(struct device *dev)
+int nexdhd_bcmsdh_remove(struct device *dev)
 {
 	bcmsdh_hc_t *sdhc, *prev;
 	osl_t *osh;

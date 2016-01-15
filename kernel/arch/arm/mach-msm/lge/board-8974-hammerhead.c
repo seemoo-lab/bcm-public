@@ -94,7 +94,7 @@ static void __init msm8974_early_memory(void)
  * into this category, and thus the driver should not be added here. The
  * EPROBE_DEFER can satisfy most dependency problems.
  */
-#if defined (CONFIG_BCMDHD) || defined (CONFIG_BCMDHD_MODULE) || defined (CONFIG_NEXDHD) || defined (CONFIG_NEXDHD_MODULE)
+#if defined (CONFIG_BCMDHD) || defined (CONFIG_BCMDHD_MODULE) || defined (CONFIG_NEXDHD) || defined (CONFIG_NEXDHD_MODULE) || defined (CONFIG_NEXMON) || defined (CONFIG_NEXMON_MODULE)
 extern void init_bcm_wifi(void);
 #endif
 
@@ -111,7 +111,7 @@ void __init msm8974_add_drivers(void)
 	tsens_tm_init_driver();
 	msm_thermal_device_init();
 	lge_add_persistent_device();
-#if defined (CONFIG_BCMDHD) || defined (CONFIG_BCMDHD_MODULE) || defined (CONFIG_NEXDHD) || defined (CONFIG_NEXDHD_MODULE)
+#if defined (CONFIG_BCMDHD) || defined (CONFIG_BCMDHD_MODULE) || defined (CONFIG_NEXDHD) || defined (CONFIG_NEXDHD_MODULE)  || defined (CONFIG_NEXMON) || defined (CONFIG_NEXMON_MODULE)
 	init_bcm_wifi();
 #endif
 }

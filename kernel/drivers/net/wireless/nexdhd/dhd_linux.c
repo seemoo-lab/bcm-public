@@ -3355,18 +3355,18 @@ dhd_attach(osl_t *osh, struct dhd_bus *bus, uint bus_hdrlen)
 	dhd_state |= DHD_ATTACH_STATE_NET_ALLOC;
 
 	/* Allocate primary dhd_info */
-#if defined(CONFIG_NEXDHD_USE_STATIC_BUF)
+#if defined(CONFIG_NEXDHD_DHD_USE_STATIC_BUF)
 	dhd = (void *)dhd_os_prealloc(osh, DHD_PREALLOC_DHD_INFO, sizeof(dhd_info_t));
 	if (!dhd) {
 		DHD_INFO(("%s: OOM - Pre-alloc dhd_info\n", __FUNCTION__));
-#endif /* CONFIG_NEXDHD_USE_STATIC_BUF */
+#endif /* CONFIG_NEXDHD_DHD_USE_STATIC_BUF */
 	if (!(dhd = MALLOC(osh, sizeof(dhd_info_t)))) {
 		DHD_ERROR(("%s: OOM - alloc dhd_info\n", __FUNCTION__));
 		goto fail;
 	}
-#if defined(CONFIG_NEXDHD_USE_STATIC_BUF)
+#if defined(CONFIG_NEXDHD_DHD_USE_STATIC_BUF)
 	}
-#endif /* CONFIG_NEXDHD_USE_STATIC_BUF */
+#endif /* CONFIG_NEXDHD_DHD_USE_STATIC_BUF */
 	memset(dhd, 0, sizeof(dhd_info_t));
 
 #ifdef DHDTHREAD
@@ -5012,19 +5012,19 @@ dhd_free(dhd_pub_t *dhdp)
 			}
 		}
 		dhd = (dhd_info_t *)dhdp->info;
-#if defined(CONFIG_NEXDHD_USE_STATIC_BUF)
+#if defined(CONFIG_NEXDHD_DHD_USE_STATIC_BUF)
 		/* If pointer is allocated by dhd_os_prealloc then avoid MFREE */
 		if (dhd != (dhd_info_t *)dhd_os_prealloc(NULL, DHD_PREALLOC_DHD_INFO, 0)) {
-#endif /* CONFIG_NEXDHD_USE_STATIC_BUF */
+#endif /* CONFIG_NEXDHD_DHD_USE_STATIC_BUF */
 			if (dhd)
 				MFREE(dhd->pub.osh, dhd, sizeof(*dhd));
-#if defined(CONFIG_NEXDHD_USE_STATIC_BUF)
+#if defined(CONFIG_NEXDHD_DHD_USE_STATIC_BUF)
 		}
 		else {
 			if (dhd)
 				dhd = NULL;
 		}
-#endif /* CONFIG_NEXDHD_USE_STATIC_BUF */
+#endif /* CONFIG_NEXDHD_DHD_USE_STATIC_BUF */
 	}
 }
 
@@ -5491,7 +5491,7 @@ dhd_os_tcpackunlock(dhd_pub_t *pub)
 }
 #endif /* DHDTCPACK_SUPPRESS */
 
-#if defined(CONFIG_NEXDHD_USE_STATIC_BUF)
+#if defined(CONFIG_NEXDHD_DHD_USE_STATIC_BUF)
 uint8* dhd_os_prealloc(void *osh, int section, uint size)
 {
 	return (uint8*)wl_android_prealloc(section, size);

@@ -44,7 +44,7 @@
 #define OS_HANDLE_MAGIC		0x1234abcd	/* Magic # to recognize osh */
 #define BCM_MEM_FILENAME_LEN 	24		/* Mem. filename length */
 
-#ifdef CONFIG_NEXDHD_USE_STATIC_BUF
+#ifdef CONFIG_NEXDHD_DHD_USE_STATIC_BUF
 #define DHD_SKB_HDRSIZE 		336
 #define DHD_SKB_1PAGE_BUFSIZE	((PAGE_SIZE*1)-DHD_SKB_HDRSIZE)
 #define DHD_SKB_2PAGE_BUFSIZE	((PAGE_SIZE*2)-DHD_SKB_HDRSIZE)
@@ -82,7 +82,7 @@ typedef struct bcm_static_pkt {
 } bcm_static_pkt_t;
 
 static bcm_static_pkt_t *bcm_static_skb = 0;
-#endif /* CONFIG_NEXDHD_USE_STATIC_BUF */
+#endif /* CONFIG_NEXDHD_DHD_USE_STATIC_BUF */
 
 typedef struct bcm_mem_link {
 	struct bcm_mem_link *prev;
@@ -246,7 +246,7 @@ osl_attach(void *pdev, uint bustype, bool pkttag)
 			break;
 	}
 
-#if defined(CONFIG_NEXDHD_USE_STATIC_BUF)
+#if defined(CONFIG_NEXDHD_DHD_USE_STATIC_BUF)
 	if (!bcm_static_buf) {
 		if (!(bcm_static_buf = (bcm_static_buf_t *)dhd_os_prealloc(osh, 3, STATIC_BUF_SIZE+
 			STATIC_BUF_TOTAL_LEN))) {
@@ -286,7 +286,7 @@ osl_attach(void *pdev, uint bustype, bool pkttag)
 
 		sema_init(&bcm_static_skb->osl_pkt_sem, 1);
 	}
-#endif /* CONFIG_NEXDHD_USE_STATIC_BUF */
+#endif /* CONFIG_NEXDHD_DHD_USE_STATIC_BUF */
 
 #ifdef BCMDBG_CTRACE
 	spin_lock_init(&osh->ctrace_lock);
@@ -305,7 +305,7 @@ osl_detach(osl_t *osh)
 	if (osh == NULL)
 		return;
 
-#ifdef CONFIG_NEXDHD_USE_STATIC_BUF
+#ifdef CONFIG_NEXDHD_DHD_USE_STATIC_BUF
 		if (bcm_static_buf) {
 			bcm_static_buf = 0;
 		}
@@ -476,14 +476,14 @@ osl_ctfpool_stats(osl_t *osh, void *b)
 	if ((osh == NULL) || (osh->ctfpool == NULL))
 		return;
 
-#ifdef CONFIG_NEXDHD_USE_STATIC_BUF
+#ifdef CONFIG_NEXDHD_DHD_USE_STATIC_BUF
 	if (bcm_static_buf) {
 		bcm_static_buf = 0;
 	}
 	if (bcm_static_skb) {
 		bcm_static_skb = 0;
 	}
-#endif /* CONFIG_NEXDHD_USE_STATIC_BUF */
+#endif /* CONFIG_NEXDHD_DHD_USE_STATIC_BUF */
 
 	bb = b;
 
@@ -760,7 +760,7 @@ next_skb:
 	}
 }
 
-#ifdef CONFIG_NEXDHD_USE_STATIC_BUF
+#ifdef CONFIG_NEXDHD_DHD_USE_STATIC_BUF
 void*
 osl_pktget_static(osl_t *osh, uint len)
 {
@@ -863,7 +863,7 @@ osl_pktfree_static(osl_t *osh, void *p, bool send)
 	up(&bcm_static_skb->osl_pkt_sem);
 	osl_pktfree(osh, p, send);
 }
-#endif /* CONFIG_NEXDHD_USE_STATIC_BUF */
+#endif /* CONFIG_NEXDHD_DHD_USE_STATIC_BUF */
 
 int osh_pktpadtailroom(osl_t *osh, void* p, int pad)
 {
@@ -987,7 +987,7 @@ osl_malloc(osl_t *osh, uint size)
 	if (osh)
 		ASSERT(osh->magic == OS_HANDLE_MAGIC);
 
-#ifdef CONFIG_NEXDHD_USE_STATIC_BUF
+#ifdef CONFIG_NEXDHD_DHD_USE_STATIC_BUF
 	if (bcm_static_buf)
 	{
 		int i = 0;
@@ -1019,7 +1019,7 @@ osl_malloc(osl_t *osh, uint size)
 		}
 	}
 original:
-#endif /* CONFIG_NEXDHD_USE_STATIC_BUF */
+#endif /* CONFIG_NEXDHD_DHD_USE_STATIC_BUF */
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 25))
 	flags = (in_atomic() || irqs_disabled()) ? GFP_ATOMIC : GFP_KERNEL;
@@ -1040,7 +1040,7 @@ original:
 void
 osl_mfree(osl_t *osh, void *addr, uint size)
 {
-#ifdef CONFIG_NEXDHD_USE_STATIC_BUF
+#ifdef CONFIG_NEXDHD_DHD_USE_STATIC_BUF
 	if (bcm_static_buf)
 	{
 		if ((addr > (void *)bcm_static_buf) && ((unsigned char *)addr
@@ -1061,7 +1061,7 @@ osl_mfree(osl_t *osh, void *addr, uint size)
 			return;
 		}
 	}
-#endif /* CONFIG_NEXDHD_USE_STATIC_BUF */
+#endif /* CONFIG_NEXDHD_DHD_USE_STATIC_BUF */
 	if (osh) {
 		ASSERT(osh->magic == OS_HANDLE_MAGIC);
 		atomic_sub(size, &osh->malloced);

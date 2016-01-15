@@ -403,9 +403,9 @@ struct wl_pmk_list {
 struct escan_info {
 	u32 escan_state;
 #if defined(STATIC_WL_PRIV_STRUCT)
-#ifndef CONFIG_NEXDHD_USE_STATIC_BUF
-#error STATIC_WL_PRIV_STRUCT should be used with CONFIG_NEXDHD_USE_STATIC_BUF
-#endif /* CONFIG_NEXDHD_USE_STATIC_BUF */
+#ifndef CONFIG_NEXDHD_DHD_USE_STATIC_BUF
+#error STATIC_WL_PRIV_STRUCT should be used with CONFIG_NEXDHD_DHD_USE_STATIC_BUF
+#endif /* CONFIG_NEXDHD_DHD_USE_STATIC_BUF */
 	u8 *escan_buf;
 #else
 	u8 escan_buf[ESCAN_BUF_SIZE];
