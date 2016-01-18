@@ -37,7 +37,6 @@
 #include <linux/inetdevice.h>
 #include <linux/rtnetlink.h>
 #include <linux/etherdevice.h>
-#include <linux/if_arp.h> /* NexMon: interface type ARPHRD_IEEE80211_RADIOTAP */
 #include <linux/random.h>
 #include <linux/spinlock.h>
 #include <linux/ethtool.h>
@@ -61,9 +60,6 @@
 #include <dhd_bus.h>
 #include <dhd_proto.h>
 #include <dhd_dbg.h>
-
-#include "nexmon.h"
-
 #ifdef CONFIG_HAS_WAKELOCK
 #include <linux/wakelock.h>
 #endif
@@ -1961,40 +1957,20 @@ dhd_rx_frame(dhd_pub_t *dhdp, int ifidx, void *pktbuf, int numpkt, uint8 chan,
 
 		ASSERT(ifp);
 		skb->dev = ifp->net;
-
-        /* NexMon: like bcmon we use the SDIO channel 15 
-         * to transport raw frames out out the firmware 
-         */
-        if (chan == 15) {
-            skb = nexmon_decode(skb);
-            if (skb == NULL) {
-                return;
-            }
-        } else {
-            PKTFREE(dhdp->osh, skb, FALSE);
-            return;
-        }
-
 		skb->protocol = eth_type_trans(skb, skb->dev);
 
 		if (skb->pkt_type == PACKET_MULTICAST) {
 			dhd->pub.rx_multicast++;
 		}
 
-        /* NexMon */
-        if (chan != 15) {
-            skb->data = eth;
-            skb->len = len;
-        }
+		skb->data = eth;
+		skb->len = len;
 
 #ifdef WLMEDIA_HTSF
 		dhd_htsf_addrxts(dhdp, pktbuf);
 #endif
-        /* NexMon */
-        if (chan != 15) {
-            /* Strip header, count, deliver upward */
-            skb_pull(skb, ETH_HLEN);
-        }
+		/* Strip header, count, deliver upward */
+		skb_pull(skb, ETH_HLEN);
 
 		/* Process special event packets and then discard them */
 		memset(&event, 0, sizeof(event));
@@ -4381,17 +4357,7 @@ dhd_preinit_ioctls(dhd_pub_t *dhd)
 #endif
 #endif /* DISABLE_11N */
 
-    /* NexMon: we have to disable MPC to receive frames 
-     * from the firmware
-     */
-    DBG_THR(("%s: about to disable MPC\n",__FUNCTION__));
-    bcm_mkiovar("mpc", (char *)&mpc, 4, iovbuf, sizeof(iovbuf));
-    if ((ret = dhd_wl_ioctl_cmd(dhd, WLC_SET_VAR, iovbuf,
-        sizeof(iovbuf), TRUE, 0)) < 0) { 
-        DHD_ERROR(("Error on disabing MPC: %d\n", ret));
-    } else {
-        DBG_THR(("%s: disabling MPC successful!\n",__FUNCTION__));
-    }
+
 
 	/* query for 'ver' to get version info from firmware */
 	memset(buf, 0, sizeof(buf));
@@ -4771,9 +4737,6 @@ dhd_net_attach(dhd_pub_t *dhdp, int ifidx)
 #endif /* defined(WL_WIRELESS_EXT) */
 
 	dhd->pub.rxsz = DBUS_RX_BUFFER_SIZE_DHD(net);
-
-    /* NexMon: set interface type to radiotap */
-    net->type = ARPHRD_IEEE80211_RADIOTAP;
 
 	memcpy(net->dev_addr, temp_addr, ETHER_ADDR_LEN);
 

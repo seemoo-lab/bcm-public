@@ -23,7 +23,7 @@ DHDCFLAGS = -Wall -Wstrict-prototypes -Dlinux -DBCMDRIVER               \
 	-Idrivers/net/wireless/bcmdhd	-Idrivers/net/wireless/bcmdhd/include   \
 	-Idrivers/net/wireless/bcmdhd/common/include
 
-DHDOFILES = aiutils.o bcmsdh_sdmmc_linux.o nexmon.o dhd_linux.o siutils.o bcmutils.o   \
+DHDOFILES = aiutils.o bcmsdh_sdmmc_linux.o dhd_linux.o siutils.o bcmutils.o   \
 	dhd_linux_sched.o dhd_pno.o dhd_sdio.o bcmwifi_channels.o bcmevent.o hndpmu.o   \
 	bcmsdh.o dhd_cdc.o bcmsdh_linux.o dhd_common.o dhd_wlfc.o dhd_ip.o linux_osl.o \
 	bcmsdh_sdmmc.o dhd_custom_gpio.o sbutils.o wldev_common.o wl_android.o
