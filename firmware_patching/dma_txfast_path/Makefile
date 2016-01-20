@@ -6,7 +6,7 @@ all : dngl_sendpkt.bin fw_bcmdhd.bin fw_bcmdhd.complete.bin fw_bcmdhd.complete.e
 $(FILE).o: $(FILE).c ../include/*.h
 	$(CC)gcc -Wall -Werror -O2 -nostdlib -nostartfiles -ffreestanding -mthumb -ffunction-sections -fdata-sections -c $(FILE).c -o $(FILE).o
 
-../wrapper/wrapper.o: ../wrapper/wrapper.c
+../wrapper/wrapper.o: ../include/wrapper.h
 	make -C ../wrapper
 
 $(FILE).elf: $(FILE).o ../wrapper/wrapper.o $(FILE).ld
