@@ -53,7 +53,7 @@ ARCH=arm
 SUBARCH=arm
 MKBOOT=$(shell pwd)/buildtools/mkboot/
 
-all: tools
+all: tools boot.img
 
 .PHONY: cleanall cleanbuildtools cleanboot kernel bcmdhd reloadnex su
 
@@ -103,6 +103,7 @@ boot.img: kernel/arch/arm/boot/Image kernel/drivers/net/wireless/bcmdhd/bcmdhd.k
 	cp kernel/drivers/net/wireless/nexdhd/nexdhd.ko bootimg_tmp/ramdisk/nexmon/
 	mkdir bootimg_tmp/ramdisk/nexmon/firmware
 	cp bootimg_src/firmware/fw_bcmdhd.orig.bin bootimg_tmp/ramdisk/nexmon/firmware/fw_bcmdhd.bin
+#	cp firmware_patching/dma_txfast_path/fw_bcmdhd.bin bootimg_tmp/ramdisk/nexmon/firmware/fw_bcmdhd.bin
 	cp bootimg_src/firmware/fw_nexmon.bin bootimg_tmp/ramdisk/nexmon/firmware/fw_nexmon.bin
 	cp bootimg_src/firmware/fw_nexdhd.bin bootimg_tmp/ramdisk/nexmon/firmware/fw_nexdhd.bin
 	cp bootimg_src/firmware/bcmdhd.cal bootimg_tmp/ramdisk/nexmon/firmware/bcmdhd.cal
