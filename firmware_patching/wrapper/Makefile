@@ -2,6 +2,10 @@ CC=../../buildtools/arm-eabi-4.7/bin/arm-eabi-
 
 all: wrapper.o
 
+wrapper.ld: ../include/wrapper.h Makefile
+	# read the wrapper.h file and extract all lines starting with "extern", split them at "(" and "/" and then remove the "*" of a return type, then the function name is the second but last word and the address is the last word
+	awk -F'[/(]' '/extern/ {gsub(/*/,"",$$1);print $$1 $$4}' ../include/wrapper.h | awk -F' ' '{print ".text." $$(NF-1) " " $$NF " : { ../wrapper/wrapper.o (.text." $$(NF-1) ") }"}' > wrapper.ld
+
 wrapper.c: ../include/wrapper.h
 	sed -e "s/extern //" -e "/#/d" -e "s/;/ { return 0; }/" ../include/wrapper.h > wrapper.c
 
@@ -11,4 +15,4 @@ wrapper.o: wrapper.c wrapper.ld
 	python2 ../../buildtools/elffile/adjalign.py wrapper.o wrapper.o
 
 clean: 
-	rm -f wrapper.o wrapper.c
+	rm -f wrapper.o wrapper.c wrapper.ld

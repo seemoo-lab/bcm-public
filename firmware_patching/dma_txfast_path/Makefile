@@ -19,7 +19,7 @@ $(FILE).bin: $(FILE).elf
 dngl_sendpkt.bin : ../../bootimg_src/firmware/fw_bcmdhd.orig.bin Makefile
 	dd if=../../bootimg_src/firmware/fw_bcmdhd.orig.bin of=dngl_sendpkt.bin bs=1 skip=$$((0x2450)) count=$$((0x464))
 
-fw_bcmdhd.bin : patcher.py dngl_sendpkt.bin
+fw_bcmdhd.bin : patcher.py dngl_sendpkt.bin $(FILE).bin
 	./patcher.py
 
 fw_bcmdhd.complete.bin : fw_bcmdhd.bin rom.bin
