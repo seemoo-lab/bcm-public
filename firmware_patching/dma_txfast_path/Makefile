@@ -1,3 +1,4 @@
+CC=../../buildtools/arm-eabi-4.7/bin/arm-eabi-
 SHELL=/bin/bash
 
 all : dngl_sendpkt.bin fw_bcmdhd.bin fw_bcmdhd.complete.bin fw_bcmdhd.complete.elf
@@ -5,8 +6,8 @@ all : dngl_sendpkt.bin fw_bcmdhd.bin fw_bcmdhd.complete.bin fw_bcmdhd.complete.e
 dngl_sendpkt.bin : ../../bootimg_src/firmware/fw_bcmdhd.orig.bin Makefile
 	dd if=../../bootimg_src/firmware/fw_bcmdhd.orig.bin of=dngl_sendpkt.bin bs=1 skip=$$((0x2450)) count=$$((0x464))
 
-fw_bcmdhd.bin : binary_patcher.py dngl_sendpkt.bin
-	./binary_patcher.py
+fw_bcmdhd.bin : patcher.py dngl_sendpkt.bin
+	./patcher.py
 
 fw_bcmdhd.complete.bin : fw_bcmdhd.bin rom.bin
 	dd if=rom.bin of=fw_bcmdhd.complete.bin bs=1
