@@ -2,6 +2,8 @@ void *dma_rx(void *di) { return (void *) 0; }
 
 void *dma_rxfill(void *di) { return (void *) 0; }
 
+void *dma_txfast(void *di, void *p, int commit) { return (void *) 0; }
+
 void *dngl_sendpkt(void *sdio, void *p, int chan) { return (void *) 0; }
 
 void *wlc_mctrl_write(void *wlc_hw_info_ptr) { return (void *) 0; }
