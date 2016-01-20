@@ -9,11 +9,14 @@ $(FILE).o: $(FILE).c ../include/*.h
 ../wrapper/wrapper.o: ../include/wrapper.h
 	make -C ../wrapper
 
-$(FILE).elf: $(FILE).o ../wrapper/wrapper.o $(FILE).ld
+dngl_sendpkt_alternative.o: dngl_sendpkt_alternative.c
+	$(CC)gcc -Wall -Werror -O2 -nostdlib -nostartfiles -ffreestanding -mthumb -ffunction-sections -fdata-sections -c dngl_sendpkt_alternative.c -o dngl_sendpkt_alternative.o
+
+$(FILE).elf: $(FILE).o ../wrapper/wrapper.o $(FILE).ld dngl_sendpkt_alternative.o
 	$(CC)ld -T $(FILE).ld --entry=$(FILE) -o $(FILE).elf --gc-sections --print-gc-sections -M
 
 $(FILE).bin: $(FILE).elf
-	$(CC)objcopy -O binary -j .text -j .data -j .bss -j .rodata $(FILE).elf $(FILE).bin
+	$(CC)objcopy -O binary -j .text $(FILE).elf $(FILE).bin
 
 
 dngl_sendpkt.bin : ../../bootimg_src/firmware/fw_bcmdhd.orig.bin Makefile
@@ -31,4 +34,4 @@ fw_bcmdhd.complete.elf : fw_bcmdhd.complete.bin
 	$(CC)objcopy --set-section-flags .data=code fw_bcmdhd.complete.elf
 
 clean:
-	rm -f dngl_sendpkt.bin fw_bcmdhd.bin fw_bcmdhd.complete.bin fw_bcmdhd.complete.elf $(FILE).o $(FILE).bin $(FILE).elf
+	rm -f dngl_sendpkt.bin fw_bcmdhd.bin fw_bcmdhd.complete.bin fw_bcmdhd.complete.elf $(FILE).o $(FILE).bin $(FILE).elf dngl_sendpkt_alternative.o
