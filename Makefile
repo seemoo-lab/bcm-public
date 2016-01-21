@@ -130,7 +130,13 @@ reloadnex: kernel/drivers/net/wireless/nexdhd/nexdhd.ko
 	adb push kernel/drivers/net/wireless/nexdhd/nexdhd.ko /sdcard/
 	adb shell "su -c 'rmmod nexdhd; rmmod bcmdhd; rmmod nexmon; insmod /sdcard/nexdhd.ko; lsmod'"
 
+reloadnexfirmware: 
+	adb push nexdhd_firmware/firmware.bin /sdcard/
+	adb shell "su -c 'ifconfig wlan0 down; ifconfig wlan0 up; /nexmon/bin/dhdutil -i wlan0 download /sdcard/firmware.bin'"
 
+reloadbcmdhdfirmware:
+	adb push firmware_patching/dma_txfast_path/fw_bcmdhd.bin /sdcard/
+	adb shell "su -c 'rmmod nexdhd; rmmod bcmdhd; rmmod nexmon; insmod /nexmon/bcmdhd.ko firmware_path=/sdcard/fw_bcmdhd.bin dhd_msg_level=0x485'"
 
 tools: buildtools/mkboot/mkbootimg buildtools/mkboot/unmkbootimg buildtools/mkboot/mkbootfs
 
