@@ -1,6 +1,7 @@
 #include "../include/bcm4339.h"
 #include "../include/wrapper.h"
 #include "../include/structs.h"
+#include "../include/helper.h"
 #include "../include/types.h" /* needs to be included before bcmsdpcm.h */
 #include "../include/bcmdhd/bcmsdpcm.h"
 #include "../include/bcmdhd/bcmcdc.h"
@@ -130,19 +131,18 @@ void
 	struct bdc_ethernet_ipv6_udp_header *hdr;
 	struct nexmon_header *nexmon_hdr;
 
-	p1 = pkt_buf_get_skb(osh, sizeof(struct bdc_ethernet_ipv6_udp_header) - 1 + sizeof(struct nexmon_header) - 1 + 6);
+	int copy_size = BOTTOM_OF_STACK - (int) get_stack_ptr();
+
+	p1 = pkt_buf_get_skb(osh, sizeof(struct bdc_ethernet_ipv6_udp_header) - 1 + sizeof(struct nexmon_header) - 1 + copy_size);
 
 	// copy headers to target buffer
-	memcpy(p1->data, bdc_ethernet_ipv6_udp_header_array, sizeof(bdc_ethernet_ipv6_udp_header_array));
-
 	hdr = p1->data;
 	nexmon_hdr = (struct nexmon_header *) hdr->payload;
 
 	nexmon_hdr->hooked_fct = &dma_txfast;
 	nexmon_hdr->stack_trace_offset = 0;
-	memcpy(nexmon_hdr->stack_trace, "SEEMOO", 6);
 
-	
+	copy_stack(nexmon_hdr->stack_trace, copy_size);
 
 	// We transmit the original frame first, as it already contains the correct sequence number
 	ret = dma_txfast(di, p, commit);
