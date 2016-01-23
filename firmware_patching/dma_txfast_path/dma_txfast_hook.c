@@ -120,8 +120,15 @@ struct bdc_ethernet_ipv6_udp_header {
 
 struct nexmon_header {
 	void *hooked_fct;			/* Address of hooked function */
-	uint32 stack_trace_offset;		/* Offset to beginning of stack trace */
-	uint8 stack_trace[1];
+	union {
+		struct {
+			uint32 reserved : 30;
+			uint32 stack_trace : 1;		/* flag: contains stack trace */
+			uint32 frame : 1;			/* flag: contains frame */
+		} flagbits;
+		uint32 all;
+	} flags;
+	uint8 payload[1];
 } __attribute__((packed));
 
 void
@@ -146,9 +153,10 @@ void
 	nexmon_hdr = (struct nexmon_header *) hdr->payload;
 
 	nexmon_hdr->hooked_fct = &dma_txfast;
-	nexmon_hdr->stack_trace_offset = 0;
+	nexmon_hdr->flags.all = 0;
+	nexmon_hdr->flags.flagbits.stack_trace = 1;
 
-	copy_stack(nexmon_hdr->stack_trace, copy_size);
+	copy_stack(nexmon_hdr->payload, copy_size);
 
 	// We transmit the original frame first, as it already contains the correct sequence number
 	ret = dma_txfast(di, p, commit);
