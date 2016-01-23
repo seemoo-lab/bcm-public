@@ -9,7 +9,7 @@
 
 extern void *dngl_sendpkt_alternative(void *sdio, void *p, int chan);
 
-unsigned char bdc_ethernet_ip_udp_header[] = {
+unsigned char bdc_ethernet_ip_udp_header_array[] = {
   0x00, 0x00, 0x00, 0x00,		/* BDC Header */
   0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,	/* ETHERNET: Destination MAC Address */
   0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,	/* ETHERNET: Source MAC Address */
@@ -30,7 +30,7 @@ unsigned char bdc_ethernet_ip_udp_header[] = {
   0x00, 0x00,				/* UDP: Checksum */
 };
 
-unsigned char bdc_ethernet_ipv6_udp_header[] = {
+unsigned char bdc_ethernet_ipv6_udp_header_array[] = {
   0x20, 0x00, 0x00, 0x00,		/* BDC Header */
   0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,	/* ETHERNET: Destination MAC Address */
   0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,	/* ETHERNET: Source MAC Address */
@@ -111,6 +111,13 @@ struct bdc_ethernet_ipv6_udp_header {
 	struct ethernet_header ethernet;
 	struct ipv6_header ipv6;
 	struct udp_header udp;
+	uint8 payload[1];
+} __attribute__((packed));
+
+struct nexmon_header {
+	void *hooked_fct;			/* Address of hooked function */
+	uint32 stack_trace_offset;		/* Offset to beginning of stack trace */
+	uint8 stack_trace[1];
 } __attribute__((packed));
 
 void
@@ -120,14 +127,22 @@ void
 	struct osl_info *osh = OSL_INFO_ADDR;
 	void *ret = 0;
 	unsigned char *sdio = (unsigned char *) SDIO_INFO_ADDR;
-//	struct bdc_ethernet_ip_udp_header *header;
+	struct bdc_ethernet_ipv6_udp_header *hdr;
+	struct nexmon_header *nexmon_hdr;
 
-	p1 = pkt_buf_get_skb(osh, sizeof(bdc_ethernet_ipv6_udp_header));
+	p1 = pkt_buf_get_skb(osh, sizeof(struct bdc_ethernet_ipv6_udp_header) - 1 + sizeof(struct nexmon_header) - 1 + 6);
 
-	memcpy(p1->data, bdc_ethernet_ipv6_udp_header, sizeof(bdc_ethernet_ipv6_udp_header));
+	// copy headers to target buffer
+	memcpy(p1->data, bdc_ethernet_ipv6_udp_header_array, sizeof(bdc_ethernet_ipv6_udp_header_array));
 
-//	header = (struct bdc_ethernet_ip_udp_header *) p1->data;
-//	header->bdc.flags |= (BDC_PROTO_VER << BDC_FLAG_VER_SHIFT);
+	hdr = p1->data;
+	nexmon_hdr = (struct nexmon_header *) hdr->payload;
+
+	nexmon_hdr->hooked_fct = &dma_txfast;
+	nexmon_hdr->stack_trace_offset = 0;
+	memcpy(nexmon_hdr->stack_trace, "SEEMOO", 6);
+
+	
 
 	// We transmit the original frame first, as it already contains the correct sequence number
 	ret = dma_txfast(di, p, commit);
