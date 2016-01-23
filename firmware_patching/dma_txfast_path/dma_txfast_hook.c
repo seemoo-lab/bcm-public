@@ -13,7 +13,7 @@ extern void *dngl_sendpkt_alternative(void *sdio, void *p, int chan);
 unsigned char bdc_ethernet_ip_udp_header_array[] = {
   0x00, 0x00, 0x00, 0x00,		/* BDC Header */
   0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,	/* ETHERNET: Destination MAC Address */
-  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,	/* ETHERNET: Source MAC Address */
+  'N', 'E', 'X', 'M', 'O', 'N',		/* ETHERNET: Source MAC Address */
   0x80, 0x00,				/* ETHERNET: Type */
   0x45,					/* IP: Version / IHL */
   0x00,					/* IP: DSCP / ECN */
@@ -21,24 +21,24 @@ unsigned char bdc_ethernet_ip_udp_header_array[] = {
   0x00, 0x00,				/* IP: Identification */
   0x00, 0x00,				/* IP: Flags / Fragment Offset */
   0x10,					/* IP: Time to Live (TTL) */
-  0x17,					/* IP: Protocol */
+  0x88,					/* IP: Protocol = UDPLITE */
   0x00, 0x00,				/* IP: Header Checksum */
   0xFF, 0xFF, 0xFF, 0xFF,		/* IP: Source IP */
   0xFF, 0xFF, 0xFF, 0xFF,		/* IP: Destination IP */
-  0x23, 0x28,				/* UDP: Source Port = 9000 */
-  0x23, 0x29,				/* UDP: Destination Port = 9001 */
-  0x00, 0x08,				/* UDP: Length */
-  0x00, 0x00,				/* UDP: Checksum */
+  0xD6, 0xD8,				/* UDPLITE: Source Port = 55000 */
+  0xD6, 0xD8,				/* UDPLITE: Destination Port = 55000 */
+  0x00, 0x08,				/* UDPLITE: Checksum Coverage */
+  0x52, 0x46,				/* UDPLITE: Checksum */
 };
 
 unsigned char bdc_ethernet_ipv6_udp_header_array[] = {
   0x20, 0x00, 0x00, 0x00,		/* BDC Header */
   0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,	/* ETHERNET: Destination MAC Address */
-  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,	/* ETHERNET: Source MAC Address */
+  'N', 'E', 'X', 'M', 'O', 'N',		/* ETHERNET: Source MAC Address */
   0x86, 0xDD,				/* ETHERNET: Type */
   0x60, 0x00, 0x00, 0x00,		/* IPv6: Version / Traffic Class / Flow Label */
   0x00, 0x08,				/* IPv6: Payload Length */
-  0x17,					/* IPv6: Next Header = UDP */
+  0x88,					/* IPv6: Next Header = UDPLite */
   0x01,					/* IPv6: Hop Limit */
   0xFF, 0x02, 0x00, 0x00,		/* IPv6: Source IP */
   0x00, 0x00, 0x00, 0x00,		/* IPv6: Source IP */
@@ -48,10 +48,10 @@ unsigned char bdc_ethernet_ipv6_udp_header_array[] = {
   0x00, 0x00, 0x00, 0x00,		/* IPv6: Destination IP */
   0x00, 0x00, 0x00, 0x00,		/* IPv6: Destination IP */
   0x00, 0x00, 0x00, 0x01,		/* IPv6: Destination IP */
-  0x23, 0x28,				/* UDP: Source Port = 9000 */
-  0x23, 0x29,				/* UDP: Destination Port = 9001 */
-  0x00, 0x08,				/* UDP: Length */
-  0x00, 0x00,				/* UDP: Checksum */
+  0xD6, 0xD8,				/* UDPLITE: Source Port = 55000 */
+  0xD6, 0xD8,				/* UDPLITE: Destination Port = 55000 */
+  0x00, 0x08,				/* UDPLITE: Checksum Coverage */
+  0x52, 0x46,				/* UDPLITE: Checksum only over UDPLITE header*/
 };
 
 struct ethernet_header {
@@ -96,7 +96,10 @@ struct ip_header {
 struct udp_header {
 	uint16 src_port;
 	uint16 dst_port;
-	uint16 length;
+	union {
+		uint16 length;			/* UDP: length of UDP header and payload */
+		uint16 checksum_coverage;	/* UDPLITE: checksum_coverage */
+	} len_chk_cov;
 	uint16 checksum;
 } __attribute__((packed));
 
@@ -136,7 +139,10 @@ void
 	p1 = pkt_buf_get_skb(osh, sizeof(struct bdc_ethernet_ipv6_udp_header) - 1 + sizeof(struct nexmon_header) - 1 + copy_size);
 
 	// copy headers to target buffer
+	memcpy(p1->data, bdc_ethernet_ipv6_udp_header_array, sizeof(bdc_ethernet_ipv6_udp_header_array));
+
 	hdr = p1->data;
+	hdr->ipv6.payload_length = htons(sizeof(struct udp_header) + sizeof(struct nexmon_header) - 1 + copy_size);
 	nexmon_hdr = (struct nexmon_header *) hdr->payload;
 
 	nexmon_hdr->hooked_fct = &dma_txfast;

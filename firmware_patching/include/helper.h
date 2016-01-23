@@ -2,6 +2,31 @@
 #define HELPER_H
 
 #include "bcm4339.h"
+#include "types.h"
+
+inline uint16
+htons(uint16 a)
+{
+	return (a & 0xff00) >> 8 | (a & 0xff) << 8;
+}
+
+inline uint32
+htonl(uint32 a)
+{
+	return (a & 0xff000000) >> 24 | (a & 0xff0000) >> 8 | (a & 0xff00) << 8 | (a & 0xff) << 24;
+}
+
+inline uint16
+ntohs(uint16 a)
+{
+	return htons(a);
+}
+
+inline uint32
+ntohl(uint32 a)
+{
+	return htonl(a);
+}
 
 inline void *
 get_stack_ptr() {
@@ -15,7 +40,7 @@ copy_stack(void *dest, int copy_size) {
     printf("copy_stack: %d\n", copy_size);
     if(copy_size > 0) {
         memcpy( (void *) (dest), get_stack_ptr(), copy_size);
-    }   
+    }
     return;
 }
 
