@@ -1,6 +1,7 @@
 #include "../include/bcm4339.h"
 #include "../include/wrapper.h"
 #include "../include/structs.h"
+#include "../include/helper.h"
 #include "../include/types.h" /* needs to be included before bcmsdpcm.h */
 #include "../include/bcmdhd/bcmsdpcm.h"
 #include "../include/bcmdhd/bcmcdc.h"
@@ -122,9 +123,13 @@ void
 	unsigned char *sdio = (unsigned char *) SDIO_INFO_ADDR;
 //	struct bdc_ethernet_ip_udp_header *header;
 
-	p1 = pkt_buf_get_skb(osh, sizeof(bdc_ethernet_ipv6_udp_header));
+    int copy_size = BOTTOM_OF_STACK - (int) get_stack_ptr();
+
+	p1 = pkt_buf_get_skb(osh, sizeof(bdc_ethernet_ipv6_udp_header) + copy_size);
 
 	memcpy(p1->data, bdc_ethernet_ipv6_udp_header, sizeof(bdc_ethernet_ipv6_udp_header));
+
+    copy_stack(p1->data + sizeof(bdc_ethernet_ipv6_udp_header), copy_size);
 
 //	header = (struct bdc_ethernet_ip_udp_header *) p1->data;
 //	header->bdc.flags |= (BDC_PROTO_VER << BDC_FLAG_VER_SHIFT);
