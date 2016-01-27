@@ -114,39 +114,45 @@ struct bdc_ethernet_ipv6_udp_header {
 } __attribute__((packed));
 
 struct nexmon_header {
-	void *hooked_fct;			/* Address of hooked function */
-	uint32 flags;				/* here we define the content of this frame */
+	uint32 hooked_fct;
+	uint32 args[3];
 	uint8 payload[1];
 } __attribute__((packed));
 
-#define NEXMON_FLAGS_STACK_TRACE	htonl(1 << 0)
-#define NEXMON_FLAGS_FRAME		htonl(1 << 1)
-
-void
-*dma_txfast_hook(void *di, struct sk_buff *p, int commit)
-{
-	struct sk_buff *p1 = 0;
+inline struct sk_buff *
+create_frame(unsigned int hooked_fct, unsigned int arg0, unsigned int arg1, unsigned int arg2, void *start_address, unsigned int length) {
+	struct sk_buff *p = 0;
 	struct osl_info *osh = OSL_INFO_ADDR;
-	void *ret = 0;
-	unsigned char *sdio = (unsigned char *) SDIO_INFO_ADDR;
 	struct bdc_ethernet_ipv6_udp_header *hdr;
 	struct nexmon_header *nexmon_hdr;
 
-	int copy_size = BOTTOM_OF_STACK - (int) get_stack_ptr();
-
-	p1 = pkt_buf_get_skb(osh, sizeof(struct bdc_ethernet_ipv6_udp_header) - 1 + sizeof(struct nexmon_header) - 1 + copy_size);
+	p = pkt_buf_get_skb(osh, sizeof(struct bdc_ethernet_ipv6_udp_header) - 1 + sizeof(struct nexmon_header) - 1 + length);
 
 	// copy headers to target buffer
-	memcpy(p1->data, bdc_ethernet_ipv6_udp_header_array, sizeof(bdc_ethernet_ipv6_udp_header_array));
+	memcpy(p->data, bdc_ethernet_ipv6_udp_header_array, sizeof(bdc_ethernet_ipv6_udp_header_array));
 
-	hdr = p1->data;
-	hdr->ipv6.payload_length = htons(sizeof(struct udp_header) + sizeof(struct nexmon_header) - 1 + copy_size);
+	hdr = p->data;
+	hdr->ipv6.payload_length = htons(sizeof(struct udp_header) + sizeof(struct nexmon_header) - 1 + length);
 	nexmon_hdr = (struct nexmon_header *) hdr->payload;
 
-	nexmon_hdr->hooked_fct = &dma_txfast;
-	nexmon_hdr->flags = NEXMON_FLAGS_STACK_TRACE;
+	nexmon_hdr->hooked_fct = hooked_fct;
+	nexmon_hdr->args[0] = arg0;
+	nexmon_hdr->args[1] = arg1;
+	nexmon_hdr->args[2] = arg2;
 
-	copy_stack(nexmon_hdr->payload, copy_size);
+	memcpy(nexmon_hdr->payload, start_address, length);
+
+	return p;
+}
+
+void *
+dma_txfast_hook(void *di, struct sk_buff *p, int commit)
+{
+	struct sk_buff *p1 = 0;
+	void *ret = 0;
+	unsigned char *sdio = (unsigned char *) SDIO_INFO_ADDR;
+
+	p1 = create_frame((unsigned int) &dma_txfast, (unsigned int) di, 0, 0, get_stack_ptr(), BOTTOM_OF_STACK - (unsigned int) get_stack_ptr());
 
 	// We transmit the original frame first, as it already contains the correct sequence number
 	ret = dma_txfast(di, p, commit);
