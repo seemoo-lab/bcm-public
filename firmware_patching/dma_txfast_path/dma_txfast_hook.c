@@ -61,9 +61,7 @@ struct ethernet_header {
 } __attribute__((packed));
 
 struct ipv6_header {
-	uint32 version : 4;
-	uint32 traffic_class : 8;
-	uint32 flow_label : 20;
+	uint32 version_traffic_class_flow_label;
 	uint16 payload_length;
 	uint8 next_header;
 	uint8 hop_limit;
@@ -72,14 +70,11 @@ struct ipv6_header {
 } __attribute__((packed));
 
 struct ip_header {
-	uint8 version : 4;
-	uint8 ihl : 4;
-	uint8 dscp : 6;
-	uint8 ecn : 2;
+	uint8 version_ihl;
+	uint8 dscp_ecn;
 	uint16 total_length;
 	uint16 identification;
-	uint16 flags : 3;
-	uint16 fragment_offset : 13;
+	uint16 flags_fragment_offset;
 	uint8 ttl;
 	uint8 protocol;
 	uint16 header_checksum;
@@ -120,16 +115,12 @@ struct bdc_ethernet_ipv6_udp_header {
 
 struct nexmon_header {
 	void *hooked_fct;			/* Address of hooked function */
-	union {
-		struct {
-			uint32 reserved : 30;
-			uint32 stack_trace : 1;		/* flag: contains stack trace */
-			uint32 frame : 1;			/* flag: contains frame */
-		} flagbits;
-		uint32 all;
-	} flags;
+	uint32 flags;				/* here we define the content of this frame */
 	uint8 payload[1];
 } __attribute__((packed));
+
+#define NEXMON_FLAGS_STACK_TRACE	htonl(1 << 0)
+#define NEXMON_FLAGS_FRAME		htonl(1 << 1)
 
 void
 *dma_txfast_hook(void *di, struct sk_buff *p, int commit)
@@ -153,8 +144,7 @@ void
 	nexmon_hdr = (struct nexmon_header *) hdr->payload;
 
 	nexmon_hdr->hooked_fct = &dma_txfast;
-	nexmon_hdr->flags.all = 0;
-	nexmon_hdr->flags.flagbits.stack_trace = 1;
+	nexmon_hdr->flags = NEXMON_FLAGS_STACK_TRACE;
 
 	copy_stack(nexmon_hdr->payload, copy_size);
 
