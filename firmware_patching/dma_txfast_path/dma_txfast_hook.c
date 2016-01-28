@@ -149,21 +149,37 @@ void *
 dma_txfast_hook(void *di, struct sk_buff *p, int commit)
 {
 	struct sk_buff *p1 = 0;
+	struct sk_buff *p2 = 0;
 	void *ret = 0;
 	unsigned char *sdio = (unsigned char *) SDIO_INFO_ADDR;
 
-	p1 = create_frame((unsigned int) &dma_txfast, (unsigned int) di, 0, 0, get_stack_ptr(), BOTTOM_OF_STACK - (unsigned int) get_stack_ptr());
+	if (di == DMA_INFO_SDIODEV_ADDR) {
+//		p1 = create_frame((unsigned int) &dma_txfast, (unsigned int) di, 0, 0, get_stack_ptr(), BOTTOM_OF_STACK - (unsigned int) get_stack_ptr());
+	} else {
+		p1 = create_frame((unsigned int) &dma_txfast, (unsigned int) di, 0, 0, get_stack_ptr(), BOTTOM_OF_STACK - (unsigned int) get_stack_ptr());
+		p2 = create_frame((unsigned int) &dma_txfast, (unsigned int) di, 0, 0, p->data, p->len);
+	}
+
+//	if (di == DMA_INFO_D11FIFO1_ADDR) {
+//		p2 = pkt_buf_get_skb((struct osl_info *) OSL_INFO_ADDR, p->len);
+//		memcpy(p2->data, p->data, p->len);
+//		dma_txfast(di, p2, commit);
+//	}
 
 	// We transmit the original frame first, as it already contains the correct sequence number
-	ret = dma_txfast(di, p, commit);
+        ret = dma_txfast(di, p, commit);
 
 	// Now we check, if an SDIO DMA transfer was done and fix the sequence number that is increased automatically in the dngl_sendpkt function
-	if (di == DMA_INFO_SDIODEV_ADDR && ((unsigned char *) p->data)[4] == sdio[SDIO_SEQ_NUM]) {
-		sdio[SDIO_SEQ_NUM]++;
-		dngl_sendpkt_alternative(SDIO_INFO_ADDR, p1, SDPCM_DATA_CHANNEL);
-		sdio[SDIO_SEQ_NUM]--;
-	} else {
-		dngl_sendpkt_alternative(SDIO_INFO_ADDR, p1, SDPCM_DATA_CHANNEL);
+	if (p1 != 0) {
+		if (di == DMA_INFO_SDIODEV_ADDR && ((unsigned char *) p->data)[4] == sdio[SDIO_SEQ_NUM]) {
+			sdio[SDIO_SEQ_NUM]++;
+			dngl_sendpkt_alternative(SDIO_INFO_ADDR, p1, SDPCM_DATA_CHANNEL);
+			dngl_sendpkt_alternative(SDIO_INFO_ADDR, p2, SDPCM_DATA_CHANNEL);
+			sdio[SDIO_SEQ_NUM]--;
+		} else {
+			dngl_sendpkt_alternative(SDIO_INFO_ADDR, p1, SDPCM_DATA_CHANNEL);
+			dngl_sendpkt_alternative(SDIO_INFO_ADDR, p2, SDPCM_DATA_CHANNEL);
+		}
 	}
 
 	printf("X %08x %08x %08x %d\n", (unsigned int) di, (unsigned int) p, (unsigned int) p->data, p->len);
