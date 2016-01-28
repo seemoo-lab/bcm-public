@@ -99,11 +99,9 @@ int darm_disasm(darm_t *d, uint16_t w, uint16_t w2, uint32_t addr)
 
         // disassemble and check for error return values
         if(darm_armv7_disasm(d, (w2 << 16) | w) < 0) {
-//            printf("%s: darm_armv7_disarm failed\n", __FUNCTION__);
             return 0;
         }
         else {
-//            printf("%s: armv7\n", __FUNCTION__);
             return 2;
         }
     }
@@ -120,22 +118,18 @@ int darm_disasm(darm_t *d, uint16_t w, uint16_t w2, uint32_t addr)
 
         // this is a Thumb instruction
         if(darm_thumb_disasm(d, w) < 0) {
-//            printf("%s: darm_thumb_disarm failed\n", __FUNCTION__);
             return 0;
         }
         else {
-//            printf("%s: thumb\n", __FUNCTION__);
             return 1;
         }
     }
 
     // this is a Thumb2 instruction
     if(darm_thumb2_disasm(d, w, w2) < 0) {
-//        printf("%s: darm_thumb2_disarm failed\n", __FUNCTION__);
         return 0;
     }
     else {
-//        printf("%s: thumb2\n", __FUNCTION__);
         return 2;
     }
 }

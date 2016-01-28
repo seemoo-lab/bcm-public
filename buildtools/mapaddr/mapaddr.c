@@ -1,3 +1,4 @@
+#define _XOPEN_SOURCE 700
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,89 +19,138 @@ struct map {
 struct map *start = NULL;
 struct map *current = NULL;
 
-char *trace_file_array;
-char *rom_array;
-char *ram_array;
+char *trace_array = NULL;
+long trace_len = 0;
 
-char *
-read_file_to_array(char *filename)
+char *rom_array = NULL;
+long rom_len = 0;
+
+char *ram_array = NULL;
+long ram_len = 0;
+
+int
+read_file_to_array(char *filename, char **buffer, long *filelen)
 {
 	FILE *fileptr;
-	char *buffer;
-	long filelen;
 
 	fileptr = fopen(filename, "rb");
 	fseek(fileptr, 0, SEEK_END);
-	filelen = ftell(fileptr);
+	*filelen = ftell(fileptr);
 	rewind(fileptr);
 
-	buffer = (char *) malloc(filelen + 1);
-	fread(buffer, filelen, 1, fileptr);
+	*buffer = (char *) malloc(*filelen + 1);
+	fread(*buffer, *filelen, 1, fileptr);
 	fclose(fileptr);
 
-	return buffer;
+	return 0;
+}
+
+int
+get_words(unsigned int addr, unsigned short *low, unsigned short *high)
+{
+	if (addr < rom_len - 4) {
+		*low = *((unsigned short *) (rom_array + addr));
+		*high = *((unsigned short *) (rom_array + addr + 2));
+		return 1;
+	}
+
+	if (addr > RAM_START && addr < RAM_START + ram_len - 4) {
+		*low = *((unsigned short *) (ram_array + addr - RAM_START));
+		*high = *((unsigned short *) (ram_array + addr - RAM_START + 2));
+		return 2;
+	}
+
+	return 0;
+}
+
+int
+get_name(unsigned int addr, char **sym_name, unsigned int *sym_addr)
+{
+	char *last = NULL;
+	unsigned int lastaddr = 0;
+
+	for (current = start; current; current = current->next) {
+		/* in th first part are no meanigful funtions, also not outside of ROM or RAM. As we are in thumb code, the target instruction address needs to have the last bit set. */
+		if(addr < 0x800 || (addr > ROM_SIZE && addr < RAM_START) || addr > RAM_START + RAM_SIZE) {
+			return 0;
+		}
+		if(addr == current->addr) {
+			if (sym_name) *sym_name = current->name;
+			if (sym_addr) *sym_addr = current->addr;
+			return 1;
+		}
+		if(addr < current->addr) {
+			if (sym_name) *sym_name = last;
+			if (sym_addr) *sym_addr = lastaddr;
+			return 2;
+		}
+		last = current->name;
+		lastaddr = current->addr;
+	}
+
+	return 0;
+}
+
+int
+disasm(darm_t *d, unsigned int addr, int cont) {
+	unsigned short low, high;
+	int ret;
+
+	get_words(addr, &low, &high);
+	ret = darm_disasm(d, low, high, addr + 1);
+
+	// If a thumb instruction was found, we continue with the next instruction
+	if(cont && ret == 1) {
+		get_words(addr + 2, &low, &high);
+		return darm_disasm(d, low, high, addr + 1);
+	} else {
+		return ret;
+	}
 }
 
 void
-analyse_trace_file(FILE *fp_trace)
+analyse_trace_file()
 {
-	char * line = NULL;
-	size_t len = 0;
-	ssize_t read;
-	unsigned int i = 0, j = 0, k = 0, l = 0;
-	char * last = NULL;
-	unsigned int lastaddr = 0;
-	char * indent[] = {"", " ", "  ", "   "};
-
-	darm_t d; darm_str_t str;
-
-	trace_file_array = read_file_to_array("trace.bin");
-	rom_array = read_file_to_array("../../firmware_patching/dma_txfast_path/rom.bin");
-	ram_array = read_file_to_array("../../bootimg_src/firmware/fw_bcmdhd.orig.bin");
+	long i = 0;
+	unsigned int v, j;
+	char *bl_target = NULL;
+	char *fct_name = NULL;
+	unsigned int fct_addr = 0;
+	darm_t d;
 
 	darm_init(&d);
-	if(darm_disasm(&d, 0xf000, 0xff96, 1) != 0 && darm_str2(&d, &str, 1) == 0) {
-		printf("-> %s %d\n", str.total, d.instr == I_BL);
-		darm_dump(&d);
-	} else {
-		printf("error\n");
-	}
 
-	while ((read = getline(&line, &len, fp_trace)) != -1) {
-		l = k;
-		k = strtoul(line, NULL, 16);
-		for (i = 0; i < 4; i++) {
-			switch(i) {
-				case 0:
-					j = __bswap_32(k) - 5;
-					break;
-				case 1:
-					j = __bswap_32(((l & 0xFF) << 24) | (k >> 8)) - 5;
-					break;
-				case 2:
-					j = __bswap_32(((l & 0xFFFF) << 16) | (k >> 16)) - 5;
-					break;
-				case 3:
-					j = __bswap_32(((l & 0xFFFFFF) << 8) | (k >> 24)) - 5;
-					break;
-			}
+	for(i = 0; i < trace_len - 4; i++) {
+		v = *((unsigned int *) (trace_array+i));
+		j = v - 5;
 
-			for (current = start; current; current = current->next) {
-				/* in th first part are no meanigful funtions, also not outside of ROM or RAM. As we are in thumb code, the target instruction address needs to have the last bit set. */
-				if(j < 0x800 || (j > ROM_SIZE && j < RAM_START) || j > RAM_START + RAM_SIZE || j % 2) {
-					break;
+		switch(get_name(j, &fct_name, &fct_addr)) {
+			case 0: // not found or ignored
+				break;
+			case 1: // Exact match
+				disasm(&d, j, 1);
+				if (d.instr == I_BL || d.instr == I_BLX) {
+					printf("%08x= %s (%08x) ", j, fct_name, fct_addr);
+					if (d.instr == I_BL) {
+						get_name(v + d.imm, &bl_target, NULL);
+						printf("%s %s\n", darm_mnemonic_name(d.instr), bl_target);
+					} else {
+						printf("%s r%d\n", darm_mnemonic_name(d.instr), d.Rm);
+					}
 				}
-				if(j == current->addr) {
-					printf("%s%08x= %s (%08x)\n", indent[i], j, current->name, current->addr);
-					break;
+				break;
+			case 2: // Somewhere in function
+				disasm(&d, j, 1);
+				if (d.instr == I_BL || d.instr == I_BLX) {
+					printf("%08x: %s (%08x+%d) ", j, fct_name, fct_addr, j - fct_addr);
+					if (d.instr == I_BL) {
+						get_name(v + d.imm, &bl_target, NULL);
+						printf("%s %s\n", darm_mnemonic_name(d.instr), bl_target);
+					} else {
+						printf("%s r%d\n", darm_mnemonic_name(d.instr), d.Rm);
+					}
 				}
-				if(j < current->addr) {
-					printf("%s%08x: %s (%08x+%d)\n", indent[i], j, last, lastaddr, j - lastaddr);
-					break;
-				}
-				last = current->name;
-				lastaddr = current->addr;
-			}
+				break;
 		}
 	}
 }
@@ -109,11 +159,10 @@ int
 main(void)
 {
 	FILE *fp_map, *fp_trace;
-	char * line = NULL;
+	char *line = NULL;
 	size_t len = 0;
 	ssize_t read;
-	unsigned int i = 0;
-	char * afteraddr = " ";
+	char *afteraddr = " ";
 
 	fp_map = fopen("firmware.map", "r");
 	if (fp_map == NULL)
@@ -122,6 +171,10 @@ main(void)
 	fp_trace = fopen("trace.txt", "r");
 	if (fp_trace == NULL)
 		exit(EXIT_FAILURE);
+
+	read_file_to_array("trace.bin", &trace_array, &trace_len);
+	read_file_to_array("../../firmware_patching/dma_txfast_path/rom.bin", &rom_array, &rom_len);
+	read_file_to_array("../../bootimg_src/firmware/fw_bcmdhd.orig.bin", &ram_array, &ram_len);
 
 	/* Read each line from the map file and create an entry in the linked list with address and name */
 	while ((read = getline(&line, &len, fp_map)) != -1) {
@@ -148,10 +201,9 @@ main(void)
 //		printf("%08x: %s", current->addr, current->name);
 //	}
 
-	analyse_trace_file(fp_trace);
+	analyse_trace_file();
 
 	fclose(fp_map);
-	fclose(fp_trace);
 	if (line)
 		free(line);
 	exit(EXIT_SUCCESS);
