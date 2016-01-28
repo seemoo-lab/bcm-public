@@ -3,6 +3,9 @@
 #include <string.h>
 #include <byteswap.h>
 
+#define RAM_SIZE (768*1024)
+#define RAM_START (0x180000)
+
 struct map {
 	struct map* next;
 	unsigned int addr;
@@ -34,7 +37,7 @@ main(void)
 
 	/* Read each line from the map file and create an entry in the linked list with address and name */
 	while ((read = getline(&line, &len, fp_map)) != -1) {
-		if(*(line+5) != ':')
+		if(line[5] != ':' || !memcmp(line+21, "loc_", 4))
 			continue;
 		if(!start) {
 			start = malloc(sizeof(struct map));
@@ -60,7 +63,7 @@ main(void)
 	while ((read = getline(&line, &len, fp_trace)) != -1) {
 		j = __bswap_32(strtoul(line, NULL, 16));
 		for (current = start; current; current = current->next) {
-			if(j < 0x800) {
+			if(j < 0x800 || j > RAM_START + RAM_SIZE) {
 				break;
 			}
 			if(j == current->addr) {
