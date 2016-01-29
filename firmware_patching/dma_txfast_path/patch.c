@@ -12,7 +12,7 @@
 
 extern void *dngl_sendpkt_alternative(void *sdio, void *p, int chan);
 
-inline struct sk_buff *
+struct sk_buff *
 create_frame(unsigned int hooked_fct, unsigned int arg0, unsigned int arg1, unsigned int arg2, void *start_address, unsigned int length) {
 	struct sk_buff *p = 0;
 	struct osl_info *osh = OSL_INFO_ADDR;

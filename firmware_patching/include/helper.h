@@ -35,6 +35,7 @@ get_stack_ptr() {
     return stack;
 }
 
+/* somehow the strings are not removed during optimization, so that they end up in the binary, hence, move the functions somewhere else, where they are only included if they are needed.
 inline void
 copy_stack(void *dest, int copy_size) {
     printf("copy_stack: %d\n", copy_size);
@@ -87,5 +88,6 @@ hexdump(char *desc, void *addr, int len) {
     // And print the final ASCII bit.
     printf ("  %s\n", buff);
 }
+*/
 
 #endif /* HELPER_H */
