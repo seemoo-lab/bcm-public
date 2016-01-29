@@ -4,6 +4,7 @@
 #include <string.h>
 #include <byteswap.h>
 #include "darm/darm.h"
+#include <pcap.h>
 
 #define ROM_SIZE (640*1024)
 #define RAM_SIZE (768*1024)
@@ -13,6 +14,28 @@ struct map {
 	struct map *next;
 	unsigned int addr;
 	char *name;
+};
+
+unsigned char ethernet_ipv6_udp_header_array[] = {
+  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,   /* ETHERNET: Destination MAC Address */
+  'N', 'E', 'X', 'M', 'O', 'N',         /* ETHERNET: Source MAC Address */
+  0x86, 0xDD,                           /* ETHERNET: Type */
+  0x60, 0x00, 0x00, 0x00,               /* IPv6: Version / Traffic Class / Flow Label */
+  0x00, 0x08,                           /* IPv6: Payload Length */
+  0x88,                                 /* IPv6: Next Header = UDPLite */
+  0x01,                                 /* IPv6: Hop Limit */
+  0xFF, 0x02, 0x00, 0x00,               /* IPv6: Source IP */
+  0x00, 0x00, 0x00, 0x00,               /* IPv6: Source IP */
+  0x00, 0x00, 0x00, 0x00,               /* IPv6: Source IP */
+  0x00, 0x00, 0x00, 0x01,               /* IPv6: Source IP */
+  0xFF, 0x02, 0x00, 0x00,               /* IPv6: Destination IP */
+  0x00, 0x00, 0x00, 0x00,               /* IPv6: Destination IP */
+  0x00, 0x00, 0x00, 0x00,               /* IPv6: Destination IP */
+  0x00, 0x00, 0x00, 0x01,               /* IPv6: Destination IP */
+  0xD6, 0xD8,                           /* UDPLITE: Source Port = 55000 */
+  0xD6, 0xD8,                           /* UDPLITE: Destination Port = 55000 */
+  0x00, 0x08,                           /* UDPLITE: Checksum Coverage */
+  0x52, 0x46,                           /* UDPLITE: Checksum only over UDPLITE header*/
 };
 
 
@@ -156,25 +179,17 @@ analyse_trace_file()
 }
 
 int
-main(void)
+read_map_file(char *filename)
 {
-	FILE *fp_map, *fp_trace;
+	FILE *fp_map;
 	char *line = NULL;
 	size_t len = 0;
 	ssize_t read;
 	char *afteraddr = " ";
 
-	fp_map = fopen("firmware.map", "r");
+	fp_map = fopen(filename, "r");
 	if (fp_map == NULL)
 		exit(EXIT_FAILURE);
-
-	fp_trace = fopen("trace.txt", "r");
-	if (fp_trace == NULL)
-		exit(EXIT_FAILURE);
-
-	read_file_to_array("trace.bin", &trace_array, &trace_len);
-	read_file_to_array("../../firmware_patching/dma_txfast_path/rom.bin", &rom_array, &rom_len);
-	read_file_to_array("../../bootimg_src/firmware/fw_bcmdhd.orig.bin", &ram_array, &ram_len);
 
 	/* Read each line from the map file and create an entry in the linked list with address and name */
 	while ((read = getline(&line, &len, fp_map)) != -1) {
@@ -196,15 +211,36 @@ main(void)
 		line = NULL;
 	}
 
-	/* Output each of the read lines */
-//	for (current = start; current; current = current->next) {
-//		printf("%08x: %s", current->addr, current->name);
-//	}
-
-	analyse_trace_file();
-
 	fclose(fp_map);
-	if (line)
-		free(line);
+
+	return 0;
+}
+
+int
+main(void)
+{
+	pcap_t *pcap;
+	char errbuf[PCAP_ERRBUF_SIZE];
+	const unsigned char *packet;
+	struct pcap_pkthdr header;
+	char *fct_name;
+	int i;
+
+	read_file_to_array("trace.bin", &trace_array, &trace_len);
+	read_file_to_array("../../firmware_patching/dma_txfast_path/rom.bin", &rom_array, &rom_len);
+	read_file_to_array("../../bootimg_src/firmware/fw_bcmdhd.orig.bin", &ram_array, &ram_len);
+
+	read_map_file("firmware.map");
+
+	pcap = pcap_open_offline("capture.pcap", errbuf);
+	while ((packet = pcap_next(pcap, &header)) != NULL) {
+		if(!memcmp(packet, ethernet_ipv6_udp_header_array, 18) && !memcmp(packet + 20, ethernet_ipv6_udp_header_array + 20, 42)) {
+			get_name(*((unsigned int *) (packet+62)), &fct_name, NULL);
+			printf("\n\n%s %08x %08x %08x %08x\n", fct_name, *((unsigned int *) (packet+62)), *((unsigned int *) (packet+66)), *((unsigned int *) (packet+70)), *((unsigned int *) (packet+74)));
+			trace_array = packet + 60 + 4 * 4;
+			analyse_trace_file();
+		}
+	}
+
 	exit(EXIT_SUCCESS);
 }
