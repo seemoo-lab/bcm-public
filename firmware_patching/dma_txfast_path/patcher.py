@@ -2,8 +2,15 @@
 
 import sys
 sys.path.append('../../buildtools/binary_patcher')
+sys.path.append('../../buildtools/elffile')
 import binary_patcher
 from binary_patcher import *
+import elffile
+
+ef = elffile.open(name="dma_txfast_hook.elf")
+
+def getSectionAddr(name):
+	return next((header for header in ef.sectionHeaders if header.name == name), None).addr
 
 patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin", 
     "fw_bcmdhd.bin", [
@@ -49,7 +56,7 @@ patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin",
 	BLPatch(0x1824C6 - 0x2400, 0x1844B2), # END some functions called by dngl_sendpkt or one of its subfunctions
 #	BPatch( 0x182CB0, 0x180350), # call to dngl_sendpkt
 #	BLPatch(0x182920, 0x180350), # call to dngl_sendpkt
-	ExernalArmPatch(0x1804B4, "dma_txfast_hook.bin"),
-	GenericPatch4(0x180C34, 0x1804B4+1), # function pointer table entry to dma_txfast replaced by dma_txfast_hook
-	GenericPatch4(0x1D53C4, 0x1804B4+1), # function pointer table entry to dma_txfast replaced by dma_txfast_hook
+	ExernalArmPatch(getSectionAddr(".text"), "dma_txfast_hook.bin"),
+	GenericPatch4(0x180C34, getSectionAddr(".text")+1), # function pointer table entry to dma_txfast replaced by dma_txfast_hook
+	GenericPatch4(0x1D53C4, getSectionAddr(".text")+1), # function pointer table entry to dma_txfast replaced by dma_txfast_hook
     ])

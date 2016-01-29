@@ -6,23 +6,26 @@ all : dngl_sendpkt.bin fw_bcmdhd.bin fw_bcmdhd.complete.bin fw_bcmdhd.complete.e
 $(FILE).o: $(FILE).c ../include/*.h
 	$(CC)gcc -Wall -Werror -O2 -nostdlib -nostartfiles -ffreestanding -mthumb -ffunction-sections -fdata-sections -c $(FILE).c -o $(FILE).o
 
+bdc_ethernet_ipv6_udp_header_array.o: bdc_ethernet_ipv6_udp_header_array.c
+	$(CC)gcc -Wall -Werror -O2 -nostdlib -nostartfiles -ffreestanding -mthumb -ffunction-sections -fdata-sections -c $< -o $@
+
 ../wrapper/wrapper.o: ../include/wrapper.h
 	make -C ../wrapper
 
 dngl_sendpkt_alternative.o: dngl_sendpkt_alternative.c
 	$(CC)gcc -Wall -Werror -O2 -nostdlib -nostartfiles -ffreestanding -mthumb -ffunction-sections -fdata-sections -c dngl_sendpkt_alternative.c -o dngl_sendpkt_alternative.o
 
-$(FILE).elf: $(FILE).o ../wrapper/wrapper.o $(FILE).ld dngl_sendpkt_alternative.o
+$(FILE).elf: $(FILE).o ../wrapper/wrapper.o $(FILE).ld dngl_sendpkt_alternative.o bdc_ethernet_ipv6_udp_header_array.o
 	$(CC)ld -T $(FILE).ld --entry=$(FILE) -o $(FILE).elf --gc-sections --print-gc-sections -M
 
 $(FILE).bin: $(FILE).elf
-	$(CC)objcopy -O binary -j .text $(FILE).elf $(FILE).bin
+	$(CC)objcopy -O binary -j .text -j .data $(FILE).elf $(FILE).bin
 
 
 dngl_sendpkt.bin : ../../bootimg_src/firmware/fw_bcmdhd.orig.bin Makefile
 	dd if=../../bootimg_src/firmware/fw_bcmdhd.orig.bin of=dngl_sendpkt.bin bs=1 skip=$$((0x2450)) count=$$((0x464))
 
-fw_bcmdhd.bin : patcher.py dngl_sendpkt.bin $(FILE).bin
+fw_bcmdhd.bin : patcher.py dngl_sendpkt.bin $(FILE).bin $(FILE).elf
 	./patcher.py
 
 fw_bcmdhd.complete.bin : fw_bcmdhd.bin rom.bin
