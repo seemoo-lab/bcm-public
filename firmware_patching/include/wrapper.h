@@ -14,7 +14,8 @@ extern int printf(const char *format, ...); // 0x126f0
 
 extern int sum_buff_lengths(void *osh, void *p); // 0x1360C
 
-extern void *wlc_mctrl_write(void *wlc_hw_info_ptr); // 0x4df60
-extern void *wlc_bmac_mctrl(void *wlc_hw_info_ptr, int mask, int val); // 0x4F080
+extern void *wlc_mctrl_write(void *wlc_hw); // 0x4df60
+extern void *wlc_bmac_mctrl(void *wlc_hw, int mask, int val); // 0x4F080
+extern void *wlc_txfifo(void *wlc, int fifo, void *p, void *txh, unsigned char commit, char txpktpend); // 0x193744
 
 #endif /*WRAPPER_H*/

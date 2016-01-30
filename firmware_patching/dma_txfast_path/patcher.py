@@ -14,7 +14,7 @@ def getSectionAddr(name):
 
 patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin", 
     "fw_bcmdhd.bin", [
-        ExernalArmPatch(0x180050, "dngl_sendpkt.bin"),
+	ExernalArmPatch(0x180050, "dngl_sendpkt.bin"),
 	BLPatch(0x182796 - 0x2400, 0x184F14), # START some functions called by dngl_sendpkt or one of its subfunctions
 	BLPatch(0x1827A4 - 0x2400, 0x184F64),
 	BLPatch(0x1827CE - 0x2400, 0x184F64),
@@ -60,4 +60,6 @@ patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin",
 	ExernalArmPatch(getSectionAddr(".text.dma_txfast_hook"), "dma_txfast_hook.bin"),
 	GenericPatch4(0x180C34, getSectionAddr(".text.dma_txfast_hook")+1), # function pointer table entry to dma_txfast replaced by dma_txfast_hook
 	GenericPatch4(0x1D53C4, getSectionAddr(".text.dma_txfast_hook")+1), # function pointer table entry to dma_txfast replaced by dma_txfast_hook
+	ExernalArmPatch(getSectionAddr(".text.wlc_txfifo_hook"), "wlc_txfifo_hook.bin"),
+	BPatch(0x193744, getSectionAddr(".text.wlc_txfifo_hook")), # replace the push instrunction of the original wlc_txfifo function by a branch to our hook
     ])

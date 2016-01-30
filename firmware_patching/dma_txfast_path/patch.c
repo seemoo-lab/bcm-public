@@ -12,6 +12,23 @@
 
 extern void *dngl_sendpkt_alternative(void *sdio, void *p, int chan);
 
+__attribute__((naked)) void 
+wlc_txfifo_hook()
+{
+	asm("push {r0-r2, r4-r11, lr}\n"		// lr is not included, as it was already pushed before
+		"push {r0-r3,lr}\n"					// save the registers that might change as well as the link register
+		"bl testprint\n"
+		"pop {r0-r3,lr}\n"					// restore the saved registers
+		"b wlc_txfifo+4\n"					// jump to the original function
+		);
+}
+
+void
+testprint(void)
+{
+	printf("wlc_txfifo");
+}
+
 struct sk_buff *
 create_frame(unsigned int hooked_fct, unsigned int arg0, unsigned int arg1, unsigned int arg2, void *start_address, unsigned int length) {
 	struct sk_buff *p = 0;
