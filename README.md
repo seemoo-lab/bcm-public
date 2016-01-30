@@ -29,7 +29,7 @@ Our software may damage your hardware and may void your hardware’s warranty! Y
 * `fastboot reboot`
 * `adb shell`
 * `su -`
-* `insmod /nexmon/bcmdhd.ko`
+* `insmod /nexmon/nexmon.ko`
 * `ifconfig wlan0 up`
 * do whatever you want, e.g. run tcpdump: `/nexmon/bin/tcpdump -i wlan0 -s0`
 
