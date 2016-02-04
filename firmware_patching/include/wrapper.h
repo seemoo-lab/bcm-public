@@ -12,6 +12,7 @@ extern void *pkt_buf_get_skb(void *osh, unsigned int len); // 0x184F14
 extern void *pkt_buf_free_skb(void *osh, void *p, int send); // 0x184F64
 extern int printf(const char *format, ...); // 0x126f0
 
+extern void sub_166b4(void); // 0x166b4
 extern int sum_buff_lengths(void *osh, void *p); // 0x1360C
 
 extern void *wlc_mctrl_write(void *wlc_hw); // 0x4df60
