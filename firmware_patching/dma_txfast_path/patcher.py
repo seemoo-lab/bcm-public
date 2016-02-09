@@ -68,4 +68,6 @@ patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin",
 	BLPatch(0x1F2358, getSectionAddr(".text.setup_some_stuff_hook")),
 	ExernalArmPatch(getSectionAddr(".text.bus_binddev_rom_hook"), "bus_binddev_rom_hook.bin"),
 	GenericPatch4(0x1D9B08, getSectionAddr(".text.bus_binddev_rom_hook")+1), # function pointer in the dngl_pointer_table
+	ExernalArmPatch(getSectionAddr(".text.sub_1ECAB0_hook"), "sub_1ECAB0_hook.bin"),
+	BLPatch(0x18389A, getSectionAddr(".text.sub_1ECAB0_hook")),
     ])

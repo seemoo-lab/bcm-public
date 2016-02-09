@@ -34,7 +34,7 @@ __attribute__((naked)) void
 interrupt_enable_hook(void)
 {
 	asm("push {r0-r3,lr}\n"					// save the registers that might change as well as the link register
-		//"bl testprint2\n"
+		"bl testprint2\n"
 		"pop {r0-r3,lr}\n"					// restore the saved registers
 		"b sub_166b4\n"						// call the function that was supposed to be called
 		);
@@ -76,6 +76,14 @@ bus_binddev_rom_hook(void *sdiodev, void *d11dev)
 	int x;
 	int *sdio_hw = (int *) *(*(((int **) sdiodev)+6)+6);
 	void *z;
+	void *console_buf;
+
+	// enlage console
+	console_buf = malloc(0x2000, 0);
+	*(void **) 0x1EBDDC = console_buf;
+	*(int *) 0x1EBDE0 = 0x2000;
+	*(int *) 0x1EBDE4 = 0;
+	*(void **) 0x1EBDE8 = console_buf;
 
 	//x = bus_binddev_rom(sdiodev, d11dev);
 	//x = bus_binddev(sdio_hw, sdiodev, d11dev);
@@ -84,10 +92,11 @@ bus_binddev_rom_hook(void *sdiodev, void *d11dev)
 	sdio_hw[3] = (int) z;
 
 	sdio_hw[15] = (int) d11dev;
+//	sdio_hw[15] = 0x100; // hinders the chip from initializing, as sub_14C54 tries to call a callback referenced through this pointer
 
-	struct sk_buff *p = 0;
-	p = create_frame(0xdddddddd, 0, 0, 0, get_stack_ptr(), BOTTOM_OF_STACK - (unsigned int) get_stack_ptr());
-	dngl_sendpkt_alternative(SDIO_INFO_ADDR, p, SDPCM_DATA_CHANNEL);
+//	struct sk_buff *p = 0;
+//	p = create_frame(0xdddddddd, 0, 0, 0, get_stack_ptr(), BOTTOM_OF_STACK - (unsigned int) get_stack_ptr());
+//	dngl_sendpkt_alternative(SDIO_INFO_ADDR, p, SDPCM_DATA_CHANNEL);
 
 	*(((int *) sdiodev)+9) = (int) d11dev;
 	*(((int *) d11dev)+36/4) = (int) sdiodev;
@@ -100,6 +109,16 @@ bus_binddev_rom_hook(void *sdiodev, void *d11dev)
 
 	
 	return x;
+}
+
+void
+sub_1ECAB0_hook(int a1)
+{
+	printf("%08x\n", a1);
+	sub_1ECAB0(a1);
+	struct sk_buff *p = 0;
+	p = create_frame(0xdddddddd, 0, 0, 0, get_stack_ptr(), BOTTOM_OF_STACK - (unsigned int) get_stack_ptr());
+	dngl_sendpkt_alternative(SDIO_INFO_ADDR, p, SDPCM_DATA_CHANNEL);
 }
 
 struct sk_buff *

@@ -5,6 +5,7 @@ SECTIONS
 	.text.interrupt_enable_hook : { KEEP(patch.o (.text.interrupt_enable_hook)) }
 	.text.setup_some_stuff_hook : { KEEP(patch.o (.text.setup_some_stuff_hook)) }
 	.text.bus_binddev_rom_hook : { KEEP(patch.o (.text.bus_binddev_rom_hook)) }
+	.text.sub_1ECAB0_hook : { KEEP(patch.o (.text.sub_1ECAB0_hook)) }
 	.text : { patch.o (.text .text.* .data .data.* .bss .bss.* .rodata .rodata.*) }
 	.text : { bdc_ethernet_ipv6_udp_header_array.o (.data.*) }
 

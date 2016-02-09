@@ -22,6 +22,7 @@ extern void *setup_some_stuff(void *wl, int vendor, int a3, int a4, char a5, voi
 extern void sub_166b4(void); // 0x166b4
 extern void sub_16D8C(int a1, int a2, void *a3); // 0x16D8C
 extern void *sub_1831A0(void *osh, void *a2, int a3, void *sdiodev); // 0x1831A0
+extern void sub_1ECAB0(int a1); // 0x1ECAB0
 extern int sum_buff_lengths(void *osh, void *p); // 0x1360C
 
 extern void wlc_bmac_init(void *wlc_hw, unsigned int chanspec, unsigned int mute); // 0x1AB840

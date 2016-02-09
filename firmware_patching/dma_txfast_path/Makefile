@@ -32,13 +32,16 @@ setup_some_stuff_hook.bin: patch.elf
 bus_binddev_rom_hook.bin: patch.elf
 	$(CC)objcopy -O binary -j .text.bus_binddev_rom_hook $< $@
 
+sub_1ECAB0_hook.bin: patch.elf
+	$(CC)objcopy -O binary -j .text.sub_1ECAB0_hook $< $@
+
 text.bin: patch.elf
 	$(CC)objcopy -O binary -j .text $< $@
 
 dngl_sendpkt.bin : ../../bootimg_src/firmware/fw_bcmdhd.orig.bin Makefile
 	dd if=../../bootimg_src/firmware/fw_bcmdhd.orig.bin of=dngl_sendpkt.bin bs=1 skip=$$((0x2450)) count=$$((0x464))
 
-fw_bcmdhd.bin : patcher.py dngl_sendpkt.bin dma_txfast_hook.bin text.bin patch.elf wlc_txfifo_hook.bin interrupt_enable_hook.bin setup_some_stuff_hook.bin bus_binddev_rom_hook.bin
+fw_bcmdhd.bin : patcher.py dngl_sendpkt.bin dma_txfast_hook.bin text.bin patch.elf wlc_txfifo_hook.bin interrupt_enable_hook.bin setup_some_stuff_hook.bin bus_binddev_rom_hook.bin sub_1ECAB0_hook.bin
 	./patcher.py
 
 fw_bcmdhd.complete.bin : fw_bcmdhd.bin rom.bin
