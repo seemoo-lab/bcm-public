@@ -74,16 +74,30 @@ int
 bus_binddev_rom_hook(void *sdiodev, void *d11dev)
 {
 	int x;
+	int *sdio_hw = (int *) *(*(((int **) sdiodev)+6)+6);
+	void *z;
 
-	x = bus_binddev_rom(sdiodev, d11dev);
+	//x = bus_binddev_rom(sdiodev, d11dev);
+	//x = bus_binddev(sdio_hw, sdiodev, d11dev);
+	sdio_hw[14] = (int) sdiodev;
+	z = sub_1831A0((void *) sdio_hw[1], sdio_hw, sdio_hw[0], sdiodev);
+	sdio_hw[3] = (int) z;
+
+	sdio_hw[15] = (int) d11dev;
 
 	struct sk_buff *p = 0;
-
 	p = create_frame(0xdddddddd, 0, 0, 0, get_stack_ptr(), BOTTOM_OF_STACK - (unsigned int) get_stack_ptr());
-
-	printf("%08x\n", p);
-
 	dngl_sendpkt_alternative(SDIO_INFO_ADDR, p, SDPCM_DATA_CHANNEL);
+
+	*(((int *) sdiodev)+9) = (int) d11dev;
+	*(((int *) d11dev)+36/4) = (int) sdiodev;
+
+	if(z) {
+		sub_16D8C(0x1D3CB8, 0x183715, sdio_hw);
+		sub_16D8C(0x93B8D, 0x14B8D, sdio_hw);
+		x = 0;
+	}
+
 	
 	return x;
 }
