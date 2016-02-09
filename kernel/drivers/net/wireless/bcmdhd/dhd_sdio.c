@@ -3156,6 +3156,8 @@ dhdsdio_readconsole(dhd_bus_t *bus)
 	uint32 n, idx, addr;
 	int rv;
 
+	DHD_TRACE(("%s: Enter\n", __FUNCTION__));
+
 	/* Don't do anything until FWREADY updates console address */
 	if (bus->console_addr == 0)
 		return 0;
@@ -4608,6 +4610,10 @@ dhd_txglom_enable(dhd_pub_t *dhdp, bool enable)
 }
 #endif /* BCMSDIOH_TXGLOM */
 
+uint8 console_buf[0x2001];
+uint32 console_addr;
+uint32 console_size;
+
 int
 dhd_bus_init(dhd_pub_t *dhdp, bool enforce_mutex)
 {
@@ -4664,6 +4670,12 @@ dhd_bus_init(dhd_pub_t *dhdp, bool enforce_mutex)
 
 	DHD_ERROR(("%s: enable 0x%02x, ready 0x%02x (waited %uus)\n",
 	          __FUNCTION__, enable, ready, tmo.elapsed));
+
+	dhdsdio_membytes(bus, FALSE, 0x1EBDDC, (uint8 *) &console_addr, 4);
+	dhdsdio_membytes(bus, FALSE, 0x1EBDE0, (uint8 *) &console_size, 4);
+	dhdsdio_membytes(bus, FALSE, console_addr, console_buf, console_size);
+	console_buf[console_size] = 0;
+	DHD_ERROR(("CONSOLE DUMP (0x%08x):\n%s\n", console_addr, console_buf));
 
 
 	/* If F2 successfully enabled, set core and enable interrupts */
