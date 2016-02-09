@@ -51,6 +51,23 @@ long rom_len = 0;
 char *ram_array = NULL;
 long ram_len = 0;
 
+unsigned int my_trace[] = {
+0x001e9854, 0x000043ae, 0x00180573, 0x001e9854 
+, 0x000014e4, 0x000043ae, 0x00000000, 0x001f235d 
+, 0x00000000, 0x001e983c, 0x18001000, 0x00000000 
+, 0x001e9854, 0x0023f6a0, 0x001d9ad8, 0x0023f854 
+, 0x00000005, 0x001d9b88, 0x000043ae, 0x001f2305 
+, 0x000000a1, 0x00000025, 0x00000004, 0x00000025 
+, 0x00000001, 0x001ec127, 0x00000812, 0x00000000 
+, 0x001df8c8, 0x001d9ad8, 0x00000003, 0x001ed727 
+, 0x0009eaa4, 0x001d3a34, 0x0023f71c, 0x00000001 
+, 0x00000025, 0x00000004, 0x000000a1, 0x00000003 
+, 0x000000a1, 0x00000003, 0x000200c5, 0x0023f71c 
+, 0x099dbf08, 0x099dbf08, 0x39333334, 0x001d2900 
+, 0x18002000, 0x00183887, 0x001d9acc, 0x00180000 
+, 0x00240000, 0x18002000, 0x18102000, 0xb6feb9fb 
+};
+
 int
 read_file_to_array(char *filename, char **buffer, long *filelen)
 {
@@ -224,7 +241,6 @@ main(void)
 	const unsigned char *packet;
 	struct pcap_pkthdr header;
 	char *fct_name;
-	int i;
 
 	read_file_to_array("trace.bin", &trace_array, &trace_len);
 	read_file_to_array("../../firmware_patching/dma_txfast_path/rom.bin", &rom_array, &rom_len);
@@ -232,15 +248,20 @@ main(void)
 
 	read_map_file("firmware.map");
 
+	trace_array = (char *) my_trace;
+	analyse_trace_file();
+
 	pcap = pcap_open_offline("capture.pcap", errbuf);
 	while ((packet = pcap_next(pcap, &header)) != NULL) {
 		if(!memcmp(packet, ethernet_ipv6_udp_header_array, 18) && !memcmp(packet + 20, ethernet_ipv6_udp_header_array + 20, 42)) {
 			get_name(*((unsigned int *) (packet+62)), &fct_name, NULL);
 			printf("\n\n%s %08x %08x %08x %08x\n", fct_name, *((unsigned int *) (packet+62)), *((unsigned int *) (packet+66)), *((unsigned int *) (packet+70)), *((unsigned int *) (packet+74)));
 			trace_array = packet + 60 + 4 * 4;
-			analyse_trace_file();
+			//analyse_trace_file();
 		}
 	}
+
+	//memcpy(trace_array, {0x0, 0x1, 0x2, 0x3}, 4);
 
 	exit(EXIT_SUCCESS);
 }

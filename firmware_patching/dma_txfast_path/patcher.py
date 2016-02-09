@@ -62,4 +62,10 @@ patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin",
 	GenericPatch4(0x1D53C4, getSectionAddr(".text.dma_txfast_hook")+1), # function pointer table entry to dma_txfast replaced by dma_txfast_hook
 	ExernalArmPatch(getSectionAddr(".text.wlc_txfifo_hook"), "wlc_txfifo_hook.bin"),
 	BPatch(0x193744, getSectionAddr(".text.wlc_txfifo_hook")), # replace the push instrunction of the original wlc_txfifo function by a branch to our hook
+	ExernalArmPatch(getSectionAddr(".text.interrupt_enable_hook"), "interrupt_enable_hook.bin"),
+	BPatch(0x1838ac, getSectionAddr(".text.interrupt_enable_hook")),
+	ExernalArmPatch(getSectionAddr(".text.setup_some_stuff_hook"), "setup_some_stuff_hook.bin"),
+	BLPatch(0x1F2358, getSectionAddr(".text.setup_some_stuff_hook")),
+	ExernalArmPatch(getSectionAddr(".text.bus_binddev_rom_hook"), "bus_binddev_rom_hook.bin"),
+	GenericPatch4(0x1D9B08, getSectionAddr(".text.bus_binddev_rom_hook")+1), # function pointer in the dngl_pointer_table
     ])

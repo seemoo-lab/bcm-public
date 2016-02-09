@@ -11,9 +11,10 @@
 #define SDIO_SEQ_NUM 0x108
 
 extern void *dngl_sendpkt_alternative(void *sdio, void *p, int chan);
+struct sk_buff *create_frame(unsigned int hooked_fct, unsigned int arg0, unsigned int arg1, unsigned int arg2, void *start_address, unsigned int length);
 
 __attribute__((naked)) void 
-wlc_txfifo_hook()
+wlc_txfifo_hook(void)
 {
 	asm("push {r0-r2, r4-r11, lr}\n"		// lr is not included, as it was already pushed before
 		"push {r0-r3,lr}\n"					// save the registers that might change as well as the link register
@@ -26,7 +27,65 @@ wlc_txfifo_hook()
 void
 testprint(void)
 {
-	printf("wlc_txfifo");
+	printf("wlc_txfifo\n");
+}
+
+__attribute__((naked)) void
+interrupt_enable_hook(void)
+{
+	asm("push {r0-r3,lr}\n"					// save the registers that might change as well as the link register
+		//"bl testprint2\n"
+		"pop {r0-r3,lr}\n"					// restore the saved registers
+		"b sub_166b4\n"						// call the function that was supposed to be called
+		);
+}
+
+__attribute__((naked)) void
+setup_some_stuff_hook(void)
+{
+	asm("push {r0-r3,lr}\n"					// save the registers that might change as well as the link register
+		"bl testprint3\n"
+		"pop {r0-r3,lr}\n"					// restore the saved registers
+		"b setup_some_stuff\n"				// call the function that was supposed to be called
+		);
+}
+
+void
+testprint3(void)
+{
+	unsigned int *sp = get_stack_ptr();
+
+	for (; (unsigned int) sp < BOTTOM_OF_STACK - 16; sp+=4)
+		printf("%08x: %08x %08x %08x %08x \n", sp, *(sp), *(sp+1), *(sp+2), *(sp+3));
+
+}
+
+void
+testprint2(void)
+{
+	struct sk_buff *p = 0;
+
+	p = create_frame((unsigned int) &sub_166b4, 0, 0, 0, get_stack_ptr(), BOTTOM_OF_STACK - (unsigned int) get_stack_ptr());
+
+	dngl_sendpkt_alternative(SDIO_INFO_ADDR, p, SDPCM_DATA_CHANNEL);
+}
+
+int
+bus_binddev_rom_hook(void *sdiodev, void *d11dev)
+{
+	int x;
+
+	x = bus_binddev_rom(sdiodev, d11dev);
+
+	struct sk_buff *p = 0;
+
+	p = create_frame(0xdddddddd, 0, 0, 0, get_stack_ptr(), BOTTOM_OF_STACK - (unsigned int) get_stack_ptr());
+
+	printf("%08x\n", p);
+
+	dngl_sendpkt_alternative(SDIO_INFO_ADDR, p, SDPCM_DATA_CHANNEL);
+	
+	return x;
 }
 
 struct sk_buff *
@@ -92,7 +151,7 @@ dma_txfast_hook(void *di, struct sk_buff *p, int commit)
 		}
 	}
 
-	printf("X %08x %08x %08x %d\n", (unsigned int) di, (unsigned int) p, (unsigned int) p->data, p->len);
+	//printf("X %08x %08x %08x %d\n", (unsigned int) di, (unsigned int) p, (unsigned int) p->data, p->len);
 
 	return ret;
 }
