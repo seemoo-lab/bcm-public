@@ -1,15 +1,21 @@
 #define _XOPEN_SOURCE 700
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <argp.h>
 #include <string.h>
 #include <byteswap.h>
 #include "darm/darm.h"
+#ifdef USE_LIBPCAP
 #include <pcap.h>
+#endif
 
 #define ROM_SIZE (640*1024)
 #define RAM_SIZE (768*1024)
 #define RAM_START (0x180000)
+
+#define AS_STR2(TEXT) #TEXT
+#define AS_STR(TEXT) AS_STR2(TEXT)
 
 struct map *start = NULL;
 struct map *current = NULL;
@@ -20,10 +26,12 @@ long rom_len = 0;
 char *ram_array = NULL;
 long ram_len = 0;
 
+#ifdef USE_LIBPCAP
 char *pcap_file_name = NULL;
-char *map_file_name = "firmware.map";
-char *rom_file_name = "rom.bin";
-char *ram_file_name = "ram.bin";
+#endif
+char *map_file_name = AS_STR(MAP_FILE_NAME);
+char *rom_file_name = AS_STR(ROM_FILE_NAME);
+char *ram_file_name = AS_STR(RAM_FILE_NAME);
 
 const char *argp_program_version = "mapaddr";
 const char *argp_program_bug_address = "<mschulz@seemoo.tu-darmstadt.de>";
@@ -31,10 +39,12 @@ const char *argp_program_bug_address = "<mschulz@seemoo.tu-darmstadt.de>";
 static char doc[] = "mapaddr -- a program to read stack dumps of the BCM4339 chip and print the stack trace.";
 
 static struct argp_option options[] = {
+#ifdef USE_LIBPCAP
 	{"input", 'c', "FILE", 0, "Read pcap file from FILE"},
-	{"input", 'm', "FILE", 0, "Read symbol map from FILE instead of firmware.map"},
-	{"input", 'o', "FILE", 0, "Read rom from FILE instead of rom.bin"},
-	{"input", 'a', "FILE", 0, "Read ram from FILE instead of ram.bin"},
+#endif
+	{"input", 'm', "FILE", 0, "Read symbol map from FILE instead of " AS_STR(MAP_FILE_NAME)},
+	{"input", 'o', "FILE", 0, "Read rom from FILE instead of " AS_STR(ROM_FILE_NAME)},
+	{"input", 'a', "FILE", 0, "Read ram from FILE instead of " AS_STR(RAM_FILE_NAME)},
 	{ 0 }
 };
 
@@ -42,9 +52,11 @@ static error_t
 parse_opt(int key, char *arg, struct argp_state *state)
 {
 	switch (key) {
+#ifdef USE_LIBPCAP
 		case 'c':
 			pcap_file_name = arg;
 			break;
+#endif
 
 		case 'm':
 			map_file_name = arg;
@@ -266,6 +278,7 @@ read_map_file(char *filename)
 	return 0;
 }
 
+#ifdef USE_LIBPCAP
 void
 analyse_pcap_file(char *filename)
 {
@@ -289,6 +302,7 @@ analyse_pcap_file(char *filename)
 		}
 	}
 }
+#endif
 
 int
 main(int argc, char **argv)
@@ -313,9 +327,11 @@ main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
+#ifdef USE_LIBPCAP
 	if (pcap_file_name)
 		analyse_pcap_file(pcap_file_name);
 	else
+#endif
 		fprintf(stderr, "ERR: no source selected.\n");
 
 	exit(EXIT_SUCCESS);
