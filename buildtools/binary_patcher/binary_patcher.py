@@ -11,7 +11,6 @@ import os
 from os.path import exists
 import struct
 import binascii
-from bitstring import ConstBitStream
 
 RAM_START = 0x180000
 

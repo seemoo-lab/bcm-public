@@ -1,6 +1,6 @@
 CC=../../buildtools/arm-eabi-4.7/bin/arm-eabi-
 
-all : dngl_sendpkt.bin fw_bcmdhd.bin fw_bcmdhd.complete.bin fw_bcmdhd.complete.elf
+all : dngl_sendpkt.bin fw_bcmdhd.bin
 
 patch.o: patch.c ../include/*.h
 	$(CC)gcc -Wall -Werror -O2 -nostdlib -nostartfiles -ffreestanding -mthumb -ffunction-sections -fdata-sections -c $< -o $@
