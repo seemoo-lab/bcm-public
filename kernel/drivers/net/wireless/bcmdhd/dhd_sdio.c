@@ -3227,7 +3227,7 @@ static int
 dhdsdio_checkdied(dhd_bus_t *bus, char *data, uint size)
 {
 	int bcmerror = 0;
-	uint msize = 512;
+	uint msize = 4096*2;
 	char *mbuffer = NULL;
 	char *console_buffer = NULL;
 	uint maxstrlen = 256;
@@ -3237,6 +3237,8 @@ dhdsdio_checkdied(dhd_bus_t *bus, char *data, uint size)
 	struct bcmstrbuf strbuf;
 	uint32 console_ptr, console_size, console_index;
 	uint8 line[CONSOLE_LINE_MAX], ch;
+	uint32 stack_dump[4];
+	uint32 sp;
 	uint32 n, i, addr;
 	int rv;
 
@@ -3322,6 +3324,11 @@ dhdsdio_checkdied(dhd_bus_t *bus, char *data, uint size)
 			                                 sdpcm_shared.trap_addr,
 			                                 (uint8*)&tr, sizeof(trap_t))) < 0)
 				goto done;
+
+			for (sp = ltoh32(tr.r13); (unsigned int) sp < 0x23f750 - 16; sp+=4*4) {
+				dhdsdio_membytes(bus, FALSE, sp, (uint8 *) stack_dump, sizeof(stack_dump));
+				udpprintf(6677, "%08x: %08x %08x %08x %08x \n", sp, *(stack_dump), *(stack_dump+1), *(stack_dump+2), *(stack_dump+3));
+			}
 
 			bcm_bprintf(&strbuf,
 			"Dongle trap type 0x%x @ epc 0x%x, cpsr 0x%x, spsr 0x%x, sp 0x%x,"
@@ -4610,9 +4617,9 @@ dhd_txglom_enable(dhd_pub_t *dhdp, bool enable)
 }
 #endif /* BCMSDIOH_TXGLOM */
 
-uint8 console_buf[0x2001];
-uint32 console_addr;
-uint32 console_size;
+//uint8 console_buf[0x2001];
+//uint32 console_addr;
+//uint32 console_size;
 
 int
 dhd_bus_init(dhd_pub_t *dhdp, bool enforce_mutex)
@@ -4671,11 +4678,11 @@ dhd_bus_init(dhd_pub_t *dhdp, bool enforce_mutex)
 	DHD_ERROR(("%s: enable 0x%02x, ready 0x%02x (waited %uus)\n",
 	          __FUNCTION__, enable, ready, tmo.elapsed));
 
-	dhdsdio_membytes(bus, FALSE, 0x1EBDDC, (uint8 *) &console_addr, 4);
-	dhdsdio_membytes(bus, FALSE, 0x1EBDE0, (uint8 *) &console_size, 4);
-	dhdsdio_membytes(bus, FALSE, console_addr, console_buf, console_size);
-	console_buf[console_size] = 0;
-	DHD_ERROR(("CONSOLE DUMP (0x%08x):\n%s\n", console_addr, console_buf));
+	//dhdsdio_membytes(bus, FALSE, 0x1EBDDC, (uint8 *) &console_addr, 4);
+	//dhdsdio_membytes(bus, FALSE, 0x1EBDE0, (uint8 *) &console_size, 4);
+	//dhdsdio_membytes(bus, FALSE, console_addr, console_buf, console_size);
+	//console_buf[console_size] = 0;
+	//DHD_ERROR(("CONSOLE DUMP (0x%08x):\n%s\n", console_addr, console_buf));
 
 
 	/* If F2 successfully enabled, set core and enable interrupts */

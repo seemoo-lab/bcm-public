@@ -43,6 +43,7 @@
 #include <linux/fcntl.h>
 #include <linux/fs.h>
 #include <linux/ip.h>
+#include <linux/inet.h>
 #include <net/addrconf.h>
 
 #include <asm/uaccess.h>
@@ -4991,11 +4992,90 @@ dhd_free(dhd_pub_t *dhdp)
 	}
 }
 
+struct socket *udpsocket = NULL;
+struct sockaddr_in from;
+char udpprintf_buf[4096];
+
+void
+dhd_udp_socket_init(short port)
+{
+	DHD_TRACE(("%s: Enter\n", __FUNCTION__));
+
+	sock_create(PF_INET, SOCK_DGRAM, IPPROTO_UDP, &udpsocket);
+
+	if(udpsocket) {
+		memset(&from, 0, sizeof(from));
+		from.sin_family = AF_INET;
+		from.sin_addr.s_addr = in_aton("127.0.0.1");
+		from.sin_port = htons(port);
+
+		udpsocket->ops->bind(udpsocket, (struct sockaddr *) &from, sizeof(from));
+	}
+}
+
+void
+dhd_udp_socket_cleanup(void)
+{
+	DHD_TRACE(("%s: Enter\n", __FUNCTION__));
+
+	if(udpsocket)
+		sock_release(udpsocket);
+}
+
+void
+dhd_send_udp_msg(short port, void *payload, int length)
+{
+	mm_segment_t oldfs;
+	struct msghdr msg;
+	struct iovec iov;
+	struct sockaddr_in to;
+
+	if(udpsocket) {
+		DHD_TRACE(("try to send udp message\n"));
+
+		memset(&to, 0, sizeof(to));
+		to.sin_family = AF_INET;
+		to.sin_addr.s_addr = in_aton("127.0.0.1");
+		to.sin_port = htons(port);
+		
+		memset(&msg, 0, sizeof(msg));
+		msg.msg_name = &to;
+		msg.msg_namelen = sizeof(to);
+
+		iov.iov_base = payload;
+		iov.iov_len = length;
+
+		msg.msg_control = NULL;
+		msg.msg_controllen = 0;
+		msg.msg_iov = &iov;
+		msg.msg_iovlen = 1;
+
+		oldfs = get_fs();
+		set_fs(KERNEL_DS);
+		sock_sendmsg(udpsocket, &msg, length);
+		set_fs(oldfs);
+	}
+}
+
+void
+udpprintf(short port, const char *fmt, ...)
+{
+	va_list args;
+	int i;
+
+	va_start(args, fmt);
+	i = vsnprintf(udpprintf_buf, sizeof(udpprintf_buf), fmt, args);
+	va_end(args);
+
+	dhd_send_udp_msg(port, udpprintf_buf, i);
+}
+
 static void __exit
 dhd_module_cleanup(void)
 {
 	DHD_TRACE(("%s: Enter\n", __FUNCTION__));
 
+	dhd_udp_socket_cleanup();
 
 	dhd_bus_unregister();
 
@@ -5007,7 +5087,6 @@ dhd_module_cleanup(void)
 	/* Call customer gpio to turn off power with WL_REG_ON signal */
 	dhd_customer_gpio_wlan_ctrl(WLAN_POWER_OFF);
 }
-
 
 #if defined(CONFIG_WIFI_CONTROL_FUNC)
 extern bool g_wifi_poweron;
@@ -5024,6 +5103,8 @@ dhd_module_init(void)
 #endif
 
 	DHD_TRACE(("%s: Enter\n", __FUNCTION__));
+
+	dhd_udp_socket_init(6688);
 
 	wl_android_init();
 

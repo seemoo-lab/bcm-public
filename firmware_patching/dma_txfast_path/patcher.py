@@ -70,4 +70,6 @@ patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin",
 	GenericPatch4(0x1D9B08, getSectionAddr(".text.bus_binddev_rom_hook")+1), # function pointer in the dngl_pointer_table
 	ExernalArmPatch(getSectionAddr(".text.sub_1ECAB0_hook"), "sub_1ECAB0_hook.bin"),
 	BLPatch(0x18389A, getSectionAddr(".text.sub_1ECAB0_hook")),
-    ])
+	GenericPatch4(0x1ED722, 0x00000000), # NOP the call to initialize_device_core to not initialize the D11 core
+	GenericPatch4(0x1ED72A, 0x00000000), # NOP the check if D11 core initialization returned an error
+	])
