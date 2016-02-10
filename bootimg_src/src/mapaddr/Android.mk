@@ -43,7 +43,7 @@ LOCAL_SRC_FILES := \
 	../../../buildtools/mapaddr/mapaddr.c
 
 LOCAL_MODULE := mapaddr
-LOCAL_CFLAGS := -lpcap -std=c99
+LOCAL_CFLAGS := -std=c99
 LOCAL_CFLAGS += -D_GL_INLINE_HEADER_BEGIN=
 LOCAL_CFLAGS += -D_GL_INLINE_HEADER_END=
 LOCAL_CFLAGS += -DARGP_EI=inline
@@ -56,6 +56,7 @@ LOCAL_CFLAGS += -D_GL_UNUSED=
 LOCAL_CFLAGS += -DMAP_FILE_NAME=/nexmon/firmware/firmware.map
 LOCAL_CFLAGS += -DROM_FILE_NAME=/nexmon/firmware/rom.bin
 LOCAL_CFLAGS += -DRAM_FILE_NAME=/nexmon/firmware/fw_bcmdhd.bin
+LOCAL_CFLGGS += -DUSE_LIBPCAP
 ifeq ($(TARGET_ARCH),arm)
 LOCAL_CFLAGS += -mabi=aapcs-linux
 endif
@@ -69,3 +70,5 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_OPTIONAL_EXECUTABLES)
 LOCAL_MODULE_TAGS := debug
 
 include $(BUILD_EXECUTABLE)
+
+include $(NDK_ROOT)/external/libpcap/Android.mk
