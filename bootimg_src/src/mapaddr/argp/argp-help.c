@@ -73,6 +73,9 @@
 #define USAGE_INDENT 12         /* indentation of wrapped usage lines */
 #define RMARGIN      79         /* right margin used for wrapping */
 
+extern void *mempcpy (void *dest, const void *src, size_t n);
+extern char *strchrnul (const char *s, int c_in);
+
 /* User-selectable (using an environment variable) formatting parameters.
    They must all be of type 'int' for the parsing code to work.  */
 struct uparams
@@ -1752,9 +1755,9 @@ __argp_short_program_name (void)
   /* FIXME: What now? Miles suggests that it is better to use NULL,
      but currently the value is passed on directly to fputs_unlocked,
      so that requires more changes. */
-# if __GNUC__
-#  warning No reasonable value to return
-# endif /* __GNUC__ */
+//# if __GNUC__
+//#  warning No reasonable value to return
+//# endif /* __GNUC__ */
   return "";
 # endif
 }

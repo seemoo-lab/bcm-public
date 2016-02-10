@@ -19,6 +19,8 @@
 /* Specification.  */
 #include <string.h>
 
+extern void *rawmemchr (const void *s, int c_in);
+
 /* Find the first occurrence of C in S or the final NUL byte.  */
 char *
 strchrnul (const char *s, int c_in)
