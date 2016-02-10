@@ -1,6 +1,7 @@
 #define _XOPEN_SOURCE 700
 #include <stdio.h>
 #include <stdlib.h>
+#include <argp.h>
 #include <string.h>
 #include <byteswap.h>
 #include "darm/darm.h"
@@ -10,11 +11,67 @@
 #define RAM_SIZE (768*1024)
 #define RAM_START (0x180000)
 
+struct map *start = NULL;
+struct map *current = NULL;
+
+char *rom_array = NULL;
+long rom_len = 0;
+
+char *ram_array = NULL;
+long ram_len = 0;
+
+char *pcap_file_name = NULL;
+char *map_file_name = "firmware.map";
+char *rom_file_name = "rom.bin";
+char *ram_file_name = "ram.bin";
+
+const char *argp_program_version = "mapaddr";
+const char *argp_program_bug_address = "<mschulz@seemoo.tu-darmstadt.de>";
+
+static char doc[] = "mapaddr -- a program to read stack dumps of the BCM4339 chip and print the stack trace.";
+
+static struct argp_option options[] = {
+	{"input", 'c', "FILE", 0, "Read pcap file from FILE"},
+	{"input", 'm', "FILE", 0, "Read symbol map from FILE instead of firmware.map"},
+	{"input", 'o', "FILE", 0, "Read rom from FILE instead of rom.bin"},
+	{"input", 'a', "FILE", 0, "Read ram from FILE instead of ram.bin"},
+	{ 0 }
+};
+
+static error_t
+parse_opt(int key, char *arg, struct argp_state *state)
+{
+	switch (key) {
+		case 'c':
+			pcap_file_name = arg;
+			break;
+
+		case 'm':
+			map_file_name = arg;
+			break;
+
+		case 'o':
+			rom_file_name = arg;
+			break;
+
+		case 'a':
+			ram_file_name = arg;
+			break;
+		
+		default:
+			return ARGP_ERR_UNKNOWN;
+	}
+
+	return 0;
+}
+
 struct map {
 	struct map *next;
 	unsigned int addr;
 	char *name;
 };
+
+static struct argp argp = { options, parse_opt, 0, doc };
 
 unsigned char ethernet_ipv6_udp_header_array[] = {
   0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,   /* ETHERNET: Destination MAC Address */
@@ -38,49 +95,22 @@ unsigned char ethernet_ipv6_udp_header_array[] = {
   0x52, 0x46,                           /* UDPLITE: Checksum only over UDPLITE header*/
 };
 
-
-struct map *start = NULL;
-struct map *current = NULL;
-
-char *trace_array = NULL;
-long trace_len = 0;
-
-char *rom_array = NULL;
-long rom_len = 0;
-
-char *ram_array = NULL;
-long ram_len = 0;
-
-unsigned int my_trace[] = {
-0x001e9854, 0x000043ae, 0x00180573, 0x001e9854 
-, 0x000014e4, 0x000043ae, 0x00000000, 0x001f235d 
-, 0x00000000, 0x001e983c, 0x18001000, 0x00000000 
-, 0x001e9854, 0x0023f6a0, 0x001d9ad8, 0x0023f854 
-, 0x00000005, 0x001d9b88, 0x000043ae, 0x001f2305 
-, 0x000000a1, 0x00000025, 0x00000004, 0x00000025 
-, 0x00000001, 0x001ec127, 0x00000812, 0x00000000 
-, 0x001df8c8, 0x001d9ad8, 0x00000003, 0x001ed727 
-, 0x0009eaa4, 0x001d3a34, 0x0023f71c, 0x00000001 
-, 0x00000025, 0x00000004, 0x000000a1, 0x00000003 
-, 0x000000a1, 0x00000003, 0x000200c5, 0x0023f71c 
-, 0x099dbf08, 0x099dbf08, 0x39333334, 0x001d2900 
-, 0x18002000, 0x00183887, 0x001d9acc, 0x00180000 
-, 0x00240000, 0x18002000, 0x18102000, 0xb6feb9fb 
-};
-
 int
 read_file_to_array(char *filename, char **buffer, long *filelen)
 {
 	FILE *fileptr;
 
-	fileptr = fopen(filename, "rb");
-	fseek(fileptr, 0, SEEK_END);
-	*filelen = ftell(fileptr);
-	rewind(fileptr);
+	if((fileptr = fopen(filename, "rb"))) {
+		fseek(fileptr, 0, SEEK_END);
+		*filelen = ftell(fileptr);
+		rewind(fileptr);
 
-	*buffer = (char *) malloc(*filelen + 1);
-	fread(*buffer, *filelen, 1, fileptr);
-	fclose(fileptr);
+		*buffer = (char *) malloc(*filelen + 1);
+		fread(*buffer, *filelen, 1, fileptr);
+		fclose(fileptr);
+
+		return *filelen;
+	}
 
 	return 0;
 }
@@ -149,7 +179,7 @@ disasm(darm_t *d, unsigned int addr, int cont) {
 }
 
 void
-analyse_trace_file()
+analyse_trace(char *trace_array, long trace_len)
 {
 	long i = 0;
 	unsigned int v, j;
@@ -203,38 +233,41 @@ read_map_file(char *filename)
 	size_t len = 0;
 	ssize_t read;
 	char *afteraddr = " ";
+	unsigned int count = 0;
 
-	fp_map = fopen(filename, "r");
-	if (fp_map == NULL)
-		exit(EXIT_FAILURE);
+	if((fp_map = fopen(filename, "r"))) {
+		/* Read each line from the map file and create an entry in the linked list with address and name */
+		while ((read = getline(&line, &len, fp_map)) != -1) {
+			if(line[5] != ':' || !memcmp(line+21, "loc_", 4))
+				continue;
+			if(!start) {
+				start = malloc(sizeof(struct map));
+				current = start;
+			} else {
+				current->next = malloc(sizeof(struct map));
+				current = current->next;
+			}
+			memset(current, 0, sizeof(struct map));
+			current->addr = strtoul(line+6,&afteraddr,16);
+			current->name = line+21;
 
-	/* Read each line from the map file and create an entry in the linked list with address and name */
-	while ((read = getline(&line, &len, fp_map)) != -1) {
-		if(line[5] != ':' || !memcmp(line+21, "loc_", 4))
-			continue;
-		if(!start) {
-			start = malloc(sizeof(struct map));
-			current = start;
-		} else {
-			current->next = malloc(sizeof(struct map));
-			current = current->next;
+			/* remove new line charecter at the end of the line */
+			*(line+strlen(line)-2) = '\0';
+			line = NULL;
+
+			count++;
 		}
-		memset(current, 0, sizeof(struct map));
-		current->addr = strtoul(line+6,&afteraddr,16);
-		current->name = line+21;
 
-		/* remove new line charecter at the end of the line */
-		*(line+strlen(line)-2) = '\0';
-		line = NULL;
+		fclose(fp_map);
+
+		return count;
 	}
-
-	fclose(fp_map);
 
 	return 0;
 }
 
-int
-main(void)
+void
+analyse_pcap_file(char *filename)
 {
 	pcap_t *pcap;
 	char errbuf[PCAP_ERRBUF_SIZE];
@@ -242,26 +275,48 @@ main(void)
 	struct pcap_pkthdr header;
 	char *fct_name;
 
-	read_file_to_array("trace.bin", &trace_array, &trace_len);
-	read_file_to_array("../../firmware_patching/dma_txfast_path/rom.bin", &rom_array, &rom_len);
-	read_file_to_array("../../bootimg_src/firmware/fw_bcmdhd.orig.bin", &ram_array, &ram_len);
+	char *trace_array = NULL;
+	long trace_len = 0;
 
-	read_map_file("firmware.map");
-
-	trace_array = (char *) my_trace;
-	analyse_trace_file();
-
-	pcap = pcap_open_offline("capture.pcap", errbuf);
+	pcap = pcap_open_offline(filename, errbuf);
 	while ((packet = pcap_next(pcap, &header)) != NULL) {
 		if(!memcmp(packet, ethernet_ipv6_udp_header_array, 18) && !memcmp(packet + 20, ethernet_ipv6_udp_header_array + 20, 42)) {
 			get_name(*((unsigned int *) (packet+62)), &fct_name, NULL);
 			printf("\n\n%s %08x %08x %08x %08x\n", fct_name, *((unsigned int *) (packet+62)), *((unsigned int *) (packet+66)), *((unsigned int *) (packet+70)), *((unsigned int *) (packet+74)));
-			trace_array = packet + 60 + 4 * 4;
-			//analyse_trace_file();
+			trace_array = (char *) packet + 60 + 4 * 4;
+			trace_len = header.len - 60 - 4 * 4;
+			analyse_trace(trace_array, trace_len);
 		}
 	}
+}
 
-	//memcpy(trace_array, {0x0, 0x1, 0x2, 0x3}, 4);
+int
+main(int argc, char **argv)
+{
+	argp_parse(&argp, argc, argv, 0, 0, 0);
+
+//	read_file_to_array("../../firmware_patching/dma_txfast_path/rom.bin", &rom_array, &rom_len);
+//	read_file_to_array("../../bootimg_src/firmware/fw_bcmdhd.orig.bin", &ram_array, &ram_len);
+
+	if(!read_file_to_array(rom_file_name, &rom_array, &rom_len)) {
+		fprintf(stderr, "ERR: rom file empty or unavailable.\n");
+		exit(EXIT_FAILURE);
+	}
+
+	if(!read_file_to_array(ram_file_name, &ram_array, &ram_len)) {
+		fprintf(stderr, "ERR: ram file empty or unavailable.\n");
+		exit(EXIT_FAILURE);
+	}
+
+	if(!read_map_file(map_file_name)) {
+		fprintf(stderr, "ERR: map file empty or unavailable.\n");
+		exit(EXIT_FAILURE);
+	}
+
+	if (pcap_file_name)
+		analyse_pcap_file(pcap_file_name);
+	else
+		fprintf(stderr, "ERR: no source selected.\n");
 
 	exit(EXIT_SUCCESS);
 }
