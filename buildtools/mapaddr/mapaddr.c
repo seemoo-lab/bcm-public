@@ -10,6 +10,12 @@
 #include <pcap.h>
 #endif
 
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
 #define ROM_SIZE (640*1024)
 #define RAM_SIZE (768*1024)
 #define RAM_START (0x180000)
@@ -33,6 +39,11 @@ char *map_file_name = AS_STR(MAP_FILE_NAME);
 char *rom_file_name = AS_STR(ROM_FILE_NAME);
 char *ram_file_name = AS_STR(RAM_FILE_NAME);
 
+short udp_port;
+char udpbuf[USHRT_MAX];
+
+int print_not_found = 0;
+
 const char *argp_program_version = "mapaddr";
 const char *argp_program_bug_address = "<mschulz@seemoo.tu-darmstadt.de>";
 
@@ -40,11 +51,13 @@ static char doc[] = "mapaddr -- a program to read stack dumps of the BCM4339 chi
 
 static struct argp_option options[] = {
 #ifdef USE_LIBPCAP
-	{"input", 'c', "FILE", 0, "Read pcap file from FILE"},
+	{"pcapfile", 'c', "FILE", 0, "Read pcap file from FILE"},
 #endif
-	{"input", 'm', "FILE", 0, "Read symbol map from FILE instead of " AS_STR(MAP_FILE_NAME)},
-	{"input", 'o', "FILE", 0, "Read rom from FILE instead of " AS_STR(ROM_FILE_NAME)},
-	{"input", 'a', "FILE", 0, "Read ram from FILE instead of " AS_STR(RAM_FILE_NAME)},
+	{"mapfile", 'm', "FILE", 0, "Read symbol map from FILE instead of " AS_STR(MAP_FILE_NAME)},
+	{"romfile", 'o', "FILE", 0, "Read rom from FILE instead of " AS_STR(ROM_FILE_NAME)},
+	{"ramfile", 'a', "FILE", 0, "Read ram from FILE instead of " AS_STR(RAM_FILE_NAME)},
+	{"udpport", 'u', "PORT", 0, "Listen for UDP frames containing stack traces on PORT"},
+	{"print-not-found", 'n', "BOOL", 0, "Set true if non-branch target stack values should be printed"},
 	{ 0 }
 };
 
@@ -68,6 +81,14 @@ parse_opt(int key, char *arg, struct argp_state *state)
 
 		case 'a':
 			ram_file_name = arg;
+			break;
+
+		case 'u':
+			udp_port = strtol(arg, NULL, 10);
+			break;
+
+		case 'n':
+			print_not_found = strncmp(arg, "true", 4) ? 0 : 1;
 			break;
 		
 		default:
@@ -191,9 +212,20 @@ disasm(darm_t *d, unsigned int addr, int cont) {
 }
 
 void
-analyse_trace(char *trace_array, long trace_len)
+print_instr(unsigned int stack_value, darm_t *d, char *bl_target)
 {
-	long i = 0;
+	if (d->instr == I_BL) {
+		get_name(stack_value + d->imm, &bl_target, NULL);
+		printf("%s %s\n", darm_mnemonic_name(d->instr), bl_target);
+	} else {
+		printf("%s r%d\n", darm_mnemonic_name(d->instr), d->Rm);
+	}
+}
+
+void
+analyse_trace(char *trace_array, unsigned int trace_len)
+{
+	unsigned int i = 0;
 	unsigned int v, j;
 	char *bl_target = NULL;
 	char *fct_name = NULL;
@@ -212,27 +244,34 @@ analyse_trace(char *trace_array, long trace_len)
 			case 1: // Exact match
 				disasm(&d, j, 1);
 				if (d.instr == I_BL || d.instr == I_BLX) {
-					printf("%08x= %s (%08x) ", j, fct_name, fct_addr);
-					if (d.instr == I_BL) {
-						get_name(v + d.imm, &bl_target, NULL);
-						printf("%s %s\n", darm_mnemonic_name(d.instr), bl_target);
-					} else {
-						printf("%s r%d\n", darm_mnemonic_name(d.instr), d.Rm);
-					}
+					printf("%04d %08x= %s (%08x) ", i, j, fct_name, fct_addr);
+					print_instr(v, &d, bl_target);
+					continue;
 				}
 				break;
 			case 2: // Somewhere in function
 				disasm(&d, j, 1);
 				if (d.instr == I_BL || d.instr == I_BLX) {
-					printf("%08x: %s (%08x+%d) ", j, fct_name, fct_addr, j - fct_addr);
-					if (d.instr == I_BL) {
-						get_name(v + d.imm, &bl_target, NULL);
-						printf("%s %s\n", darm_mnemonic_name(d.instr), bl_target);
-					} else {
-						printf("%s r%d\n", darm_mnemonic_name(d.instr), d.Rm);
-					}
+					printf("%04d %08x: %s (%08x+%d) ", i, j, fct_name, fct_addr, j - fct_addr);
+					print_instr(v, &d, bl_target);
+					continue;
 				}
 				break;
+		}
+
+		switch(get_name(v - 1, &fct_name, &fct_addr)) {
+			case 0:
+				break;
+			case 1:
+				printf("%04d %08x= %s (%08x)\n", i, v - 1, fct_name, fct_addr);
+				continue;
+				break;
+			case 2:
+				break;
+		}
+
+		if ((i % 4 == 0) && print_not_found) {
+			printf("%04d %08x\n", i, v);
 		}
 	}
 }
@@ -305,6 +344,34 @@ analyse_pcap_file(char *filename)
 #endif
 
 int
+analyse_udp_frames(short port)
+{
+	struct sockaddr_in si_me, si_other;
+	socklen_t slen = sizeof(si_other);
+	int sock, l;
+
+	if ((sock=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP))==-1)
+		return -1;
+
+	memset((char *) &si_me, 0, sizeof(si_me));
+	si_me.sin_family = AF_INET;
+	si_me.sin_port = htons(port);
+	si_me.sin_addr.s_addr = htonl(INADDR_ANY);
+	if (bind(sock, (struct sockaddr *) &si_me, sizeof(si_me))==-1)
+		return -2;
+
+	while(1) {
+		if ((l = recvfrom(sock, udpbuf, sizeof(udpbuf), 0, (struct sockaddr *) &si_other, &slen)) == -1)
+			return -3;
+		printf("Received packet from %s:%d length: %d\n", 
+		inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port), slen);
+		analyse_trace(udpbuf, l);
+	}
+
+	close(sock);
+}
+
+int
 main(int argc, char **argv)
 {
 	argp_parse(&argp, argc, argv, 0, 0, 0);
@@ -330,8 +397,12 @@ main(int argc, char **argv)
 #ifdef USE_LIBPCAP
 	if (pcap_file_name)
 		analyse_pcap_file(pcap_file_name);
-	else
+#else
+	if (0);
 #endif
+	else if (udp_port)
+		analyse_udp_frames(udp_port);
+	else
 		fprintf(stderr, "ERR: no source selected.\n");
 
 	exit(EXIT_SUCCESS);

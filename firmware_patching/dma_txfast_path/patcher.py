@@ -70,6 +70,8 @@ patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin",
 	GenericPatch4(0x1D9B08, getSectionAddr(".text.bus_binddev_rom_hook")+1), # function pointer in the dngl_pointer_table
 	ExernalArmPatch(getSectionAddr(".text.sub_1ECAB0_hook"), "sub_1ECAB0_hook.bin"),
 	BLPatch(0x18389A, getSectionAddr(".text.sub_1ECAB0_hook")),
-	GenericPatch4(0x1ED722, 0x00000000), # NOP the call to initialize_device_core to not initialize the D11 core
-	GenericPatch4(0x1ED72A, 0x00000000), # NOP the check if D11 core initialization returned an error
+#	GenericPatch4(0x1ED722, 0x00000000), # NOP the call to initialize_device_core to not initialize the D11 core
+#	GenericPatch4(0x1ED72A, 0x00000000), # NOP the check if D11 core initialization returned an error
+#	GenericPatch2(0x19B260, int('1011111000000000',2)), # replace function with huge jump table with a breakpoint
+	GenericPatch2(0x19B348, int('1011111000000000',2)), # breakpoint in function with huge jump table before jumping
 	])

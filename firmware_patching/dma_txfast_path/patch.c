@@ -80,6 +80,7 @@ bus_binddev_rom_hook(void *sdiodev, void *d11dev)
 
 	// enlage console
 	console_buf = malloc(0x2000, 0);
+	memset(console_buf, 0, 0x2000);
 	*(void **) 0x1EBDDC = console_buf;
 	*(int *) 0x1EBDE0 = 0x2000;
 	*(int *) 0x1EBDE4 = 0;

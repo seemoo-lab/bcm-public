@@ -167,7 +167,7 @@ extern void dhd_wlfc_trigger_pktcommit(dhd_pub_t *dhd);
 #ifdef DHD_DEBUG
 /* Device console log buffer state */
 #define CONSOLE_LINE_MAX	192
-#define CONSOLE_BUFFER_MAX	2024
+#define CONSOLE_BUFFER_MAX	0x2048
 typedef struct dhd_console {
 	uint		count;			/* Poll interval msec counter */
 	uint		log_addr;		/* Log struct address (fixed) */
@@ -3223,6 +3223,8 @@ break2:
 	return BCME_OK;
 }
 
+uint32 stack_dump[8000];
+
 static int
 dhdsdio_checkdied(dhd_bus_t *bus, char *data, uint size)
 {
@@ -3237,8 +3239,7 @@ dhdsdio_checkdied(dhd_bus_t *bus, char *data, uint size)
 	struct bcmstrbuf strbuf;
 	uint32 console_ptr, console_size, console_index;
 	uint8 line[CONSOLE_LINE_MAX], ch;
-	uint32 stack_dump[4];
-	uint32 sp;
+	int stack_dump_len;
 	uint32 n, i, addr;
 	int rv;
 
@@ -3325,10 +3326,15 @@ dhdsdio_checkdied(dhd_bus_t *bus, char *data, uint size)
 			                                 (uint8*)&tr, sizeof(trap_t))) < 0)
 				goto done;
 
-			for (sp = ltoh32(tr.r13); (unsigned int) sp < 0x23f750 - 16; sp+=4*4) {
-				dhdsdio_membytes(bus, FALSE, sp, (uint8 *) stack_dump, sizeof(stack_dump));
-				udpprintf(6677, "%08x: %08x %08x %08x %08x \n", sp, *(stack_dump), *(stack_dump+1), *(stack_dump+2), *(stack_dump+3));
-			}
+//			for (sp = ltoh32(tr.r13); (unsigned int) sp < 0x23f750 - 16; sp+=4*4) {
+//				dhdsdio_membytes(bus, FALSE, sp, (uint8 *) stack_dump, sizeof(stack_dump));
+//				udpprintf(6677, "%08x: %08x %08x %08x %08x \n", sp, *(stack_dump), *(stack_dump+1), *(stack_dump+2), *(stack_dump+3));
+//			}
+			stack_dump_len = 0x23f750 - ltoh32(tr.r13);
+			if(stack_dump_len > sizeof(stack_dump)) stack_dump_len = sizeof(stack_dump);
+			dhdsdio_membytes(bus, FALSE, ltoh32(tr.r13), (uint8 *) stack_dump, stack_dump_len);
+			dhd_send_udp_msg(6677, stack_dump, stack_dump_len);
+			DHD_ERROR(("stack dump len: %d\n", stack_dump_len));
 
 			bcm_bprintf(&strbuf,
 			"Dongle trap type 0x%x @ epc 0x%x, cpsr 0x%x, spsr 0x%x, sp 0x%x,"
@@ -3359,6 +3365,8 @@ dhdsdio_checkdied(dhd_bus_t *bus, char *data, uint size)
 			console_ptr = ltoh32(console_ptr);
 			console_size = ltoh32(console_size);
 			console_index = ltoh32(console_index);
+
+			DHD_ERROR(("%08x %08x %08x %08x\n", console_ptr, console_size, console_index, CONSOLE_BUFFER_MAX));
 
 			if (console_size > CONSOLE_BUFFER_MAX ||
 				!(console_buffer = MALLOC(bus->dhd->osh, console_size)))

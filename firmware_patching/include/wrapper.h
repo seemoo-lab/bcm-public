@@ -13,6 +13,7 @@ extern void free(void *p); // 0x16620
 
 extern void *malloc(unsigned int size, char x); // 0x1814F4
 extern int memcpy(void *dst, void *src, int len); // 0x181418
+extern void *memset(void *dst, int value, int len); // 0x1269C
 
 extern void *pkt_buf_get_skb(void *osh, unsigned int len); // 0x184F14
 extern void *pkt_buf_free_skb(void *osh, void *p, int send); // 0x184F64

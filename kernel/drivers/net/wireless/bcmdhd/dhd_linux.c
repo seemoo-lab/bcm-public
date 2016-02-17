@@ -5031,8 +5031,6 @@ dhd_send_udp_msg(short port, void *payload, int length)
 	struct sockaddr_in to;
 
 	if(udpsocket) {
-		DHD_TRACE(("try to send udp message\n"));
-
 		memset(&to, 0, sizeof(to));
 		to.sin_family = AF_INET;
 		to.sin_addr.s_addr = in_aton("127.0.0.1");
