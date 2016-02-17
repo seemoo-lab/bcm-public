@@ -62,9 +62,9 @@ cleanall: cleanbuildtools cleanboot
 
 
 
-kernel: kernel/arch/arm/boot/zImage-dtb
+kernel: kernel/arch/arm/boot/Image
 
-kernel/arch/arm/boot/zImage-dtb: kernel/.config
+kernel/arch/arm/boot/Image: kernel/.config
 	cd kernel && make
 
 
