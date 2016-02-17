@@ -72,13 +72,13 @@ kernel/arch/arm/boot/zImage-dtb: kernel/.config
 bcmdhd: kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko
 
 kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko : kernel/drivers/net/wireless/bcmdhd/*.h kernel/drivers/net/wireless/bcmdhd/*.c kernel/drivers/net/wireless/bcmdhd/Makefile
-	cd kernel && make modules
+	cd kernel && make
 
 kernel/drivers/net/wireless/nexmon/nexmon.ko : kernel/drivers/net/wireless/nexmon/*.h kernel/drivers/net/wireless/nexmon/*.c kernel/drivers/net/wireless/nexmon/Makefile
-	cd kernel && make modules
+	cd kernel && make
 
 kernel/drivers/net/wireless/nexdhd/nexdhd.ko : kernel/drivers/net/wireless/nexdhd/*.h kernel/drivers/net/wireless/nexdhd/*.c kernel/drivers/net/wireless/nexdhd/Makefile
-	cd kernel && make modules
+	cd kernel && make
 
 su: su.img
 	adb push su.img /sdcard/
