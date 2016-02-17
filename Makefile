@@ -62,9 +62,9 @@ cleanall: cleanbuildtools cleanboot
 
 
 
-kernel: kernel/arch/arm/boot/Image
+kernel: kernel/arch/arm/boot/zImage-dtb
 
-kernel/arch/arm/boot/Image: kernel/.config
+kernel/arch/arm/boot/zImage-dtb: kernel/.config
 	cd kernel && make
 
 
@@ -86,7 +86,7 @@ su: su.img
 	adb push SuperSU.apk /sdcard/
 	adb shell "su -c 'mv /sdcard/SuperSU.apk /data/SuperSU.apk'"
 
-boot.img: Makefile kernel/arch/arm/boot/Image kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko kernel/drivers/net/wireless/nexmon/nexmon.ko  kernel/drivers/net/wireless/nexdhd/nexdhd.ko 
+boot.img: Makefile kernel/arch/arm/boot/zImage-dtb kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko kernel/drivers/net/wireless/nexmon/nexmon.ko  kernel/drivers/net/wireless/nexdhd/nexdhd.ko 
 	rm -Rf bootimg_tmp
 	mkdir bootimg_tmp
 	cd bootimg_tmp && \
