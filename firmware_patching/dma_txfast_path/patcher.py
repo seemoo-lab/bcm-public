@@ -73,5 +73,6 @@ patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin",
 #	GenericPatch4(0x1ED722, 0x00000000), # NOP the call to initialize_device_core to not initialize the D11 core
 #	GenericPatch4(0x1ED72A, 0x00000000), # NOP the check if D11 core initialization returned an error
 #	GenericPatch2(0x19B260, int('1011111000000000',2)), # replace function with huge jump table with a breakpoint
-	GenericPatch2(0x19B348, int('1011111000000000',2)), # breakpoint in function with huge jump table before jumping
+#	GenericPatch4(0x19B348, 0xFFFFFFFF), # breakpoint in function with huge jump table before jumping
+	GenericPatch4(0x18AE72, 0xFFFFFFFF), # breakpoint in function with huge jump table before jumping
 	])
