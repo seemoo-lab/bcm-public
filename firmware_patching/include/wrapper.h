@@ -1,3 +1,64 @@
+/***************************************************************************
+ *                                                                         *
+ *          ###########   ###########   ##########    ##########           *
+ *         ############  ############  ############  ############          *
+ *         ##            ##            ##   ##   ##  ##        ##          *
+ *         ##            ##            ##   ##   ##  ##        ##          *
+ *         ###########   ####  ######  ##   ##   ##  ##    ######          *
+ *          ###########  ####  #       ##   ##   ##  ##    #    #          *
+ *                   ##  ##    ######  ##   ##   ##  ##    #    #          *
+ *                   ##  ##    #       ##   ##   ##  ##    #    #          *
+ *         ############  ##### ######  ##   ##   ##  ##### ######          *
+ *         ###########    ###########  ##   ##   ##   ##########           *
+ *                                                                         *
+ *            S E C U R E   M O B I L E   N E T W O R K I N G              *
+ *                                                                         *
+ * Warning:                                                                *
+ *                                                                         *
+ * Our software may damage your hardware and may void your hardware’s      *
+ * warranty! You use our tools at your own risk and responsibility!        *
+ *                                                                         *
+ * License:                                                                *
+ * Copyright (c) 2015 NexMon Team                                          *
+ *                                                                         *
+ * Permission is hereby granted, free of charge, to any person obtaining   *
+ * a copy of this software and associated documentation files (the         *
+ * "Software"), to deal in the Software without restriction, including     *
+ * without limitation the rights to use, copy, modify, merge, publish,     *
+ * distribute copies of the Software, and to permit persons to whom the    *
+ * Software is furnished to do so, subject to the following conditions:    *
+ *                                                                         *
+ * The above copyright notice and this permission notice shall be included *
+ * in all copies or substantial portions of the Software.                  *
+ *                                                                         *
+ * Any use of the Software which results in an academic publication or     *
+ * other publication which includes a bibliography must include a citation *
+ * to the author's publication "M. Schulz, D. Wegemer and M. Hollick.      *
+ * NexMon: A Cookbook for Firmware Modifications on Smartphones to Enable  *
+ * Monitor Mode.".                                                         *
+ *                                                                         *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS *
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF              *
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  *
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY    *
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,    *
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE       *
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                  *
+ *                                                                         *
+ * About this file:                                                        *
+ * This file contains function prototypes for functions that already exist *
+ * in the original firmware of the BCM4339 Wifi chip. With this file, we   *
+ * intend to build wrapper functions that can be called directly from C    *
+ * after including this header file and linking against the resulting      *
+ * object file ../wrapper/wrapper.o. The latter is generated using the     *
+ * Makefile ../wrapper/Makefile. Besides the object file, it also creates  *
+ * the linker file ../wrapper/wrapper.ld which is based on this header     *
+ * file. To make this work, the function prototypes have to written as one *
+ * line per prototype. Each prototype has to start with the word "extern"  *
+ * and end with a comment containing the functions location in memory as a *
+ * hex number. Before the address has to be a space.                       *
+ **************************************************************************/
+
 #ifndef WRAPPER_H
 #define WRAPPER_H
 
@@ -10,6 +71,9 @@ extern void *dma_txfast(void *di, void *p, int commit); // 0x1844B2
 extern void *dngl_sendpkt(void *sdio, void *p, int chan); // 0x182750
 
 extern void free(void *p); // 0x16620
+extern int function_with_huge_jump_table(void *wlc, int a2, int cmd, int a4, int a5, unsigned int a6, int a7, int a8, int a9, int a10); // 0x19B25C
+
+extern int handle_ioctl_cmd(void *wlc, int cmd, void *buf, int len); // 0x2BDBC
 
 extern void *malloc(unsigned int size, char x); // 0x1814F4
 extern int memcpy(void *dst, void *src, int len); // 0x181418
@@ -19,6 +83,7 @@ extern void *pkt_buf_get_skb(void *osh, unsigned int len); // 0x184F14
 extern void *pkt_buf_free_skb(void *osh, void *p, int send); // 0x184F64
 extern int printf(const char *format, ...); // 0x126f0
 
+extern void *sdio_header_parsing_from_sk_buff(void *sdio, void *p); // 0x182A64
 extern void *setup_some_stuff(void *wl, int vendor, int a3, int a4, char a5, void *osh, int a7, int a8, int a9, int a10); // 0x1F319C
 extern void sub_166b4(void); // 0x166b4
 extern void sub_16D8C(int a1, int a2, void *a3); // 0x16D8C
