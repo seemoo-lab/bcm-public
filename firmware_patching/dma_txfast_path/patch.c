@@ -13,6 +13,7 @@
 extern void *dngl_sendpkt_alternative(void *sdio, void *p, int chan);
 struct sk_buff *create_frame(unsigned int hooked_fct, unsigned int arg0, unsigned int arg1, unsigned int arg2, void *start_address, unsigned int length);
 
+/*
 __attribute__((naked)) void 
 wlc_txfifo_hook(void)
 {
@@ -23,12 +24,15 @@ wlc_txfifo_hook(void)
 		"b wlc_txfifo+4\n"					// jump to the original function
 		);
 }
+*/
 
+/*
 void
 testprint(void)
 {
 	printf("wlc_txfifo\n");
 }
+*/
 
 __attribute__((naked)) void
 interrupt_enable_hook(void)
@@ -41,28 +45,6 @@ interrupt_enable_hook(void)
 		"pop {r0-r3,lr}\n"					// restore the saved registers
 		"b sub_166b4\n"						// call the function that was supposed to be called
 		);
-}
-
-__attribute__((naked)) void
-setup_some_stuff_hook(void)
-{
-	asm("push {r0-r3,lr}\n"					// save the registers that might change as well as the link register
-		"bl testprint3\n"
-		"pop {r0-r3,lr}\n"					// restore the saved registers
-		"b setup_some_stuff\n"				// call the function that was supposed to be called
-		);
-}
-
-void
-testprint3(void)
-{
-	unsigned int *sp = get_stack_ptr();
-
-	for (; (unsigned int) sp < BOTTOM_OF_STACK - 16; sp+=4)
-		printf("%08x: %08x %08x %08x %08x \n", sp, *(sp), *(sp+1), *(sp+2), *(sp+3));
-
-	//printf("D11 maccontrol %08x\n", *(unsigned int *) 0x18001120);
-
 }
 
 void
@@ -80,6 +62,32 @@ interrupt_enable_do(int a1, int a2, int a3)
 	for (i = 0; i < 4; i++)
 		printf("%08x: %08x\n", ((a2  & 0xFFFFFFF0) + (a3 & 0xFFFFFFF0) + offsets[i]), *(int *) ((a2  & 0xFFFFFFF0) + (a3 & 0xFFFFFFF0) + offsets[i]));
 }
+
+/*
+__attribute__((naked)) void
+setup_some_stuff_hook(void)
+{
+	asm("push {r0-r3,lr}\n"					// save the registers that might change as well as the link register
+		"bl testprint3\n"
+		"pop {r0-r3,lr}\n"					// restore the saved registers
+		"b setup_some_stuff\n"				// call the function that was supposed to be called
+		);
+}
+*/
+
+/*
+void
+testprint3(void)
+{
+	unsigned int *sp = get_stack_ptr();
+
+	for (; (unsigned int) sp < BOTTOM_OF_STACK - 16; sp+=4)
+		printf("%08x: %08x %08x %08x %08x \n", sp, *(sp), *(sp+1), *(sp+2), *(sp+3));
+
+	//printf("D11 maccontrol %08x\n", *(unsigned int *) 0x18001120);
+
+}
+*/
 
 /*
 int
@@ -125,18 +133,23 @@ bus_binddev_rom_hook(void *sdiodev, void *d11dev)
 }
 */
 
+/*
 __attribute__((naked)) void 
 console_size_r0(void)
 {
 	asm("movw r0, #0x800\n");
 }
+*/
 
+/*
 __attribute__((naked)) void 
 console_size_r2(void)
 {
 	asm("movw r2, #0x800\n");
 }
+*/
 
+/*
 __attribute__((naked)) void 
 function_with_huge_jump_table_hook(void)
 {
@@ -147,13 +160,17 @@ function_with_huge_jump_table_hook(void)
 		"b function_with_huge_jump_table+4\n"					// jump to the original function
 		);
 }
+*/
 
+/*
 void
 function_with_huge_jump_table_do(void *wlc, int a2, int cmd, int a4)
 {
 //	printf("jmptab: %d %08x\n", cmd, a4);
 }
+*/
 
+/*
 __attribute__((naked)) void 
 handle_ioctl_cmd_hook(void)
 {
@@ -164,13 +181,17 @@ handle_ioctl_cmd_hook(void)
 		"b handle_ioctl_cmd\n"					// jump to the original function
 		);
 }
+*/
 
+/*
 void
 handle_ioctl_cmd_do(void *a1, int cmd, void *buf, int len)
 {
 //	printf("ioctl: %d\n", cmd);
 }
+*/
 
+/*
 void
 sub_1ECAB0_hook(int a1)
 {
@@ -180,7 +201,9 @@ sub_1ECAB0_hook(int a1)
 	p = create_frame(0xdddddddd, 0, 0, 0, get_stack_ptr(), BOTTOM_OF_STACK - (unsigned int) get_stack_ptr());
 	dngl_sendpkt_alternative(SDIO_INFO_ADDR, p, SDPCM_DATA_CHANNEL);
 }
+*/
 
+/*
 struct sk_buff *
 create_frame(unsigned int hooked_fct, unsigned int arg0, unsigned int arg1, unsigned int arg2, void *start_address, unsigned int length) {
 	struct sk_buff *p = 0;
@@ -206,7 +229,9 @@ create_frame(unsigned int hooked_fct, unsigned int arg0, unsigned int arg1, unsi
 
 	return p;
 }
+*/
 
+/*
 void *
 dma_txfast_hook(void *di, struct sk_buff *p, int commit)
 {
@@ -248,3 +273,4 @@ dma_txfast_hook(void *di, struct sk_buff *p, int commit)
 
 	return ret;
 }
+*/

@@ -3120,8 +3120,8 @@ dhd_open(struct net_device *net)
 
 		}
 
-		// here the debug system can be accessed???
-		//dhd_check_debug_system(dhd->pub.bus);
+		// here the debug system can be accessed
+		dhd_check_debug_system(dhd->pub.bus);
 
 		/* dhd_prot_init has been called in dhd_bus_start or wl_android_wifi_on */
 		memcpy(net->dev_addr, dhd->pub.mac.octet, ETHER_ADDR_LEN);
@@ -6804,8 +6804,21 @@ bool dhd_wlfc_skip_fc(void)
 
 #include <linux/debugfs.h>
 
-extern uint32 dhd_readregl(void *bp, uint32 addr);
-extern uint32 dhd_writeregl(void *bp, uint32 addr, uint32 data);
+uint32
+dhd_readregl(void *bp, uint32 addr)
+{
+	DHD_TRACE(("%s: Enter, addr: %08x\n", __FUNCTION__, addr));
+
+	return 0;
+}
+
+uint32
+dhd_writeregl(void *bp, uint32 addr, uint32 data)
+{
+	DHD_TRACE(("%s: Enter, addr: %08x, data: %08x\n", __FUNCTION__, addr, data));
+
+	return 0;
+}
 
 typedef struct dhd_dbgfs {
 	struct dentry	*debugfs_dir;
