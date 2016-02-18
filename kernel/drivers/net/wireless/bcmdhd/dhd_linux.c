@@ -3121,7 +3121,7 @@ dhd_open(struct net_device *net)
 		}
 
 		// here the debug system can be accessed
-		dhd_check_debug_system(dhd->pub.bus);
+		//dhd_check_debug_system(dhd->pub.bus);
 
 		/* dhd_prot_init has been called in dhd_bus_start or wl_android_wifi_on */
 		memcpy(net->dev_addr, dhd->pub.mac.octet, ETHER_ADDR_LEN);
@@ -3134,6 +3134,9 @@ dhd_open(struct net_device *net)
 			dhd->iflist[ifidx]->net->features &= ~NETIF_F_IP_CSUM;
 #endif /* TOE */
 
+		// Here it is not possible to access the debug system!
+		//dhd_check_debug_system(dhd->pub.bus);
+
 #if defined(WL_CFG80211)
 		if (unlikely(wl_cfg80211_up(NULL))) {
 			DHD_ERROR(("%s: failed to bring up cfg80211\n", __FUNCTION__));
@@ -3141,7 +3144,13 @@ dhd_open(struct net_device *net)
 			goto exit;
 		}
 #endif /* WL_CFG80211 */
+
+		// Here it is not possible to access the debug system!
+		//dhd_check_debug_system(dhd->pub.bus);
 	}
+
+	// Here it is not possible to access the debug system!
+	//dhd_check_debug_system(dhd->pub.bus);
 
 	/* Allow transmit calls */
 	netif_start_queue(net);
@@ -6716,6 +6725,8 @@ int dhd_ioctl_entry_local(struct net_device *net, wl_ioctl_t *ioc, int cmd)
 	int ifidx;
 	int ret = 0;
 	dhd_info_t *dhd = NULL;
+
+	DHD_TRACE(("%s: Enter, cmd: %d\n", __FUNCTION__, cmd));
 
 	if (!net || !netdev_priv(net)) {
 		DHD_ERROR(("%s invalid parameter\n", __FUNCTION__));

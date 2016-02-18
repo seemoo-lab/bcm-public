@@ -25,6 +25,9 @@
  * $Id: wl_cfg80211.c 419844 2013-08-23 00:07:03Z $
  */
 /* */
+
+extern void dhd_check_debug_system(void *bus);
+
 #include <typedefs.h>
 #include <linuxver.h>
 #include <osl.h>
@@ -10412,9 +10415,15 @@ static s32 __wl_cfg80211_up(struct wl_priv *wl)
 
 	WL_DBG(("In\n"));
 
+	// here the debug system can be accessed
+	//dhd_check_debug_system(((dhd_pub_t *) wl->pub)->bus);
+
 	err = dhd_config_dongle(wl, false);
 	if (unlikely(err))
 		return err;
+
+	// Here it is not possible to access the debug system!
+	//dhd_check_debug_system(((dhd_pub_t *) wl->pub)->bus);
 
 	err = wl_config_ifmode(wl, ndev, wdev->iftype);
 	if (unlikely(err && err != -EINPROGRESS)) {
@@ -10528,6 +10537,9 @@ s32 wl_cfg80211_up(void *para)
 	WL_DBG(("In\n"));
 	wl = wlcfg_drv_priv;
 
+	// here the debug system can be accessed
+	//dhd_check_debug_system(((dhd_pub_t *) wl->pub)->bus);
+
 	if ((err = wldev_ioctl(wl_to_prmry_ndev(wl), WLC_GET_VERSION, &val,
 		sizeof(int), false) < 0)) {
 		WL_ERR(("WLC_GET_VERSION failed, err=%d\n", err));
@@ -10542,6 +10554,9 @@ s32 wl_cfg80211_up(void *para)
 	ioctl_version = val;
 	WL_TRACE(("WLC_GET_VERSION=%d\n", ioctl_version));
 
+	// here the debug system can be accessed
+	//dhd_check_debug_system(((dhd_pub_t *) wl->pub)->bus);
+
 	mutex_lock(&wl->usr_sync);
 	dhd = (dhd_pub_t *)(wl->pub);
 	if (!(dhd->op_mode & DHD_FLAG_HOSTAP_MODE)) {
@@ -10549,6 +10564,8 @@ s32 wl_cfg80211_up(void *para)
 		if (unlikely(err))
 			return err;
 	}
+	// here the debug system can be accessed
+	//dhd_check_debug_system(((dhd_pub_t *) wl->pub)->bus);
 	err = __wl_cfg80211_up(wl);
 	if (unlikely(err))
 		WL_ERR(("__wl_cfg80211_up failed\n"));

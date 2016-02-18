@@ -24,6 +24,8 @@
  * $Id: wl_cfg80211.c,v 1.1.4.1.2.14 2011/02/09 01:40:07 Exp $
  */
 
+ extern void dhd_check_debug_system(void *bus);
+
 #include <net/rtnetlink.h>
 
 #include <bcmutils.h>
@@ -119,6 +121,7 @@ static s32 wl_dongle_up(struct net_device *ndev, u32 up)
 	}
 	return err;
 }
+
 s32 dhd_config_dongle(struct wl_priv *wl, bool need_lock)
 {
 #ifndef DHD_SDALIGN
@@ -138,12 +141,18 @@ s32 dhd_config_dongle(struct wl_priv *wl, bool need_lock)
 	if (need_lock)
 		rtnl_lock();
 
+	// here the debug system can be accessed
+	//dhd_check_debug_system(((dhd_pub_t *) wl->pub)->bus);
+
 	err = wl_dongle_up(ndev, 0);
 	if (unlikely(err)) {
 		WL_ERR(("wl_dongle_up failed\n"));
 		goto default_conf_out;
 	}
 	dhd_dongle_up = true;
+
+	// Here it is not possible to access the debug system!
+	//dhd_check_debug_system(((dhd_pub_t *) wl->pub)->bus);
 
 default_conf_out:
 	if (need_lock)
