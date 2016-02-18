@@ -34,7 +34,10 @@ __attribute__((naked)) void
 interrupt_enable_hook(void)
 {
 	asm("push {r0-r3,lr}\n"					// save the registers that might change as well as the link register
-		"bl testprint2\n"
+		"mrc p14, 0, r0, c0, c0, 0\n"
+		"mrc p14, 0, r1, c1, c0, 0\n"
+		"mrc p14, 0, r2, c2, c0, 0\n"
+		"bl interrupt_enable_do\n"
 		"pop {r0-r3,lr}\n"					// restore the saved registers
 		"b sub_166b4\n"						// call the function that was supposed to be called
 		);
@@ -58,18 +61,27 @@ testprint3(void)
 	for (; (unsigned int) sp < BOTTOM_OF_STACK - 16; sp+=4)
 		printf("%08x: %08x %08x %08x %08x \n", sp, *(sp), *(sp+1), *(sp+2), *(sp+3));
 
+	//printf("D11 maccontrol %08x\n", *(unsigned int *) 0x18001120);
+
 }
 
 void
-testprint2(void)
+interrupt_enable_do(int a1, int a2, int a3)
 {
-	struct sk_buff *p = 0;
+//	struct sk_buff *p = 0;
 
-	p = create_frame((unsigned int) &sub_166b4, 0, 0, 0, get_stack_ptr(), BOTTOM_OF_STACK - (unsigned int) get_stack_ptr());
+//	p = create_frame((unsigned int) &sub_166b4, 0, 0, 0, get_stack_ptr(), BOTTOM_OF_STACK - (unsigned int) get_stack_ptr());
 
-	dngl_sendpkt_alternative(SDIO_INFO_ADDR, p, SDPCM_DATA_CHANNEL);
+//	dngl_sendpkt_alternative(SDIO_INFO_ADDR, p, SDPCM_DATA_CHANNEL);
+	int i = 0;
+	//unsigned short offsets[] = { 0, 0x18, 0x1c, 0x28, 0x80, 0x88, 0x8c, 0x100, 0x104, 0x108, 0x10c, 0x110, 0x114, 0x118, 0x11c, 0x140, 0x144, 0x148, 0x14c, 0x150, 0x154, 0x158, 0x15c};
+	printf("%08x %08x %08x\n", a1, a2, a3);
+	unsigned short offsets[] = { 0, 0x18, 0x1c, 0x28 };
+	for (i = 0; i < 4; i++)
+		printf("%08x: %08x\n", ((a2  & 0xFFFFFFF0) + (a3 & 0xFFFFFFF0) + offsets[i]), *(int *) ((a2  & 0xFFFFFFF0) + (a3 & 0xFFFFFFF0) + offsets[i]));
 }
 
+/*
 int
 bus_binddev_rom_hook(void *sdiodev, void *d11dev)
 {
@@ -110,6 +122,53 @@ bus_binddev_rom_hook(void *sdiodev, void *d11dev)
 
 	
 	return x;
+}
+*/
+
+__attribute__((naked)) void 
+console_size_r0(void)
+{
+	asm("movw r0, #0x800\n");
+}
+
+__attribute__((naked)) void 
+console_size_r2(void)
+{
+	asm("movw r2, #0x800\n");
+}
+
+__attribute__((naked)) void 
+function_with_huge_jump_table_hook(void)
+{
+	asm("push {r4-r11, lr}\n"		// lr is not included, as it was already pushed before
+		"push {r0-r3,lr}\n"					// save the registers that might change as well as the link register
+		"bl function_with_huge_jump_table_do\n"
+		"pop {r0-r3,lr}\n"					// restore the saved registers
+		"b function_with_huge_jump_table+4\n"					// jump to the original function
+		);
+}
+
+void
+function_with_huge_jump_table_do(void *wlc, int a2, int cmd, int a4)
+{
+//	printf("jmptab: %d %08x\n", cmd, a4);
+}
+
+__attribute__((naked)) void 
+handle_ioctl_cmd_hook(void)
+{
+	asm(
+		"push {r0-r3,lr}\n"					// save the registers that might change as well as the link register
+		"bl handle_ioctl_cmd_do\n"
+		"pop {r0-r3,lr}\n"					// restore the saved registers
+		"b handle_ioctl_cmd\n"					// jump to the original function
+		);
+}
+
+void
+handle_ioctl_cmd_do(void *a1, int cmd, void *buf, int len)
+{
+//	printf("ioctl: %d\n", cmd);
 }
 
 void

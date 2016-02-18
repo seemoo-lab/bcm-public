@@ -25,6 +25,8 @@
  * $Id: dhd_linux.c 419821 2013-08-22 21:43:26Z $
  */
 
+extern void dhd_check_debug_system(void *bus);
+
 #include <typedefs.h>
 #include <linuxver.h>
 #include <osl.h>
@@ -3118,6 +3120,9 @@ dhd_open(struct net_device *net)
 
 		}
 
+		// here the debug system can be accessed???
+		//dhd_check_debug_system(dhd->pub.bus);
+
 		/* dhd_prot_init has been called in dhd_bus_start or wl_android_wifi_on */
 		memcpy(net->dev_addr, dhd->pub.mac.octet, ETHER_ADDR_LEN);
 
@@ -3153,6 +3158,8 @@ exit:
 
 	DHD_OS_WAKE_UNLOCK(&dhd->pub);
 
+	// Here it is not possible to access the debug system!
+	//dhd_check_debug_system(dhd->pub.bus);
 
 	return ret;
 }
@@ -3681,9 +3688,15 @@ dhd_bus_start(dhd_pub_t *dhdp)
 
 	dhd_process_cid_mac(dhdp, TRUE);
 
+	// here the debug system can be accessed
+	//dhd_check_debug_system(dhd->pub.bus);
+
 	/* Bus is ready, do any protocol initialization */
 	if ((ret = dhd_prot_init(&dhd->pub)) < 0)
 		return ret;
+
+	// here the debug system can be accessed
+	//dhd_check_debug_system(dhd->pub.bus);
 
 	dhd_process_cid_mac(dhdp, FALSE);
 

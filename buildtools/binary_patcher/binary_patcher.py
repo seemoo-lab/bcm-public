@@ -148,6 +148,18 @@ class GenericPatch2(BasePatch):
         self.data = str(self.patch_gen(self.to))
         return super(GenericPatch2, self).apply(firmware)
 
+class StringPatch(BasePatch):
+    """
+    Place a string into the firmware
+    """
+    def __init__(self, pos, to):
+        self.pos = pos
+        self.to = to
+
+    def apply(self, firmware, **kargs):
+        self.data = self.to + '\0'
+        return super(StringPatch, self).apply(firmware)
+
         
 def patch_firmware(src, dst, patchs, extra = "", **kargs):
     """

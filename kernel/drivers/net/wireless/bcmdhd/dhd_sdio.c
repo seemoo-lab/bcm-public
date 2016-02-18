@@ -3084,6 +3084,19 @@ xfer_done:
 	return bcmerror;
 }
 
+void
+dhd_check_debug_system(struct dhd_bus *bus)
+{
+	uint8 dump[16];
+	dhdsdio_membytes(bus, FALSE, 0x18007000, dump, 4);
+	//dhd_send_udp_msg(6670, dump, 4);
+	//udpprintf(6681, "0x%08x\n", *(uint32 *) dump);
+	DHD_TRACE(("%s: Enter DBG 0x%08x\n", __FUNCTION__, *(uint32 *) dump));
+
+	//dhdsdio_membytes(bus, FALSE, 0x18001000, dump, 4);
+	//DHD_TRACE(("%s: Enter D11 0x%08x\n", __FUNCTION__, *(uint32 *) dump));
+}
+
 #ifdef DHD_DEBUG
 static int
 dhdsdio_readshared(dhd_bus_t *bus, sdpcm_shared_t *sh)
@@ -3743,6 +3756,9 @@ dhdsdio_doiovar(dhd_bus_t *bus, const bcm_iovar_t *vi, uint32 actionid, const ch
 
 		/* Call to do the transfer */
 		bcmerror = dhdsdio_membytes(bus, set, address, data, size);
+
+		// Here it is not possible to access the debug system
+		//dhd_check_debug_system(bus);
 
 		break;
 	}
@@ -4641,6 +4657,9 @@ dhd_bus_init(dhd_pub_t *dhdp, bool enforce_mutex)
 
 	DHD_TRACE(("%s: Enter\n", __FUNCTION__));
 
+	// here the debug system can be accessed
+	//dhd_check_debug_system(bus);
+
 	ASSERT(bus->dhd);
 	if (!bus->dhd)
 		return 0;
@@ -4669,6 +4688,9 @@ dhd_bus_init(dhd_pub_t *dhdp, bool enforce_mutex)
 		goto exit;
 	}
 
+	// here the debug system can be accessed
+	//dhd_check_debug_system(bus);
+
 	/* Enable function 2 (frame transfers) */
 	W_SDREG((SDPCM_PROT_VERSION << SMB_DATA_VERSION_SHIFT),
 	        &bus->regs->tosbmailboxdata, retries);
@@ -4685,6 +4707,11 @@ dhd_bus_init(dhd_pub_t *dhdp, bool enforce_mutex)
 
 	DHD_ERROR(("%s: enable 0x%02x, ready 0x%02x (waited %uus)\n",
 	          __FUNCTION__, enable, ready, tmo.elapsed));
+
+	dhdsdio_checkdied(bus, NULL, 0);
+
+	// here the debug system can be accessed
+	//dhd_check_debug_system(bus);
 
 	//dhdsdio_membytes(bus, FALSE, 0x1EBDDC, (uint8 *) &console_addr, 4);
 	//dhdsdio_membytes(bus, FALSE, 0x1EBDE0, (uint8 *) &console_size, 4);
@@ -4740,10 +4767,10 @@ dhd_bus_init(dhd_pub_t *dhdp, bool enforce_mutex)
 			bcmsdh_intr_disable(bus->sdh);
 		}
 
-	}
+		// here the debug system can be accessed
+		//dhd_check_debug_system(bus);
 
-
-	else {
+	} else {
 		/* Disable F2 again */
 		enable = SDIO_FUNC_ENABLE_1;
 		bcmsdh_cfg_write(bus->sdh, SDIO_FUNC_0, SDIOD_CCCR_IOEN, enable, NULL);
@@ -4760,6 +4787,9 @@ dhd_bus_init(dhd_pub_t *dhdp, bool enforce_mutex)
 	else
 		bcmsdh_cfg_write(bus->sdh, SDIO_FUNC_1,
 			SBSDIO_FUNC1_CHIPCLKCSR, saveclk, &err);
+
+	// here the debug system can be accessed
+	//dhd_check_debug_system(bus);
 
 	/* If we didn't come up, turn off backplane clock */
 	if (dhdp->busstate != DHD_BUS_DATA)
@@ -7512,7 +7542,12 @@ dhd_bus_download_firmware(struct dhd_bus *bus, osl_t *osh,
 	bus->fw_path = pfw_path;
 	bus->nv_path = pnv_path;
 
+	DHD_TRACE(("%s: Enter\n", __FUNCTION__));
+
 	ret = dhdsdio_download_firmware(bus, osh, bus->sdh);
+
+	// here the debug system can be accessed
+	//dhd_check_debug_system(bus);
 
 
 	return ret;
@@ -8006,11 +8041,17 @@ _dhdsdio_download_firmware(struct dhd_bus *bus)
 		goto err;
 	}
 
+	// here the debug system can be accessed
+	// dhd_check_debug_system(bus);
+
 	/* Take arm out of reset */
 	if (dhdsdio_download_state(bus, FALSE)) {
 		DHD_ERROR(("%s: error getting out of ARM core reset\n", __FUNCTION__));
 		goto err;
 	}
+
+	// here the debug system can be accessed
+	// dhd_check_debug_system(bus);
 
 	bcmerror = 0;
 

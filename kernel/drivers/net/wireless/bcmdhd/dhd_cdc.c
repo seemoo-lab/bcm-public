@@ -122,6 +122,7 @@ dhdcdc_query_ioctl(dhd_pub_t *dhd, int ifidx, uint cmd, void *buf, uint len, uin
 
 	DHD_TRACE(("%s: Enter\n", __FUNCTION__));
 	DHD_CTL(("%s: cmd %d len %d\n", __FUNCTION__, cmd, len));
+	udpprintf(6678, "%s: cmd %d len %d\n", __FUNCTION__, cmd, len);
 
 
 	/* Respond "bcmerror" and "bcmerrorstr" with local cache */
@@ -207,6 +208,7 @@ dhdcdc_set_ioctl(dhd_pub_t *dhd, int ifidx, uint cmd, void *buf, uint len, uint8
 
 	DHD_TRACE(("%s: Enter\n", __FUNCTION__));
 	DHD_CTL(("%s: cmd %d len %d\n", __FUNCTION__, cmd, len));
+	udpprintf(6678, "%s: cmd %d len %d\n", __FUNCTION__, cmd, len);
 
 	if (dhd->busstate == DHD_BUS_DOWN) {
 		DHD_ERROR(("%s : bus is down. we have nothing to do\n", __FUNCTION__));
