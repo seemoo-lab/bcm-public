@@ -22,7 +22,7 @@ Our software may damage your hardware and may void your hardware’s warranty! Y
 
 ## Steps needed to run the boot.img on your phone
 
-* Download the [boot.img](https://dev.seemoo.tu-darmstadt.de/bcm/bcm-public/raw/master/boot.img)
+* Download the [boot.img](https://dev.seemoo.tu-darmstadt.de/bcm/bcm-public/raw/master/boot.img) (this project is still in heavy development, the monitor mode should work on the boot.img in this commit though: 65ce51f3363135176a870338ab24137d1151d692)
 * `adb reboot bootloader`
 * `fastboot boot boot.img`
   * without the `flash` parameter, this boot image will be reset to the previous one on the next reboot
