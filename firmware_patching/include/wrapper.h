@@ -17,4 +17,6 @@ extern int sum_buff_lengths(void *osh, void *p); // 0x1360C
 extern void *wlc_mctrl_write(void *wlc_hw_info_ptr); // 0x4df60
 extern void *wlc_bmac_mctrl(void *wlc_hw_info_ptr, int mask, int val); // 0x4F080
 
+extern void *sdio_header_parsing_from_sk_buff(void *sdio, void *p); //0x182A64
+
 #endif /*WRAPPER_H*/

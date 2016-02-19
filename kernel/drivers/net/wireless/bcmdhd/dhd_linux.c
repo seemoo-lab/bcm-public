@@ -43,6 +43,7 @@
 #include <linux/fcntl.h>
 #include <linux/fs.h>
 #include <linux/ip.h>
+#include <linux/netlink.h>
 #include <net/addrconf.h>
 
 #include <asm/uaccess.h>
@@ -97,6 +98,11 @@ typedef struct histo_ {
 
 static histo_t vi_d1, vi_d2, vi_d3, vi_d4;
 #endif /* WLMEDIA_HTSF */
+
+/* Netlink stuff for NexMon */
+#include <dhd_sdio.h>
+#define NETLINK_USER 31
+struct sock *nl_sk = NULL;
 
 
 #if defined(SOFTAP)
@@ -512,6 +518,9 @@ module_param(dhd_pktgen, uint, 0);
 uint dhd_pktgen_len = 0;
 module_param(dhd_pktgen_len, uint, 0);
 #endif /* SDTEST */
+
+/* NexMon */
+dhd_info_t* nexmon_glob_dhd = NULL;
 
 /* Version string to report */
 #ifdef DHD_DEBUG
@@ -3313,6 +3322,8 @@ dhd_attach(osl_t *osh, struct dhd_bus *bus, uint bus_hdrlen)
 	dhd_attach_states_t dhd_state = DHD_ATTACH_STATE_INIT;
 	DHD_TRACE(("%s: Enter\n", __FUNCTION__));
 
+    nexmon_glob_dhd = dhd;
+
 	/* updates firmware nvram path if it was provided as module parameters */
 	if (strlen(firmware_path) != 0) {
 		bzero(fw_path, MOD_PARAM_PATHLEN);
@@ -4357,8 +4368,6 @@ dhd_preinit_ioctls(dhd_pub_t *dhd)
 #endif
 #endif /* DISABLE_11N */
 
-
-
 	/* query for 'ver' to get version info from firmware */
 	memset(buf, 0, sizeof(buf));
 	ptr = buf;
@@ -4661,6 +4670,26 @@ static int dhd_device_ipv6_event(struct notifier_block *this,
 	up(&dhd->thr_sysioc_ctl.sema);
 exit:
 	return NOTIFY_DONE;
+}
+
+/* NexMon */
+static void 
+nexmon_nl_recv_filter(struct sk_buff *skb) {
+
+    struct nlmsghdr *nlh;
+    
+    nlh = (struct nlmsghdr *)skb->data;
+    DHD_INFO(("Netlink received msg payload: %s\n", (char *)nlmsg_data(nlh)));
+
+
+    //awake from suspend
+    if(nexmon_glob_dhd != NULL) {
+        dhd_set_suspend(0, &nexmon_glob_dhd->pub);
+    }
+    
+    nexmon_send_filter_pkt();
+
+    return;
 }
 
 int
@@ -4996,6 +5025,8 @@ dhd_module_cleanup(void)
 {
 	DHD_TRACE(("%s: Enter\n", __FUNCTION__));
 
+    /* NexMon */
+    netlink_kernel_release(nl_sk);
 
 	dhd_bus_unregister();
 
@@ -5127,6 +5158,13 @@ dhd_module_init(void)
 #if defined(WL_CFG80211)
 	wl_android_post_init();
 #endif /* defined(WL_CFG80211) */
+
+    /* NexMon */
+    nl_sk = netlink_kernel_create(&init_net, NETLINK_USER, 0, nexmon_nl_recv_filter, NULL, THIS_MODULE);
+    if (!nl_sk) {
+        DHD_ERROR(("%s: Error creating socket.\n", __FUNCTION__));
+        goto fail_2;
+    }
 
 	return error;
 

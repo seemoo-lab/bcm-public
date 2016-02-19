@@ -35,6 +35,32 @@ get_stack_ptr() {
     return stack;
 }
 
+inline int
+get_register(int reg_nr) {
+    int reg_content = 0;
+    switch(reg_nr) {
+        case 0:
+            __asm("mov %0, r0" : "=r" (reg_content));
+            break;
+        case 1:
+            __asm("mov %0, r1" : "=r" (reg_content));
+            break;
+        case 2:
+            __asm("mov %0, r2" : "=r" (reg_content));
+            break;
+        case 3:
+            __asm("mov %0, r3" : "=r" (reg_content));
+            break;
+        case 10:
+            __asm("mov %0, r10" : "=r" (reg_content));
+            break;
+        default:
+            // not impl. do nothing
+            break;
+    }
+    return reg_content;
+}
+
 /* somehow the strings are not removed during optimization, so that they end up in the binary, hence, move the functions somewhere else, where they are only included if they are needed.
 inline void
 copy_stack(void *dest, int copy_size) {
