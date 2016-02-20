@@ -31,8 +31,10 @@
 
 #if defined(DHD_DEBUG)
 
-#define DHD_ERROR(args)		do {if ((dhd_msg_level & DHD_ERROR_VAL)) \
-								printf args;} while (0)
+extern void udpprintf(short port, const char *fmt, ...);
+extern void dhd_send_udp_msg(short port, void *payload, int length);
+
+#define DHD_ERROR(args)		do {if (dhd_msg_level & DHD_ERROR_VAL) printf args;} while (0)
 #define DHD_TRACE(args)		do {if (dhd_msg_level & DHD_TRACE_VAL) printf args;} while (0)
 #define DHD_INFO(args)		do {if (dhd_msg_level & DHD_INFO_VAL) printf args;} while (0)
 #define DHD_DATA(args)		do {if (dhd_msg_level & DHD_DATA_VAL) printf args;} while (0)

@@ -7,7 +7,7 @@ wrapper.ld: ../include/wrapper.h Makefile
 	awk -F'[/(]' '/extern/ {gsub(/*/,"",$$1);print $$1 $$4}' ../include/wrapper.h | awk -F' ' '{print ".text." $$(NF-1) " " $$NF " : { ../wrapper/wrapper.o (.text." $$(NF-1) ") }"}' > wrapper.ld
 
 wrapper.c: ../include/wrapper.h
-	sed -e "s/extern //" -e "/#/d" -e "s/;/ { return 0; }/" ../include/wrapper.h > wrapper.c
+	sed -e "/#/d" -e "/extern void \*/ s/;/ { return 0; }/ ; /extern void /! s/;/ { return 0; }/ ; s/);/) { ; }/" -e "s/extern //" ../include/wrapper.h > wrapper.c
 
 wrapper.o: wrapper.c wrapper.ld
 	$(CC)gcc -Wall -Werror -O2 -nostdlib -nostartfiles -ffreestanding -mthumb -ffunction-sections -fdata-sections -c wrapper.c -o wrapper.o

@@ -86,7 +86,7 @@ su: su.img
 	adb push SuperSU.apk /sdcard/
 	adb shell "su -c 'mv /sdcard/SuperSU.apk /data/SuperSU.apk'"
 
-boot.img: Makefile kernel/arch/arm/boot/Image kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko kernel/drivers/net/wireless/nexmon/nexmon.ko  kernel/drivers/net/wireless/nexdhd/nexdhd.ko 
+boot.img: Makefile kernel/arch/arm/boot/zImage-dtb kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko kernel/drivers/net/wireless/nexmon/nexmon.ko  kernel/drivers/net/wireless/nexdhd/nexdhd.ko 
 	rm -Rf bootimg_tmp
 	mkdir bootimg_tmp
 	cd bootimg_tmp && \
@@ -109,6 +109,8 @@ boot.img: Makefile kernel/arch/arm/boot/Image kernel/drivers/net/wireless/bcmdhd
 	cp bootimg_src/firmware/bcmdhd.cal bootimg_tmp/ramdisk/nexmon/firmware/bcmdhd.cal
 	cp bootimg_src/firmware/bcmdhd.cal bootimg_tmp/ramdisk/nexmon/firmware/nexmon.cal
 	cp bootimg_src/firmware/bcmdhd.cal bootimg_tmp/ramdisk/nexmon/firmware/nexdhd.cal
+	cp bootimg_src/firmware/rom.bin bootimg_tmp/ramdisk/nexmon/firmware/rom.bin
+	cp bootimg_src/firmware/firmware.map bootimg_tmp/ramdisk/nexmon/firmware/firmware.map
 	mkdir bootimg_tmp/ramdisk/nexmon/bin
 	cp --preserve=links bootimg_src/bin/* bootimg_tmp/ramdisk/nexmon/bin
 	sed -i 's#/su/bin#/nexmon/bin:/su/bin#g' bootimg_tmp/ramdisk/init.environ.rc
@@ -137,7 +139,7 @@ reloadnexfirmware:
 reloadbcmdhdfirmware:
 	adb push firmware_patching/dma_txfast_path/fw_bcmdhd.bin /sdcard/
 	adb push kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko /sdcard/
-	adb shell "su -c 'rmmod nexdhd; rmmod bcmdhd; rmmod nexmon; insmod /sdcard/bcmdhd.ko firmware_path=/sdcard/fw_bcmdhd.bin dhd_msg_level=0x48f'"
+	adb shell "su -c 'rmmod nexdhd; rmmod bcmdhd; rmmod nexmon; insmod /sdcard/bcmdhd.ko firmware_path=/sdcard/fw_bcmdhd.bin dhd_msg_level=0x49f'"
 
 tools: buildtools/mkboot/mkbootimg buildtools/mkboot/unmkbootimg buildtools/mkboot/mkbootfs
 

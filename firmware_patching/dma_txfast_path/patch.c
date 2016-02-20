@@ -11,6 +11,116 @@
 #define SDIO_SEQ_NUM 0x108
 
 extern void *dngl_sendpkt_alternative(void *sdio, void *p, int chan);
+struct sk_buff *create_frame(unsigned int hooked_fct, unsigned int arg0, unsigned int arg1, unsigned int arg2, void *start_address, unsigned int length);
+
+__attribute__((naked)) void 
+wlc_txfifo_hook(void)
+{
+	asm("push {r0-r2, r4-r11, lr}\n"		// lr is not included, as it was already pushed before
+		"push {r0-r3,lr}\n"					// save the registers that might change as well as the link register
+		"bl testprint\n"
+		"pop {r0-r3,lr}\n"					// restore the saved registers
+		"b wlc_txfifo+4\n"					// jump to the original function
+		);
+}
+
+void
+testprint(void)
+{
+	printf("wlc_txfifo\n");
+}
+
+__attribute__((naked)) void
+interrupt_enable_hook(void)
+{
+	asm("push {r0-r3,lr}\n"					// save the registers that might change as well as the link register
+		"bl testprint2\n"
+		"pop {r0-r3,lr}\n"					// restore the saved registers
+		"b sub_166b4\n"						// call the function that was supposed to be called
+		);
+}
+
+__attribute__((naked)) void
+setup_some_stuff_hook(void)
+{
+	asm("push {r0-r3,lr}\n"					// save the registers that might change as well as the link register
+		"bl testprint3\n"
+		"pop {r0-r3,lr}\n"					// restore the saved registers
+		"b setup_some_stuff\n"				// call the function that was supposed to be called
+		);
+}
+
+void
+testprint3(void)
+{
+	unsigned int *sp = get_stack_ptr();
+
+	for (; (unsigned int) sp < BOTTOM_OF_STACK - 16; sp+=4)
+		printf("%08x: %08x %08x %08x %08x \n", sp, *(sp), *(sp+1), *(sp+2), *(sp+3));
+
+}
+
+void
+testprint2(void)
+{
+	struct sk_buff *p = 0;
+
+	p = create_frame((unsigned int) &sub_166b4, 0, 0, 0, get_stack_ptr(), BOTTOM_OF_STACK - (unsigned int) get_stack_ptr());
+
+	dngl_sendpkt_alternative(SDIO_INFO_ADDR, p, SDPCM_DATA_CHANNEL);
+}
+
+int
+bus_binddev_rom_hook(void *sdiodev, void *d11dev)
+{
+	int x;
+	int *sdio_hw = (int *) *(*(((int **) sdiodev)+6)+6);
+	void *z;
+	void *console_buf;
+
+	// enlage console
+	console_buf = malloc(0x2000, 0);
+	memset(console_buf, 0, 0x2000);
+	*(void **) 0x1EBDDC = console_buf;
+	*(int *) 0x1EBDE0 = 0x2000;
+	*(int *) 0x1EBDE4 = 0;
+	*(void **) 0x1EBDE8 = console_buf;
+
+	//x = bus_binddev_rom(sdiodev, d11dev);
+	//x = bus_binddev(sdio_hw, sdiodev, d11dev);
+	sdio_hw[14] = (int) sdiodev;
+	z = sub_1831A0((void *) sdio_hw[1], sdio_hw, sdio_hw[0], sdiodev);
+	sdio_hw[3] = (int) z;
+
+	sdio_hw[15] = (int) d11dev;
+//	sdio_hw[15] = 0x100; // hinders the chip from initializing, as sub_14C54 tries to call a callback referenced through this pointer
+
+//	struct sk_buff *p = 0;
+//	p = create_frame(0xdddddddd, 0, 0, 0, get_stack_ptr(), BOTTOM_OF_STACK - (unsigned int) get_stack_ptr());
+//	dngl_sendpkt_alternative(SDIO_INFO_ADDR, p, SDPCM_DATA_CHANNEL);
+
+	*(((int *) sdiodev)+9) = (int) d11dev;
+	*(((int *) d11dev)+36/4) = (int) sdiodev;
+
+	if(z) {
+		sub_16D8C(0x1D3CB8, 0x183715, sdio_hw);
+		sub_16D8C(0x93B8D, 0x14B8D, sdio_hw);
+		x = 0;
+	}
+
+	
+	return x;
+}
+
+void
+sub_1ECAB0_hook(int a1)
+{
+	printf("%08x\n", a1);
+	sub_1ECAB0(a1);
+	struct sk_buff *p = 0;
+	p = create_frame(0xdddddddd, 0, 0, 0, get_stack_ptr(), BOTTOM_OF_STACK - (unsigned int) get_stack_ptr());
+	dngl_sendpkt_alternative(SDIO_INFO_ADDR, p, SDPCM_DATA_CHANNEL);
+}
 
 struct sk_buff *
 create_frame(unsigned int hooked_fct, unsigned int arg0, unsigned int arg1, unsigned int arg2, void *start_address, unsigned int length) {
@@ -75,7 +185,7 @@ dma_txfast_hook(void *di, struct sk_buff *p, int commit)
 		}
 	}
 
-	printf("X %08x %08x %08x %d\n", (unsigned int) di, (unsigned int) p, (unsigned int) p->data, p->len);
+	//printf("X %08x %08x %08x %d\n", (unsigned int) di, (unsigned int) p, (unsigned int) p->data, p->len);
 
 	return ret;
 }

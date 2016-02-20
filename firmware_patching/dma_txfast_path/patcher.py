@@ -14,7 +14,7 @@ def getSectionAddr(name):
 
 patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin", 
     "fw_bcmdhd.bin", [
-        ExernalArmPatch(0x180050, "dngl_sendpkt.bin"),
+	ExernalArmPatch(0x180050, "dngl_sendpkt.bin"),
 	BLPatch(0x182796 - 0x2400, 0x184F14), # START some functions called by dngl_sendpkt or one of its subfunctions
 	BLPatch(0x1827A4 - 0x2400, 0x184F64),
 	BLPatch(0x1827CE - 0x2400, 0x184F64),
@@ -60,4 +60,19 @@ patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin",
 	ExernalArmPatch(getSectionAddr(".text.dma_txfast_hook"), "dma_txfast_hook.bin"),
 	GenericPatch4(0x180C34, getSectionAddr(".text.dma_txfast_hook")+1), # function pointer table entry to dma_txfast replaced by dma_txfast_hook
 	GenericPatch4(0x1D53C4, getSectionAddr(".text.dma_txfast_hook")+1), # function pointer table entry to dma_txfast replaced by dma_txfast_hook
-    ])
+	ExernalArmPatch(getSectionAddr(".text.wlc_txfifo_hook"), "wlc_txfifo_hook.bin"),
+	BPatch(0x193744, getSectionAddr(".text.wlc_txfifo_hook")), # replace the push instrunction of the original wlc_txfifo function by a branch to our hook
+	ExernalArmPatch(getSectionAddr(".text.interrupt_enable_hook"), "interrupt_enable_hook.bin"),
+	BPatch(0x1838ac, getSectionAddr(".text.interrupt_enable_hook")),
+	ExernalArmPatch(getSectionAddr(".text.setup_some_stuff_hook"), "setup_some_stuff_hook.bin"),
+	BLPatch(0x1F2358, getSectionAddr(".text.setup_some_stuff_hook")),
+	ExernalArmPatch(getSectionAddr(".text.bus_binddev_rom_hook"), "bus_binddev_rom_hook.bin"),
+	GenericPatch4(0x1D9B08, getSectionAddr(".text.bus_binddev_rom_hook")+1), # function pointer in the dngl_pointer_table
+	ExernalArmPatch(getSectionAddr(".text.sub_1ECAB0_hook"), "sub_1ECAB0_hook.bin"),
+	BLPatch(0x18389A, getSectionAddr(".text.sub_1ECAB0_hook")),
+#	GenericPatch4(0x1ED722, 0x00000000), # NOP the call to initialize_device_core to not initialize the D11 core
+#	GenericPatch4(0x1ED72A, 0x00000000), # NOP the check if D11 core initialization returned an error
+#	GenericPatch2(0x19B260, int('1011111000000000',2)), # replace function with huge jump table with a breakpoint
+#	GenericPatch4(0x19B348, 0xFFFFFFFF), # breakpoint in function with huge jump table before jumping
+	GenericPatch4(0x18AE72, 0xFFFFFFFF), # breakpoint in function with huge jump table before jumping
+	])
