@@ -70,6 +70,7 @@ copy_stack(void *dest, int copy_size) {
     }
     return;
 }
+*/
 
 inline void
 hexdump(char *desc, void *addr, int len) {
@@ -114,6 +115,5 @@ hexdump(char *desc, void *addr, int len) {
     // And print the final ASCII bit.
     printf ("  %s\n", buff);
 }
-*/
 
 #endif /* HELPER_H */

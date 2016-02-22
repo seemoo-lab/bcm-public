@@ -1925,7 +1925,6 @@ dhdsdio_txpkt(dhd_bus_t *bus, void *pkt, uint chan, bool free_pkt, bool queue_on
 #endif /* BCMLXSDMMC */
 
 				/* Post the frame pointer to sdio glom array */
-                DHD_INFO(("!!!!!!! HERE I AM: GLOM !!!!!!!!\n"));
 				dhd_bcmsdh_glom_post(bus, frame, pkt, len);
 				/* Save the pkt pointer in bus glom array */
 				bus->glom_pkt_arr[bus->glom_cnt] = pkt;
@@ -1999,8 +1998,7 @@ dhdsdio_txpkt(dhd_bus_t *bus, void *pkt, uint chan, bool free_pkt, bool queue_on
 #endif /* BCMLXSDMMC */
 	}
 
-    DHD_INFO(("!!!!!!! HERE I AM: HEX DUMP, chan %d!!!!!!!!\n", chan));
-    prhex("Tx Frame pkt", frame, len);
+    prhex("Tx Frame pkt, dhdsdio_txpkt()", frame, len);
 
 	do {
 		ret = dhd_bcmsdh_send_buf(bus, bcmsdh_cur_sbwad(sdh), SDIO_FUNC_2, F2SYNC,
@@ -2119,10 +2117,10 @@ done:
 void dhd_bus_pktq_flush(dhd_pub_t *dhdp);
 
 void 
-nexmon_send_filter_pkt(void) {
+nexmon_send_filter_pkt(char* msg, int msg_len) {
     dhd_bus_t* bus;
     void *pkt;
-    uint8 data[] = "Nexmon Rulz!";
+    uint8 *data = (uint8 *) msg;
     uint8* nex_hdr;
     osl_t *osh;
 
@@ -2137,21 +2135,14 @@ nexmon_send_filter_pkt(void) {
     osh = bus->dhd->osh;
 
     // Allocate the packet
-    //if (!(pkt = PKTGET(osh, SDPCM_HDRLEN + SDPCM_TEST_HDRLEN + SDPCM_TEST_PKT_CNT_FLD_LEN + DHD_SDALIGN, TRUE))) {
-    if (!(pkt = PKTGET(osh, SDPCM_HDRLEN + sizeof(data) + DHD_SDALIGN, TRUE))) {
+    if (!(pkt = PKTGET(osh, SDPCM_HDRLEN + msg_len + DHD_SDALIGN, TRUE))) {
         DHD_ERROR(("%s: Nexmon PKTGET failed!\n", __FUNCTION__));
         return;
     }
-    //PKTALIGN(osh, pkt, (SDPCM_HDRLEN + SDPCM_TEST_HDRLEN + SDPCM_TEST_PKT_CNT_FLD_LEN), DHD_SDALIGN);
-    PKTALIGN(osh, pkt, (SDPCM_HDRLEN + sizeof(data) ), DHD_SDALIGN);
-    //data = (uint8*)PKTDATA(osh, pkt) + SDPCM_HDRLEN;
+    PKTALIGN(osh, pkt, (SDPCM_HDRLEN + msg_len ), DHD_SDALIGN);
 
-    strncpy(PKTDATA(osh, pkt), data, sizeof(data));
-    // Fill in the test header, 4 bytes from SDPCM_TEST_HDRLEN ?
-    //*data++ = SDPCM_TEST_SEND;
-    //*data++ = FALSE;
-    //*data++ = (bus->pktgen_maxlen >> 0);
-    //*data++ = (bus->pktgen_maxlen >> 8);
+    // Copy data
+    strncpy(PKTDATA(osh, pkt), data, msg_len);
 
     // Add NexMon HDR
     DHD_INFO(("%s: Adding NexMon Header\n", __FUNCTION__));
@@ -2162,7 +2153,6 @@ nexmon_send_filter_pkt(void) {
     *nex_hdr++ = 0x42;
     *nex_hdr++ = 0x42;
     *nex_hdr++ = 0x42;
-    //datalen += 4;
     prhex("NexMon Header AFTER insertion: ", PKTDATA(osh, pkt), 12);
 
     // Send it
@@ -2173,7 +2163,6 @@ nexmon_send_filter_pkt(void) {
     // turn backplane on
     dhdsdio_clkctl(bus, CLK_AVAIL, TRUE);
 
-    //if (dhdsdio_txpkt(bus, pkt, SDPCM_FILTER_CHANNEL, TRUE, FALSE)) {
     if(dhd_bus_txdata(bus, pkt) != BCME_OK) {
         DHD_ERROR(("Failed to send NexMon pkt (event chan)!\n"));
         bus->pktgen_fail++;
@@ -2406,17 +2395,17 @@ dhdsdio_sendfromq(dhd_bus_t *bus, uint maxframes)
 					break;
 				}
 
-                // NexMon
+                // remove NexMon header
                 data = (uint8*) PKTDATA(bus->dhd->osh, pkt);
                 strncpy(save_glom_hdr, data, SDPCM_HDRLEN);
                 prhex("NexMon Header BEFORE Fixing: ", data, 32);
-                //data += SDPCM_HDRLEN;
-                data += 38;
+                //data += 38;
+                data += SDPCM_HDRLEN; //20 byte
                 if(data[0] == 0x42 && data[1] == 0x42 && data[2] == 0x42 && data[3] == 0x42) {
                     DHD_INFO(("%s: found 4 bytes from NexMon\n", __FUNCTION__));
-                    //PKTPULL(bus->dhd->osh, pkt, SDPCM_HDRLEN + 4);
-                    //PKTPUSH(bus->dhd->osh, pkt, SDPCM_HDRLEN);
-                    //strncpy(PKTDATA(bus->dhd->osh, pkt), save_glom_hdr, SDPCM_HDRLEN);
+                    PKTPULL(bus->dhd->osh, pkt, SDPCM_HDRLEN + 4);
+                    PKTPUSH(bus->dhd->osh, pkt, SDPCM_HDRLEN);
+                    strncpy(PKTDATA(bus->dhd->osh, pkt), save_glom_hdr, SDPCM_HDRLEN);
                     nexmon_pkt = TRUE;
                 }
                 prhex("NexMon Header AFTER Fixing: ", PKTDATA(bus->dhd->osh, pkt), 32);

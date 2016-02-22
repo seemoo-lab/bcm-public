@@ -520,9 +520,6 @@ uint dhd_pktgen_len = 0;
 module_param(dhd_pktgen_len, uint, 0);
 #endif /* SDTEST */
 
-/* NexMon */
-dhd_info_t* nexmon_glob_dhd = NULL;
-
 /* Version string to report */
 #ifdef DHD_DEBUG
 #ifndef SRCBASE
@@ -3323,8 +3320,6 @@ dhd_attach(osl_t *osh, struct dhd_bus *bus, uint bus_hdrlen)
 	dhd_attach_states_t dhd_state = DHD_ATTACH_STATE_INIT;
 	DHD_TRACE(("%s: Enter\n", __FUNCTION__));
 
-    nexmon_glob_dhd = dhd;
-
 	/* updates firmware nvram path if it was provided as module parameters */
 	if (strlen(firmware_path) != 0) {
 		bzero(fw_path, MOD_PARAM_PATHLEN);
@@ -4680,15 +4675,10 @@ nexmon_nl_recv_filter(struct sk_buff *skb) {
     struct nlmsghdr *nlh;
     
     nlh = (struct nlmsghdr *)skb->data;
+    // skb->len == skb->tail - skb->data * sizeof(char); seems to be 1040 by default
     DHD_INFO(("Netlink received msg payload: %s\n", (char *)nlmsg_data(nlh)));
 
-
-    //awake from suspend
-    if(nexmon_glob_dhd != NULL) {
-        dhd_set_suspend(0, &nexmon_glob_dhd->pub);
-    }
-    
-    nexmon_send_filter_pkt();
+    nexmon_send_filter_pkt((char *)nlmsg_data(nlh), strlen((char *)nlmsg_data(nlh)));
 
     return;
 }
