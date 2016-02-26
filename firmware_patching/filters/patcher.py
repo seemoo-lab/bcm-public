@@ -9,7 +9,7 @@ FW_FILE = "../../bootimg_src/firmware/fw_bcmdhd.orig.bin"
 
 #patchfile1 = 'filter_handler.bin'
 #v2
-patchfile1 = 'filter_handler_v2.bin'
+patchfile1 = 'filter_handler.bin'
 
 # filter_handler()
 detour1 = ExernalArmPatch(0x180050, patchfile1)

@@ -1,6 +1,6 @@
 CC=../../buildtools/arm-eabi-4.7/bin/arm-eabi-
-FILE=filter_handler_v2
-ENTRY_FUNC=filter_handler
+FILE=filter_handler
+ENTRY_FUNC=receive_filter
 
 all: $(FILE).o $(FILE).elf $(FILE).bin fw_bcmdhd.bin
 
