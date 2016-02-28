@@ -56,13 +56,13 @@ reciprocal_divide(uint32_t A, uint32_t R) {
 //from skbuff.h
 static inline void *
 skb_header_pointer(const struct sk_buff *skb, int offset, int len, void *buffer) {
-    int hlen = skb->len - skb->data_len;
+    //int hlen = skb->len - skb->data_len;
 
-    if (hlen - offset >= len) {
-        return skb->data + offset;
-    } else {
-        printf("skb_header_pointer(): ERROR, this is not covered yet!\n");
-    }
+    //if (hlen - offset >= len) {
+    return skb->data + offset;
+    //} else {
+    //    printf("skb_header_pointer(): ERROR, this is not covered yet! skb->len: %d, skb->data_len: %d, offset: %d\n", skb->len, skb->data_len, offset);
+    //}
     // maybe not needed
     //if (skb_copy_bits(skb, offset, buffer, len) < 0) {
     //    return 0;
@@ -81,7 +81,7 @@ load_pointer(const struct sk_buff *skb, int k, unsigned int size, void *buffer) 
 }
 
 //Corresponds to net/core/filter.c:sk_chk_filter()
-int 
+inline int 
 import_filter(struct sock_filter *filter, unsigned int flen) {
     static const uint8_t codes[] = {
         [BPF_ALU|BPF_ADD|BPF_K]  = BPF_S_ALU_ADD_K,
@@ -155,7 +155,8 @@ import_filter(struct sock_filter *filter, unsigned int flen) {
     return 0;
 }
 
-unsigned int 
+// return == 0 => throw packet away; return != 0 => keep it
+inline unsigned int 
 sk_run_filter(const struct sk_buff *skb, const struct sock_filter *fentry) {
     void *ptr;
     uint32_t A = 0;          // Accumulator
@@ -167,6 +168,7 @@ sk_run_filter(const struct sk_buff *skb, const struct sock_filter *fentry) {
     // Process array of filter instructions.
     for (;; fentry++) {
         const uint32_t K = fentry->k;
+        printf("current code: %u, A: 0x%x, X: 0x%x, k: 0x%x\n", fentry->code, A, X, K);
 
         switch (fentry->code) {
         case BPF_S_ALU_ADD_X:
@@ -181,6 +183,7 @@ sk_run_filter(const struct sk_buff *skb, const struct sock_filter *fentry) {
         case BPF_S_ALU_SUB_K:
             A -= K;
             continue;
+        /* some thing is wrong here, see: https://stackoverflow.com/questions/6576517/what-is-the-cause-of-not-being-able-to-divide-numbers-in-gcc
         case BPF_S_ALU_MUL_X:
             A *= X;
             continue;
@@ -195,6 +198,7 @@ sk_run_filter(const struct sk_buff *skb, const struct sock_filter *fentry) {
         case BPF_S_ALU_DIV_K:
             A = reciprocal_divide(A, K);
             continue;
+        */
         case BPF_S_ALU_AND_X:
             A &= X;
             continue;
@@ -232,6 +236,7 @@ sk_run_filter(const struct sk_buff *skb, const struct sock_filter *fentry) {
             fentry += (A >= K) ? fentry->jt : fentry->jf;
             continue;
         case BPF_S_JMP_JEQ_K:
+            printf("BPF_S_JMP_JEQ_K: A == K? A: 0x%x, K: 0x%x\n", A, K);
             fentry += (A == K) ? fentry->jt : fentry->jf;
             continue;
         case BPF_S_JMP_JSET_K:
@@ -392,7 +397,7 @@ load_b:
         //    continue;
         //}
         default:
-            printf("sk_run_filter(): Unknown code:%u jt:%u tf:%u k:%u\n",
+            printf("sk_run_filter(): Unknown code:0x%x jt:0x%x tf:0x%x k:0x%x\n",
                        fentry->code, fentry->jt,
                        fentry->jf, fentry->k);
             return 0;
@@ -404,6 +409,25 @@ load_b:
 
 void*
 receive_filter(void *sdio, sk_buff *p) {
+    //char* skbarr[] = {0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x42, 0x42, 0x42};
+
+    struct sock_filter code[] = {
+        { 0x30, 0, 0, 0x00000003 }, 
+        { 0x64, 0, 0, 0x00000008 }, 
+        { 0x7, 0, 0, 0x00000000 },
+        { 0x30, 0, 0, 0x00000002 }, 
+        { 0x4c, 0, 0, 0x00000000 },
+        { 0x2, 0, 0, 0x00000000 },  
+        { 0x7, 0, 0, 0x00000000 },  
+        { 0x40, 0, 0, 0x00000006 }, 
+        { 0x15, 0, 3, 0x33445566 },
+        { 0x48, 0, 0, 0x00000004 }, 
+        { 0x15, 0, 1, 0x00001122 },
+        { 0x6, 0, 0, 0x00040000 },
+        { 0x6, 0, 0, 0x00000000 },
+    };
+
+
     //do the same as in the original function:
     int chan = *((int *)(p->data + 1)) & 0xf;
     int offset = 0;
@@ -414,10 +438,13 @@ receive_filter(void *sdio, sk_buff *p) {
     }
 
     if(chan == 4) {
-        printf("our filter!: %d\n", chan);
-        hexdump(0, p->data + 8 + offset, p->len - 8 - offset);
+        import_filter(code, ARRAY_SIZE(code));
+        int ret = sk_run_filter(p, code);
+        printf("our filter! chan: %d, ret of sk_run_filter: %d\n", chan, ret);
+        // not sure about the -20 len
+        hexdump(0, p->data + 8 + offset, p->len - 8 - offset - 20);
     } else {
-        printf("even some other stuff... %d\n", chan);
+        printf("oi2: some other stuff... %d\n", chan);
     }
     
     return sdio_header_parsing_from_sk_buff(sdio, p);
