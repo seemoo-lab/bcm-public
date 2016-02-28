@@ -4,6 +4,16 @@
 #define EINVAL 22
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(*(x)))
 
+//from filter.h
+#define SKF_NET_OFF   (-0x100000)
+#define SKF_LL_OFF    (-0x200000)
+
+//from skbuff.h
+#define skb_shinfo(skb) ((struct skb_shared_info *) skb->head + skb->end;
+#define skb_walk_frags(skb, iter)   \
+    for (iter = skb_shinfo(skb)->frag_list; iter; iter = iter->next)
+
+
 struct sock_filter {    /* Filter block */
     uint16_t   code;   /* Actual filter code */
     uint8_t    jt; /* Jump true */

@@ -18,7 +18,7 @@ detour1 = ExernalArmPatch(0x180050, patchfile1)
 #detour2 = BPatch(0x182AC8, 0x180050);
 #v2
 detour2 = BLPatch(0x182C60, 0x180050);
-detour3 = GenericPatch4(0x180BB4, 0x180051);
+detour3 = GenericPatch4(0x180BB4, 0x180050);
 
 #replace revision with 'SEEMOO!'
 detour4 = GenericPatch4(0x1d3a48, 0x4D454553)
