@@ -1,73 +1,14 @@
-#include "../include/bcm4339.h"
-#include "../include/wrapper.h"
-#include "../include/structs.h"
+#include "../include/bcm4339.h" /* needs to be imported before wrapper.h to define addresses */
+#include "../include/wrapper_filter.h"
 #include "../include/helper.h"
-#include "../include/types.h" /* needs to be included before bcmsdpcm.h */
+#include "../include/structs.h"
 #include "../include/nexmon_filter.h"
 
-static inline uint32_t 
-reciprocal_divide(uint32_t A, uint32_t R) {
-    return (uint32_t)(((uint64_t)A * R) >> 32);
-}
-
-//static inline uint16_t
-//get_unaligned16(const void *p) {
-//        const uint8_t *_p = p;
-//        return _p[0] << 8 | _p[1];
-//}
-
-//static inline uint32_t
-//get_unaligned32(const void *p) {
-//    uint32_t val = (uint32_t) p;
-//    __asm (" ldnw     .d1t1   *%0,%0\n"
-//         " nop     4\n"
-//         : "+a"(val));
-//    return val;
-//}
-
-//from skbuff.h
-//static inline unsigned char *
-//skb_network_header(const struct sk_buff *skb) {
-//    return skb->head + skb->network_header;
-//}
-//static inline unsigned char *
-//skb_mac_header(const struct sk_buff *skb) {
-//    return skb->head + skb->mac_header;
-//}
-//static inline unsigned char *
-//skb_tail_pointer(const struct sk_buff *skb) {
-//    return skb->head + skb->tail;
-//}
-
-//void *
-//bpf_internal_load_pointer_neg_helper(const struct sk_buff *skb, int k, unsigned int size) {
-//    uint8_t *ptr = 0;
-//
-//    if (k >= SKF_NET_OFF)
-//        ptr = skb_network_header(skb) + k - SKF_NET_OFF;
-//    else if (k >= SKF_LL_OFF)
-//        ptr = skb_mac_header(skb) + k - SKF_LL_OFF;
-//
-//    if (ptr >= skb->head && ptr + size <= skb_tail_pointer(skb))
-//        return ptr;
-//    return 0;
-//}
 
 //from skbuff.h
 static inline void *
 skb_header_pointer(const struct sk_buff *skb, int offset, int len, void *buffer) {
-    //int hlen = skb->len - skb->data_len;
-
-    //if (hlen - offset >= len) {
     return skb->data + offset;
-    //} else {
-    //    printf("skb_header_pointer(): ERROR, this is not covered yet! skb->len: %d, skb->data_len: %d, offset: %d\n", skb->len, skb->data_len, offset);
-    //}
-    // maybe not needed
-    //if (skb_copy_bits(skb, offset, buffer, len) < 0) {
-    //    return 0;
-    //}
-    //return buffer;
 }
 
 static inline void *
@@ -133,6 +74,7 @@ import_filter(struct sock_filter *filter, unsigned int flen) {
     int pc;
 
     if (flen == 0 || flen > BPF_MAXINSNS) {
+        printf("import_filter ERROR: problem with 'flen': %d\n", flen);
         return -EINVAL;
     }
 
@@ -141,10 +83,12 @@ import_filter(struct sock_filter *filter, unsigned int flen) {
         uint16_t code = ftest->code;
 
         if (code >= ARRAY_SIZE(codes)) {
+            printf("import_filter ERROR: problem with size of code\n");
             return -EINVAL;
         }
         code = codes[code];
         if (!code) {
+            printf("import_filter ERROR: uncnown code\n");
             return -EINVAL;
         }
         // special checks for some instructions would begin here, we dont do that
@@ -154,6 +98,7 @@ import_filter(struct sock_filter *filter, unsigned int flen) {
     // there would be some checks if the last instruction are return commands, we dont do that either
     return 0;
 }
+
 
 // return == 0 => throw packet away; return != 0 => keep it
 inline unsigned int 
@@ -260,7 +205,7 @@ load_w:
             ptr = load_pointer(skb, k, 4, &tmp);
             if (ptr != 0) {
                 //A = get_unaligned32(ptr);
-                A = (uint32_t) ptr;
+                A = *((uint32_t *) ptr);
                 continue;
             }
             return 0;
@@ -270,7 +215,7 @@ load_h:
             ptr = load_pointer(skb, k, 2, &tmp);
             if (ptr != 0) {
                 //A = get_unaligned16(ptr);
-                A = (uint32_t) ptr;
+                A = *((uint16_t *) ptr);
                 continue;
             }
             return 0;
@@ -407,9 +352,15 @@ load_b:
     return 0;
 }
 
-void*
-receive_filter(void *sdio, sk_buff *p) {
-    //char* skbarr[] = {0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x42, 0x42, 0x42};
+unsigned int
+nexmon_filter(struct sk_buff *skb, struct sock_filter *filter) {
+    //int strip_hdr = 38;
+    int strip_hdr = 42;
+    char old_val0 = 0x0;
+    char old_val1 = 0x0;
+    char old_val2 = 0x0;
+    char old_val3 = 0x0;
+    void *orig_data;
 
     struct sock_filter code[] = {
         { 0x30, 0, 0, 0x00000003 }, 
@@ -420,32 +371,52 @@ receive_filter(void *sdio, sk_buff *p) {
         { 0x2, 0, 0, 0x00000000 },  
         { 0x7, 0, 0, 0x00000000 },  
         { 0x40, 0, 0, 0x00000006 }, 
-        { 0x15, 0, 3, 0x33445566 },
+//        { 0x15, 0, 3, 0x33445566 },
+        { 0x15, 0, 3, 0xffffffff },
         { 0x48, 0, 0, 0x00000004 }, 
-        { 0x15, 0, 1, 0x00001122 },
+//        { 0x15, 0, 1, 0x00001122 },
+        { 0x15, 0, 1, 0x0000ffff },
         { 0x6, 0, 0, 0x00040000 },
         { 0x6, 0, 0, 0x00000000 },
     };
 
+    filter = code;
 
-    //do the same as in the original function:
-    int chan = *((int *)(p->data + 1)) & 0xf;
-    int offset = 0;
-    if(*((int *)(sdio + 0x220))) {
-        offset = *((int *)(p->data + 3)) - 20;
-    } else {
-        offset = *((int *)(p->data + 3)) - 12;
+    short rxstat = *((short *)(skb->data + 0x10));
+    if(rxstat & 4) {
+        printf("add two!\n");
+        strip_hdr += 2;
     }
 
-    if(chan == 4) {
-        import_filter(code, ARRAY_SIZE(code));
-        int ret = sk_run_filter(p, code);
-        printf("our filter! chan: %d, ret of sk_run_filter: %d\n", chan, ret);
-        // not sure about the -20 len
-        hexdump(0, p->data + 8 + offset, p->len - 8 - offset - 20);
+    old_val0 = *((char *)(skb->data + strip_hdr + 0));
+    *((char *)(skb->data + strip_hdr + 0)) = 0x0;
+    old_val1 = *((char *)(skb->data + strip_hdr + 1));
+    *((char *)(skb->data + strip_hdr + 1)) = 0x0;
+    old_val2 = *((char *)(skb->data + strip_hdr + 2));
+    *((char *)(skb->data + strip_hdr + 2)) = 0x4;
+    old_val3 = *((char *)(skb->data + strip_hdr + 3));
+    *((char *)(skb->data + strip_hdr + 3)) = 0x0;
+
+    orig_data = skb->data;
+    skb->data = skb->data + strip_hdr;
+    hexdump(0, skb->data, 0x40);
+
+    //TODO get length right
+    int ret = import_filter(filter, ARRAY_SIZE(code));
+
+    if(ret == 0) {
+        ret = sk_run_filter(skb, filter);
+        if(ret != 0) {
+            *((char *)(skb->data + 0)) = old_val0;
+            *((char *)(skb->data + 1)) = old_val1;
+            *((char *)(skb->data + 2)) = old_val2;
+            *((char *)(skb->data + 3)) = old_val3;
+
+            skb->data = orig_data;
+        }
+        return ret;
     } else {
-        printf("oi2: some other stuff... %d\n", chan);
+        printf("ERROR Could not import filter: %d!\n", ret);
+        return 0;
     }
-    
-    return sdio_header_parsing_from_sk_buff(sdio, p);
 }

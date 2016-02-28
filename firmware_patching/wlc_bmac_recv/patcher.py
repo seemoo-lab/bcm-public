@@ -7,10 +7,12 @@ from binary_patcher import *
 
 FW_FILE = "../../bootimg_src/firmware/fw_bcmdhd.orig.bin"
 
+patchfile0 = 'filter.bin'
 patchfile1 = 'wlc_bmac_recv.bin'
 
 # wlc_bmac_recv()
-detour1 = ExernalArmPatch(0x1AAD98, patchfile1)
+detour0 = ExternalArmPatch(0x180050, patchfile0)
+detour1 = ExternalArmPatch(0x1AAD98, patchfile1)
 
 #2nd call of wlc_bmac_mctrl() in wlc_coreinit()
 # mask
@@ -26,6 +28,7 @@ detour5 = GenericPatch4(0x1d3a4c, 0x29214F4F)
 #Android 6
 patch_firmware(FW_FILE,
     "fw_bcmdhd.bin", [
+        detour0,
         detour1,
         detour2,
         detour3,

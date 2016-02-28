@@ -12,7 +12,7 @@ FW_FILE = "../../bootimg_src/firmware/fw_bcmdhd.orig.bin"
 patchfile1 = 'filter_handler.bin'
 
 # filter_handler()
-detour1 = ExernalArmPatch(0x180050, patchfile1)
+detour1 = ExternalArmPatch(0x180050, patchfile1)
 
 # Substitue B.W to pkt_buf_free_skb() with our own code
 #detour2 = BPatch(0x182AC8, 0x180050);

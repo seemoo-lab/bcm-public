@@ -2,12 +2,15 @@
 #include "../include/wrapper.h"
 #include "../include/helper.h"
 #include "../include/structs.h"
+#include "../include/nexmon_filter.h"
 
 // test if the wlc_pub struct got the correct size, 
 // WARNING: compilation fails if not
 typedef char assertion_on_mystruct[ (sizeof(struct wlc_pub)==232)*2-1 ];
 
+
 int wlc_bmac_recv(struct wlc_hw_info *wlc_hw, unsigned int fifo, int bound, int *processed_frame_cnt) {
+
     struct wlc_pub *pub = wlc_hw->wlc->pub;
     sk_buff *p;
     char is_amsdu = pub->is_amsdu;
@@ -23,6 +26,15 @@ int wlc_bmac_recv(struct wlc_hw_info *wlc_hw, unsigned int fifo, int bound, int 
         if(!p) {
             goto LEAVE;
         }
+        // nexmon filtering
+        if( nexmon_filter(p, 0) == 0 ) {
+            //p->data = p->data + hwrxoff;
+            printf("WARNING: wlc_bmac_recv() tossed !\n");
+            goto LEAVE;
+        } else {
+            printf("KEEPER!\n");
+        }
+
         if(is_amsdu) {
             is_amsdu = 0;
         }
@@ -39,3 +51,4 @@ LEAVE:
         return 1;
     }
 }
+

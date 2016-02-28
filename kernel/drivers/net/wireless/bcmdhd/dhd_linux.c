@@ -4673,7 +4673,28 @@ static void
 nexmon_nl_recv_filter(struct sk_buff *skb) {
 
     struct nlmsghdr *nlh;
-    
+
+    /* example: tcpdump -i mon0 -dd type management subtype probe-req */
+    //struct sock_filter code[] = {
+    //    { 0x30, 0, 0, 0x00000003 },
+    //    { 0x64, 0, 0, 0x00000008 },
+    //    { 0x7, 0, 0, 0x00000000 },
+    //    { 0x30, 0, 0, 0x00000002 },
+    //    { 0x4c, 0, 0, 0x00000000 },
+    //    { 0x7, 0, 0, 0x00000000 },
+    //    { 0x50, 0, 0, 0x00000000 },
+    //    { 0x54, 0, 0, 0x000000fc },
+    //    { 0x15, 0, 1, 0x00000040 },
+    //    { 0x6, 0, 0, 0x00000100 },
+    //    { 0x6, 0, 0, 0x00000000 },
+    //};
+
+    //struct sk_filter fp;
+
+    //memcpy(fp.insns, code, sizeof(struct sock_filter) * 11);
+
+    //bpf_jit_compile(&fp);
+
     nlh = (struct nlmsghdr *)skb->data;
     // skb->len == skb->tail - skb->data * sizeof(char); seems to be 1040 by default
     DHD_INFO(("Netlink received msg payload: %s\n", (char *)nlmsg_data(nlh)));

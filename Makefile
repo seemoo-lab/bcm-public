@@ -72,13 +72,13 @@ kernel/arch/arm/boot/zImage-dtb: kernel/.config
 bcmdhd: kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko
 
 kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko : kernel/drivers/net/wireless/bcmdhd/*.h kernel/drivers/net/wireless/bcmdhd/*.c kernel/drivers/net/wireless/bcmdhd/Makefile
-	cd kernel && make
+	cd kernel && make -j2
 
 kernel/drivers/net/wireless/nexmon/nexmon.ko : kernel/drivers/net/wireless/nexmon/*.h kernel/drivers/net/wireless/nexmon/*.c kernel/drivers/net/wireless/nexmon/Makefile
-	cd kernel && make
+	cd kernel && make modules -j2
 
 kernel/drivers/net/wireless/nexdhd/nexdhd.ko : kernel/drivers/net/wireless/nexdhd/*.h kernel/drivers/net/wireless/nexdhd/*.c kernel/drivers/net/wireless/nexdhd/Makefile
-	cd kernel && make
+	cd kernel && make modules -j2
 
 su: su.img
 	adb push su.img /sdcard/
@@ -102,9 +102,11 @@ boot.img: Makefile kernel/arch/arm/boot/zImage-dtb kernel/drivers/net/wireless/b
 	cp kernel/drivers/net/wireless/nexmon/nexmon.ko bootimg_tmp/ramdisk/nexmon/
 	cp kernel/drivers/net/wireless/nexdhd/nexdhd.ko bootimg_tmp/ramdisk/nexmon/
 	mkdir bootimg_tmp/ramdisk/nexmon/firmware
-	cp bootimg_src/firmware/fw_bcmdhd.orig.bin bootimg_tmp/ramdisk/nexmon/firmware/fw_bcmdhd.bin
+#	cp bootimg_src/firmware/fw_bcmdhd.orig.bin bootimg_tmp/ramdisk/nexmon/firmware/fw_bcmdhd.bin
 #	cp firmware_patching/dma_txfast_path/fw_bcmdhd.bin bootimg_tmp/ramdisk/nexmon/firmware/fw_bcmdhd.bin
-	cp bootimg_src/firmware/fw_nexmon.bin bootimg_tmp/ramdisk/nexmon/firmware/fw_nexmon.bin
+	cp firmware_patching/filters/fw_bcmdhd.bin bootimg_tmp/ramdisk/nexmon/firmware/fw_bcmdhd.bin
+#	cp bootimg_src/firmware/fw_nexmon.bin bootimg_tmp/ramdisk/nexmon/firmware/fw_nexmon.bin
+	cp firmware_patching/wlc_bmac_recv/fw_bcmdhd.bin bootimg_tmp/ramdisk/nexmon/firmware/fw_nexmon.bin
 	cp bootimg_src/firmware/fw_nexdhd.bin bootimg_tmp/ramdisk/nexmon/firmware/fw_nexdhd.bin
 	cp bootimg_src/firmware/bcmdhd.cal bootimg_tmp/ramdisk/nexmon/firmware/bcmdhd.cal
 	cp bootimg_src/firmware/bcmdhd.cal bootimg_tmp/ramdisk/nexmon/firmware/nexmon.cal

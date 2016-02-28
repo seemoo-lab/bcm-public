@@ -3221,11 +3221,14 @@ break2:
 	return BCME_OK;
 }
 
+/* Nexmon */
+uint32 stack_dump[8000];
+
 static int
 dhdsdio_checkdied(dhd_bus_t *bus, char *data, uint size)
 {
 	int bcmerror = 0;
-	uint msize = 512;
+	uint msize = 4096*2;
 	char *mbuffer = NULL;
 	char *console_buffer = NULL;
 	uint maxstrlen = 256;
@@ -3235,6 +3238,7 @@ dhdsdio_checkdied(dhd_bus_t *bus, char *data, uint size)
 	struct bcmstrbuf strbuf;
 	uint32 console_ptr, console_size, console_index;
 	uint8 line[CONSOLE_LINE_MAX], ch;
+    int stack_dump_len;
 	uint32 n, i, addr;
 	int rv;
 
@@ -3320,6 +3324,13 @@ dhdsdio_checkdied(dhd_bus_t *bus, char *data, uint size)
 			                                 sdpcm_shared.trap_addr,
 			                                 (uint8*)&tr, sizeof(trap_t))) < 0)
 				goto done;
+
+            /* Nexmon */
+            stack_dump_len = 0x23f750 - ltoh32(tr.r13);
+            if(stack_dump_len > sizeof(stack_dump)) stack_dump_len = sizeof(stack_dump);
+            dhdsdio_membytes(bus, FALSE, ltoh32(tr.r13), (uint8 *) stack_dump, stack_dump_len);
+            //dhd_send_udp_msg(6677, stack_dump, stack_dump_len)
+            DHD_ERROR(("stack dump len: %d\n", stack_dump_len));
 
 			bcm_bprintf(&strbuf,
 			"Dongle trap type 0x%x @ epc 0x%x, cpsr 0x%x, spsr 0x%x, sp 0x%x,"
