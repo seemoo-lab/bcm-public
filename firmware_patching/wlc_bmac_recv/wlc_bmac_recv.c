@@ -31,6 +31,7 @@ int wlc_bmac_recv(struct wlc_hw_info *wlc_hw, unsigned int fifo, int bound, int 
         if( nexmon_filter(p, 0) == 0 ) {
             printf("FILTER: tossed!\n");
             ++n;
+            pkt_buf_free_skb(wlc_hw->wlc->osh, p, 0);
             goto LEAVE;
         } else {
             printf("FILTER: keep!\n");
