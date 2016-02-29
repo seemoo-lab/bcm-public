@@ -1,6 +1,10 @@
 #ifndef WRAPPER_H
 #define WRAPPER_H
 
+// Syntax for firmware_patching/wrapper/Makefile to generate 
+// firmware_patching/wrapper/wrapper.c && firmware_patching/wrapper/wrapper.ld :
+// extern<SPACE><return value><SPACE><func. head;><SPACE>//<SPACE><address in chip memory>
+
 extern int bus_binddev(void *sdio_hw, void *sdiodev, void *d11dev); // 0x1837F8
 extern int bus_binddev_rom(void *sdiodev, void *d11dev); // 0x1B8C4
 
@@ -40,7 +44,7 @@ extern void *wl_alloc_if(void *wl, int iftype, int unit, int wlc_if); // 0x271B0
 extern int wl_init(void *wl); // 0x2716C
 extern int wl_reset(void *wl); // 0x27138
 
-extern void *sdio_header_parsing_from_sk_buff(void *sdio, void *p); //0x182A64
-extern unsigned int nexmon_filter(void *skb, void *filter); //0x180050
+extern void *sdio_header_parsing_from_sk_buff(void *sdio, void *p); // 0x182A64
+extern unsigned int nexmon_filter(void *skb, void *filter); // 0x180050
 
 #endif /*WRAPPER_H*/

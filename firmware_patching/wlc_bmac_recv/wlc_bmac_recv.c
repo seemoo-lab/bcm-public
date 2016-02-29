@@ -27,12 +27,13 @@ int wlc_bmac_recv(struct wlc_hw_info *wlc_hw, unsigned int fifo, int bound, int 
             goto LEAVE;
         }
         // nexmon filtering
+        // 2nd parameter is zero => the filter is currently static
         if( nexmon_filter(p, 0) == 0 ) {
-            //p->data = p->data + hwrxoff;
-            printf("WARNING: wlc_bmac_recv() tossed !\n");
+            printf("FILTER: tossed!\n");
+            ++n;
             goto LEAVE;
         } else {
-            printf("KEEPER!\n");
+            printf("FILTER: keep!\n");
         }
 
         if(is_amsdu) {

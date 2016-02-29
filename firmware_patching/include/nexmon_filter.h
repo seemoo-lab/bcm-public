@@ -141,7 +141,7 @@ enum {
     BPF_S_JMP_JGT_X,
     BPF_S_JMP_JSET_K,
     BPF_S_JMP_JSET_X,
-    /* Ancillary data */
+    // Ancillary data
     BPF_S_ANC_PROTOCOL,
     BPF_S_ANC_PKTTYPE,
     BPF_S_ANC_IFINDEX,

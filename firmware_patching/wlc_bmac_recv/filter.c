@@ -21,7 +21,9 @@ load_pointer(const struct sk_buff *skb, int k, unsigned int size, void *buffer) 
     //return bpf_internal_load_pointer_neg_helper(skb, k, size);
 }
 
-//Corresponds to net/core/filter.c:sk_chk_filter()
+// Corresponds to net/core/filter.c:sk_chk_filter()
+// to substitue the instructions with the enum BPF_S...
+// decreases the amount of generated code!!!
 inline int 
 import_filter(struct sock_filter *filter, unsigned int flen) {
     static const uint8_t codes[] = {
@@ -74,7 +76,6 @@ import_filter(struct sock_filter *filter, unsigned int flen) {
     int pc;
 
     if (flen == 0 || flen > BPF_MAXINSNS) {
-        printf("import_filter ERROR: problem with 'flen': %d\n", flen);
         return -EINVAL;
     }
 
@@ -83,12 +84,10 @@ import_filter(struct sock_filter *filter, unsigned int flen) {
         uint16_t code = ftest->code;
 
         if (code >= ARRAY_SIZE(codes)) {
-            printf("import_filter ERROR: problem with size of code\n");
             return -EINVAL;
         }
         code = codes[code];
         if (!code) {
-            printf("import_filter ERROR: uncnown code\n");
             return -EINVAL;
         }
         // special checks for some instructions would begin here, we dont do that
@@ -181,7 +180,7 @@ sk_run_filter(const struct sk_buff *skb, const struct sock_filter *fentry) {
             fentry += (A >= K) ? fentry->jt : fentry->jf;
             continue;
         case BPF_S_JMP_JEQ_K:
-            printf("BPF_S_JMP_JEQ_K: A == K? A: 0x%x, K: 0x%x\n", A, K);
+            //printf("BPF_S_JMP_JEQ_K: A == K? A: 0x%x, K: 0x%x\n", A, K);
             fentry += (A == K) ? fentry->jt : fentry->jf;
             continue;
         case BPF_S_JMP_JSET_K:
@@ -362,6 +361,7 @@ nexmon_filter(struct sk_buff *skb, struct sock_filter *filter) {
     char old_val3 = 0x0;
     void *orig_data;
 
+    // equals: tcpdump -i mon0 -d wlan addr1 ff:ff:ff:ff:ff:ff
     struct sock_filter code[] = {
         { 0x30, 0, 0, 0x00000003 }, 
         { 0x64, 0, 0, 0x00000008 }, 
@@ -384,10 +384,13 @@ nexmon_filter(struct sk_buff *skb, struct sock_filter *filter) {
 
     short rxstat = *((short *)(skb->data + 0x10));
     if(rxstat & 4) {
-        printf("add two!\n");
+        //printf("add two!\n");
         strip_hdr += 2;
     }
 
+    // the filter needs to know where the the data starts in skb->data (presumably from a radiotap header)
+    // 'strip_hdr' already jumps over the headers, hence we simly add
+    // 4 byte to header that tell him to jump over this
     old_val0 = *((char *)(skb->data + strip_hdr + 0));
     *((char *)(skb->data + strip_hdr + 0)) = 0x0;
     old_val1 = *((char *)(skb->data + strip_hdr + 1));
@@ -399,7 +402,7 @@ nexmon_filter(struct sk_buff *skb, struct sock_filter *filter) {
 
     orig_data = skb->data;
     skb->data = skb->data + strip_hdr;
-    hexdump(0, skb->data, 0x40);
+    //hexdump(0, skb->data, 0x40);
 
     //TODO get length right
     int ret = import_filter(filter, ARRAY_SIZE(code));

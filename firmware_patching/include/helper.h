@@ -4,6 +4,7 @@
 #include "bcm4339.h"
 #include "types.h"
 
+/* somehow the strings are not removed during optimization, so that they end up in the binary, hence, move the functions somewhere else, where they are only included if they are needed.
 inline uint16
 htons(uint16 a)
 {
@@ -61,7 +62,6 @@ get_register(int reg_nr) {
     return reg_content;
 }
 
-/* somehow the strings are not removed during optimization, so that they end up in the binary, hence, move the functions somewhere else, where they are only included if they are needed.
 inline void
 copy_stack(void *dest, int copy_size) {
     printf("copy_stack: %d\n", copy_size);
@@ -70,7 +70,6 @@ copy_stack(void *dest, int copy_size) {
     }
     return;
 }
-*/
 
 inline void
 hexdump(char *desc, void *addr, int len) {
@@ -115,5 +114,6 @@ hexdump(char *desc, void *addr, int len) {
     // And print the final ASCII bit.
     printf ("  %s\n", buff);
 }
+*/
 
 #endif /* HELPER_H */

@@ -38,5 +38,5 @@ void *wl_alloc_if(void *wl, int iftype, int unit, int wlc_if) { return 0; } // 0
 int wl_init(void *wl) { return 0; } // 0x2716C
 int wl_reset(void *wl) { return 0; } // 0x27138
 
-void *sdio_header_parsing_from_sk_buff(void *sdio, void *p) { return 0; } //0x182A64
+void *sdio_header_parsing_from_sk_buff(void *sdio, void *p) { return 0; } // 0x182A64
 
