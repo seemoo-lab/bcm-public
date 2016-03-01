@@ -7,16 +7,10 @@ from binary_patcher import *
 
 FW_FILE = "../../bootimg_src/firmware/fw_bcmdhd.orig.bin"
 
-#patchfile1 = 'filter_handler.bin'
-#v2
-patchfile1 = 'filter_handler.bin'
+patchfile1 = 'user2fw.bin'
 
-# filter_handler()
 detour1 = ExternalArmPatch(0x180050, patchfile1)
 
-# Substitue B.W to pkt_buf_free_skb() with our own code
-#detour2 = BPatch(0x182AC8, 0x180050);
-#v2
 detour2 = BLPatch(0x182C60, 0x180050);
 detour3 = GenericPatch4(0x180BB4, 0x180050);
 
