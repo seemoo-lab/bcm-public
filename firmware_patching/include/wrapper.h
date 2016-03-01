@@ -91,13 +91,22 @@ extern void *sub_1831A0(void *osh, void *a2, int a3, void *sdiodev); // 0x1831A0
 extern void sub_1ECAB0(int a1); // 0x1ECAB0
 extern int sum_buff_lengths(void *osh, void *p); // 0x1360C
 
+extern void sub_1ed41c(void); // 0x1ed41c
+extern void sub_1810a8(void); // 0x1810a8
+extern void sub_1ec7c8(void); // 0x1ec7c8
+extern void sub_1ed584(void); // 0x1ed584
+extern void sub_1ecab0(void); // 0x1ecab0
+extern void sub_1ec6fc(void); // 0x1ec6fc
+extern void sub_1816e4(void); // 0x1816e4
+
 extern void wlc_bmac_init(void *wlc_hw, unsigned int chanspec, unsigned int mute); // 0x1AB840
 extern void wlc_bmac_mctrl(void *wlc_hw, int mask, int val); // 0x4F080
 extern void wlc_bmac_write_template_ram(void *wlc_hw, int offset, int len, void *buf); // 0x504B0
 extern void wlc_coreinit(void *wlc_hw); // 0x1AB66C
 extern int wlc_init(void *wlc); // 0x199874
-extern void wlc_mctrl_write(void *wlc_hw); // 0x4df60
+extern void wlc_mctrl_write(void *wlc_hw); // 0x4DF60
 extern void wlc_txfifo(void *wlc, int fifo, void *p, void *txh, unsigned char commit, char txpktpend); // 0x193744
+extern void wlc_ucode_download(void *wlc_hw); // 0x1F4EF8
 extern void wlc_ucode_write(void *wlc_hw, const int ucode[], const unsigned int nbytes); // 0x4E0C8
 
 extern void *wl_add_if(void *wl, int wlcif, int unit, int wds_or_bss); // 0x26F50

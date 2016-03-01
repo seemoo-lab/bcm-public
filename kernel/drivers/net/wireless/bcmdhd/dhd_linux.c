@@ -2157,6 +2157,8 @@ dhd_txcomplete(dhd_pub_t *dhdp, void *txp, bool success)
 
 }
 
+extern int dhdsdio_checkdied(void *bus, char *data, uint size); 
+
 static struct net_device_stats *
 dhd_get_stats(struct net_device *net)
 {
@@ -2165,6 +2167,8 @@ dhd_get_stats(struct net_device *net)
 	int ifidx;
 
 	DHD_TRACE(("%s: Enter\n", __FUNCTION__));
+
+	dhdsdio_checkdied(dhd->pub.bus, NULL, 0);
 
 	ifidx = dhd_net2idx(dhd, net);
 	if (ifidx == DHD_BAD_IF) {
@@ -6720,6 +6724,7 @@ void dhd_set_version_info(dhd_pub_t *dhdp, char *fw)
 		"\n  Chip: %x Rev %x Pkg %x", dhd_bus_chip_id(dhdp),
 		dhd_bus_chiprev_id(dhdp), dhd_bus_chippkg_id(dhdp));
 }
+
 int dhd_ioctl_entry_local(struct net_device *net, wl_ioctl_t *ioc, int cmd)
 {
 	int ifidx;

@@ -551,7 +551,7 @@ static void dhdsdio_sdtest_set(dhd_bus_t *bus, uint count);
 #endif
 
 #ifdef DHD_DEBUG
-static int dhdsdio_checkdied(dhd_bus_t *bus, char *data, uint size);
+int dhdsdio_checkdied(dhd_bus_t *bus, char *data, uint size);
 static int dhd_serialconsole(dhd_bus_t *bus, bool get, bool enable, int *bcmerror);
 #endif /* DHD_DEBUG */
 
@@ -3238,7 +3238,7 @@ break2:
 
 uint32 stack_dump[8000];
 
-static int
+int
 dhdsdio_checkdied(dhd_bus_t *bus, char *data, uint size)
 {
 	int bcmerror = 0;
@@ -4645,6 +4645,111 @@ dhd_txglom_enable(dhd_pub_t *dhdp, bool enable)
 //uint32 console_addr;
 //uint32 console_size;
 
+#define DBGBASE (0x18007000)
+
+#define DBGDIDR_OFF (0x0)
+#define DBGWFAR_OFF (0x18)
+#define DBGVCR_OFF (0x1C)
+#define DBGDSCCR_OFF (0x28)
+#define DBGDTRRX_OFF (0x80)
+#define DBGITR_OFF (0x84)
+#define DBGDSCR_OFF (0x88)
+#define DBGDTRTX_OFF (0x8C)
+#define DBGDRCR_OFF (0x90)
+#define DBGBVR_OFF (0x100)
+#define DBGBCR_OFF (0x140)
+#define DBGWVR_OFF (0x180)
+#define DBGWCR_OFF (0x1C0)
+#define DBGOSLSR_OFF (0x304)
+#define DBGPRCR_OFF (0x310)
+#define DBGPRSR_OFF (0x314)
+#define DBGPIDR_OFF (0xD00)
+
+void
+dhd_dbg_dump(dhd_bus_t * bus)
+{
+//	int bpval = 0x0001dcbc;
+//	int bpctl = 0x000000f7;
+
+	int DBGDIDR = 0;		// c0			R	Debug ID Register
+	int DBGWFAR = 0;		// c6			RW	Watchpoint Fault Address Register
+	int DBGVCR = 0;			// c7			RW	Vector Catch Register
+	int DBGDSCCR = 0;		// c10			RW	Debug State Cache Control Register
+	int DBGDTRRX = 0;		// c32			RW	Data Transfer Register
+//	int DBGITR = 0;			// c33			W	Instruction Transfer Register
+	int DBGDSCR = 0;		// c34			RW	Debug Status and Control Register
+	int DBGDTRTX = 0;		// c35			RW	Data Transfer Register
+//	int DBGDRCR = 0;		// c36			W	Debug Run Control Register
+	int DBGBVR[8] = {0};	// c64-c71		RW	Breakpiont Value Registers
+	int DBGBCR[8] = {0};	// c80-c87		RW	Breakpoint Control Registers
+	int DBGWVR[8] = {0};	// c96-c103		RW	Watchpoint Value Registers
+	int DBGWCR[8] = {0};	// c112-c119	RW	Watchpoint Control Registers
+	int DBGOSLSR = 0;		// c193			R	Operating System Lock Status Register
+	int DBGPRCR = 0;		// c196			RW	Device Power-down and Reset Control Register
+	int DBGPRSR = 0;		// c197			R	Device Power-down and Reset Status Register
+	int DBGPIDR[64] = {0};	// c832-c895	R	Processor ID Registers
+
+	dhdsdio_membytes(bus, FALSE, DBGBASE + DBGDIDR_OFF, (void *) &DBGDIDR, sizeof(DBGDIDR));
+	DHD_ERROR(("DBGDIDR: 0x%08x\n", DBGDIDR));
+
+	dhdsdio_membytes(bus, FALSE, DBGBASE + DBGWFAR_OFF, (void *) &DBGWFAR, sizeof(DBGWFAR));
+	DHD_ERROR(("DBGWFAR: 0x%08x\n", DBGWFAR));
+
+	dhdsdio_membytes(bus, FALSE, DBGBASE + DBGVCR_OFF, (void *) &DBGVCR, sizeof(DBGVCR));
+	DHD_ERROR(("DBGVCR: 0x%08x\n", DBGVCR));
+
+	dhdsdio_membytes(bus, FALSE, DBGBASE + DBGDSCCR_OFF, (void *) &DBGDSCCR, sizeof(DBGDSCCR));
+	DHD_ERROR(("DBGDSCCR: 0x%08x\n", DBGDSCCR));
+
+	dhdsdio_membytes(bus, FALSE, DBGBASE + DBGDTRRX_OFF, (void *) &DBGDTRRX, sizeof(DBGDTRRX));
+	DHD_ERROR(("DBGDTRRX: 0x%08x\n", DBGDTRRX));
+
+	dhdsdio_membytes(bus, FALSE, DBGBASE + DBGDSCR_OFF, (void *) &DBGDSCR, sizeof(DBGDSCR));
+	DHD_ERROR(("DBGDSCR: 0x%08x\n", DBGDSCR));
+
+	dhdsdio_membytes(bus, FALSE, DBGBASE + DBGDTRTX_OFF, (void *) &DBGDTRTX, sizeof(DBGDTRTX));
+	DHD_ERROR(("DBGDTRTX: 0x%08x\n", DBGDTRTX));
+
+	dhdsdio_membytes(bus, FALSE, DBGBASE + DBGBVR_OFF, (void *) &DBGBVR, sizeof(DBGBVR));
+	DHD_ERROR(("DBGBVR: 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x\n", DBGBVR[0], DBGBVR[1], DBGBVR[2], DBGBVR[3], DBGBVR[4], DBGBVR[5], DBGBVR[6], DBGBVR[7]));
+
+	dhdsdio_membytes(bus, FALSE, DBGBASE + DBGBCR_OFF, (void *) &DBGBCR, sizeof(DBGBCR));
+	DHD_ERROR(("DBGBCR: 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x\n", DBGBCR[0], DBGBCR[1], DBGBCR[2], DBGBCR[3], DBGBCR[4], DBGBCR[5], DBGBCR[6], DBGBCR[7]));
+
+	dhdsdio_membytes(bus, FALSE, DBGBASE + DBGWVR_OFF, (void *) &DBGWVR, sizeof(DBGWVR));
+	DHD_ERROR(("DBGWVR: 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x\n", DBGWVR[0], DBGWVR[1], DBGWVR[2], DBGWVR[3], DBGWVR[4], DBGWVR[5], DBGWVR[6], DBGWVR[7]));
+
+	dhdsdio_membytes(bus, FALSE, DBGBASE + DBGWCR_OFF, (void *) &DBGWCR, sizeof(DBGWCR));
+	DHD_ERROR(("DBGWCR: 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x\n", DBGWCR[0], DBGWCR[1], DBGWCR[2], DBGWCR[3], DBGWCR[4], DBGWCR[5], DBGWCR[6], DBGWCR[7]));
+
+	dhdsdio_membytes(bus, FALSE, DBGBASE + DBGOSLSR_OFF, (void *) &DBGOSLSR, sizeof(DBGOSLSR));
+	DHD_ERROR(("DBGOSLSR: 0x%08x\n", DBGOSLSR));
+
+	dhdsdio_membytes(bus, FALSE, DBGBASE + DBGPRCR_OFF, (void *) &DBGPRCR, sizeof(DBGPRCR));
+	DHD_ERROR(("DBGPRCR: 0x%08x\n", DBGPRCR));
+
+	dhdsdio_membytes(bus, FALSE, DBGBASE + DBGPRSR_OFF, (void *) &DBGPRSR, sizeof(DBGPRSR));
+	DHD_ERROR(("DBGPRSR: 0x%08x\n", DBGPRSR));
+
+	dhdsdio_membytes(bus, FALSE, DBGBASE + DBGPIDR_OFF, (void *) &DBGPIDR, sizeof(DBGPIDR));
+	DHD_ERROR(("DBGPIDR: 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x\n", DBGPIDR[0], DBGPIDR[1], DBGPIDR[2], DBGPIDR[3], DBGPIDR[4], DBGPIDR[5], DBGPIDR[6], DBGPIDR[7]));
+	DHD_ERROR(("DBGPIDR: 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x\n", DBGPIDR[8], DBGPIDR[9], DBGPIDR[10], DBGPIDR[11], DBGPIDR[12], DBGPIDR[13], DBGPIDR[14], DBGPIDR[15]));
+	DHD_ERROR(("DBGPIDR: 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x\n", DBGPIDR[16], DBGPIDR[17], DBGPIDR[18], DBGPIDR[19], DBGPIDR[20], DBGPIDR[21], DBGPIDR[22], DBGPIDR[23]));
+	DHD_ERROR(("DBGPIDR: 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x\n", DBGPIDR[24], DBGPIDR[25], DBGPIDR[26], DBGPIDR[27], DBGPIDR[28], DBGPIDR[29], DBGPIDR[30], DBGPIDR[31]));
+	DHD_ERROR(("DBGPIDR: 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x\n", DBGPIDR[32], DBGPIDR[33], DBGPIDR[34], DBGPIDR[35], DBGPIDR[36], DBGPIDR[37], DBGPIDR[38], DBGPIDR[39]));
+	DHD_ERROR(("DBGPIDR: 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x\n", DBGPIDR[40], DBGPIDR[41], DBGPIDR[42], DBGPIDR[43], DBGPIDR[44], DBGPIDR[45], DBGPIDR[46], DBGPIDR[47]));
+	DHD_ERROR(("DBGPIDR: 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x\n", DBGPIDR[48], DBGPIDR[49], DBGPIDR[50], DBGPIDR[51], DBGPIDR[52], DBGPIDR[53], DBGPIDR[54], DBGPIDR[55]));
+	DHD_ERROR(("DBGPIDR: 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x\n", DBGPIDR[56], DBGPIDR[57], DBGPIDR[58], DBGPIDR[59], DBGPIDR[60], DBGPIDR[61], DBGPIDR[62], DBGPIDR[63]));
+}
+
+void
+dhd_set_dbg_regs(dhd_bus_t *bus)
+{
+	int DBGBVR[8] = {0};	// c64-c71		RW	Breakpiont Value Registers
+
+	dhdsdio_membytes(bus, TRUE, DBGBASE + DBGBVR_OFF, (void *) &DBGBVR, sizeof(DBGBVR));
+}
+
 int
 dhd_bus_init(dhd_pub_t *dhdp, bool enforce_mutex)
 {
@@ -4654,7 +4759,7 @@ dhd_bus_init(dhd_pub_t *dhdp, bool enforce_mutex)
 	uint8 ready, enable;
 	int err, ret = 0;
 	uint8 saveclk;
-
+	
 	DHD_TRACE(("%s: Enter\n", __FUNCTION__));
 
 	// here the debug system can be accessed
