@@ -34,6 +34,23 @@ testprint(void)
 }
 */
 
+__attribute__((naked)) void 
+interrupt_handler(void)
+{
+	asm("push {r0-r3,lr}\n"					// save the registers that might change as well as the link register
+		"bl interrupt_handler_do\n"
+		"pop {r0-r3,lr}\n"					// restore the saved registers
+		"b dump_stack_print_dbg_stuff_intr_handler\n"					// jump to the original function
+		);
+}
+
+void
+interrupt_handler_do(int a1, int a2, int a3)
+{
+	printf("intr %08x %08x %08x\n", a1, a2, a3);
+}
+
+
 __attribute__((naked)) void
 interrupt_enable_hook(void)
 {
@@ -68,10 +85,10 @@ interrupt_enable_do(int a1, int a2, int a3)
 void
 set_debug_registers(void)
 { 
-	int dbgdscr = *(volatile int *) 0x18007088;
+//	int dbgdscr = *(volatile int *) 0x18007088;
 	printf("DBG %08x %08x %08x %08x\n", *(volatile int *) 0x18007088, *(volatile int *) 0x18007100, *(volatile int *) 0x18007140, *(volatile int *) 0x18007FB4);
 	*(volatile int *) 0x18007FB0 = 0xC5ACCE55;
-	*(volatile int *) 0x18007088 = dbgdscr | (1 << 15);
+//	*(volatile int *) 0x18007088 = dbgdscr | (1 << 15);
 	*(volatile int *) 0x18007140 = 0x0;
 	*(volatile int *) 0x18007100 = 0x61eb8 & 0xFFFFFFFC;
 	*(volatile int *) 0x18007140 = 7 | ((3 << (0x61eb8 & 2)) << 5);

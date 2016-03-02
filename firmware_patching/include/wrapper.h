@@ -70,6 +70,8 @@ extern void *dma_rxfill(void *di); // 0x8c6cc
 extern void *dma_txfast(void *di, void *p, int commit); // 0x1844B2
 extern void *dngl_sendpkt(void *sdio, void *p, int chan); // 0x182750
 
+extern void *dump_stack_print_dbg_stuff_intr_handler(void); // 0x181E48
+
 extern void free(void *p); // 0x16620
 extern int function_with_huge_jump_table(void *wlc, int a2, int cmd, int a4, int a5, unsigned int a6, int a7, int a8, int a9, int a10); // 0x19B25C
 
