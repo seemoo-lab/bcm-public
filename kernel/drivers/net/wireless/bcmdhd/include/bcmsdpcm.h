@@ -130,7 +130,6 @@
 #define SDPCM_EVENT_CHANNEL	1	/* Asyc Event Indication Channel Id */
 #define SDPCM_DATA_CHANNEL	2	/* Data Xmit/Recv Channel Id */
 #define SDPCM_GLOM_CHANNEL	3	/* For coalesced packets (superframes) */
-#define SDPCM_FILTER_CHANNEL 4  /* To upload filters for NexMon */
 #define SDPCM_TEST_CHANNEL	15	/* Reserved for test/debug packets */
 #define SDPCM_MAX_CHANNEL	15
 
