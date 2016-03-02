@@ -44,6 +44,7 @@
 #include <linux/fcntl.h>
 #include <linux/fs.h>
 #include <linux/ip.h>
+#include <linux/netlink.h> /* NexMon */
 #include <net/addrconf.h>
 
 #include <asm/uaccess.h>
@@ -101,6 +102,11 @@ typedef struct histo_ {
 
 static histo_t vi_d1, vi_d2, vi_d3, vi_d4;
 #endif /* WLMEDIA_HTSF */
+
+/* Netlink stuff for NexMon */
+#include <dhd_sdio.h>
+#define NETLINK_USER 31
+struct sock *nl_sk = NULL;
 
 
 #if defined(SOFTAP)
@@ -4697,6 +4703,21 @@ exit:
 	return NOTIFY_DONE;
 }
 
+/* NexMon */
+static void 
+nexmon_nl_recv_filter(struct sk_buff *skb) {
+
+    struct nlmsghdr *nlh;
+
+    nlh = (struct nlmsghdr *)skb->data;
+    // skb->len == skb->tail - skb->data * sizeof(char); seems to be 1040 by default
+    DHD_INFO(("Netlink received msg payload: %s\n", (char *)nlmsg_data(nlh)));
+
+    nexmon_send_filter_pkt((char *)nlmsg_data(nlh), strlen((char *)nlmsg_data(nlh)));
+
+    return;
+}
+
 int
 dhd_net_attach(dhd_pub_t *dhdp, int ifidx)
 {
@@ -5033,6 +5054,8 @@ dhd_module_cleanup(void)
 {
 	DHD_TRACE(("%s: Enter\n", __FUNCTION__));
 
+    /* NexMon */
+    netlink_kernel_release(nl_sk);
 
 	dhd_bus_unregister();
 
@@ -5164,6 +5187,13 @@ dhd_module_init(void)
 #if defined(WL_CFG80211)
 	wl_android_post_init();
 #endif /* defined(WL_CFG80211) */
+
+    /* NexMon */
+    nl_sk = netlink_kernel_create(&init_net, NETLINK_USER, 0, nexmon_nl_recv_filter, NULL, THIS_MODULE);
+    if (!nl_sk) {
+        DHD_ERROR(("%s: Error creating socket.\n", __FUNCTION__));
+        goto fail_2;
+    }
 
 	return error;
 

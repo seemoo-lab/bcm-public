@@ -386,6 +386,9 @@ static int qcount[NUMPRIO];
 static int tx_packets[NUMPRIO];
 #endif /* DHD_DEBUG */
 
+/* NexMon */
+dhd_bus_t* nexmon_glob_bus = NULL;
+
 /* Deferred transmit */
 const uint dhd_deferred_tx = 1;
 
@@ -1725,6 +1728,8 @@ dhd_tcpack_suppress(dhd_pub_t *dhdp, void *pkt)
 	return FALSE;
 }
 #endif /* DHDTCPACK_SUPPRESS */
+
+
 /* Writes a HW/SW header into the packet and sends it. */
 /* Assumes: (a) header space already there, (b) caller holds lock */
 static int
@@ -1934,67 +1939,67 @@ dhdsdio_txpkt(dhd_bus_t *bus, void *pkt, uint chan, bool free_pkt, bool queue_on
 	} else
 #endif /* BCMSDIOH_TXGLOM */
 	{
-	act_len = len;
-	/* Software tag: channel, sequence number, data offset */
-	swheader = ((chan << SDPCM_CHANNEL_SHIFT) & SDPCM_CHANNEL_MASK) | bus->tx_seq |
-	        (((pad1 + SDPCM_HDRLEN) << SDPCM_DOFFSET_SHIFT) & SDPCM_DOFFSET_MASK);
-	htol32_ua_store(swheader, frame + SDPCM_FRAMETAG_LEN);
-	htol32_ua_store(0, frame + SDPCM_FRAMETAG_LEN + sizeof(swheader));
+        act_len = len;
+
+        /* Software tag: channel, sequence number, data offset */
+        swheader = ((chan << SDPCM_CHANNEL_SHIFT) & SDPCM_CHANNEL_MASK) | bus->tx_seq |
+                (((pad1 + SDPCM_HDRLEN) << SDPCM_DOFFSET_SHIFT) & SDPCM_DOFFSET_MASK);
+        htol32_ua_store(swheader, frame + SDPCM_FRAMETAG_LEN);
+        htol32_ua_store(0, frame + SDPCM_FRAMETAG_LEN + sizeof(swheader));
 
 #ifdef DHD_DEBUG
-	if (PKTPRIO(pkt) < ARRAYSIZE(tx_packets)) {
-		tx_packets[PKTPRIO(pkt)]++;
-	}
-	if (DHD_BYTES_ON() &&
-	    (((DHD_CTL_ON() && (chan == SDPCM_CONTROL_CHANNEL)) ||
-	      (DHD_DATA_ON() && (chan != SDPCM_CONTROL_CHANNEL))))) {
-		prhex("Tx Frame", frame, len);
-	} else if (DHD_HDRS_ON()) {
-		prhex("TxHdr", frame, MIN(len, 16));
-	}
+        if (PKTPRIO(pkt) < ARRAYSIZE(tx_packets)) {
+            tx_packets[PKTPRIO(pkt)]++;
+        }
+
 #endif
 
-	/* Raise len to next SDIO block to eliminate tail command */
-	if (bus->roundup && bus->blocksize && (len > bus->blocksize)) {
-		uint16 pad2 = bus->blocksize - (len % bus->blocksize);
-		if ((pad2 <= bus->roundup) && (pad2 < bus->blocksize))
+        /* Raise len to next SDIO block to eliminate tail command */
+        if (bus->roundup && bus->blocksize && (len > bus->blocksize)) {
+            uint16 pad2 = bus->blocksize - (len % bus->blocksize);
+            if ((pad2 <= bus->roundup) && (pad2 < bus->blocksize))
 #ifdef NOTUSED
-			if (pad2 <= PKTTAILROOM(osh, pkt))
+                if (pad2 <= PKTTAILROOM(osh, pkt))
 #endif /* NOTUSED */
-				len += pad2;
-	} else if (len % DHD_SDALIGN) {
-		len += DHD_SDALIGN - (len % DHD_SDALIGN);
-	}
+                    len += pad2;
+        } else if (len % DHD_SDALIGN) {
+            len += DHD_SDALIGN - (len % DHD_SDALIGN);
+        }
 
 	/* Some controllers have trouble with odd bytes -- round to even */
-	if (forcealign && (len & (ALIGNMENT - 1))) {
+        if (forcealign && (len & (ALIGNMENT - 1))) {
 #ifdef NOTUSED
-		if (PKTTAILROOM(osh, pkt))
+            if (PKTTAILROOM(osh, pkt))
 #endif
-			len = ROUNDUP(len, ALIGNMENT);
+                len = ROUNDUP(len, ALIGNMENT);
 #ifdef NOTUSED
-		else
-			DHD_ERROR(("%s: sending unrounded %d-byte packet\n", __FUNCTION__, len));
+            else
+                DHD_ERROR(("%s: sending unrounded %d-byte packet\n", __FUNCTION__, len));
 #endif
-	}
-	real_pad = len - act_len;
-	if (PKTTAILROOM(osh, pkt) < real_pad) {
-		DHD_INFO(("%s 3: insufficient tailroom %d for %d real_pad\n",
-		__FUNCTION__, (int)PKTTAILROOM(osh, pkt), real_pad));
-		if (PKTPADTAILROOM(osh, pkt, real_pad)) {
-			DHD_ERROR(("CHK3: padding error size %d\n", real_pad));
-			ret = BCME_NOMEM;
-			goto done;
-		}
+        }
+        real_pad = len - act_len;
+        if (PKTTAILROOM(osh, pkt) < real_pad) {
+            DHD_INFO(("%s 3: insufficient tailroom %d for %d real_pad\n",
+            __FUNCTION__, (int)PKTTAILROOM(osh, pkt), real_pad));
+            if (PKTPADTAILROOM(osh, pkt, real_pad)) {
+                DHD_ERROR(("CHK3: padding error size %d\n", real_pad));
+                ret = BCME_NOMEM;
+                goto done;
+            }
 #ifndef BCMLXSDMMC
 		else
 			PKTSETLEN(osh, pkt, act_len);
 #endif
-	}
+        }
+
+
 #ifdef BCMLXSDMMC
-	PKTSETLEN(osh, pkt, len);
+        PKTSETLEN(osh, pkt, len);
 #endif /* BCMLXSDMMC */
 	}
+
+    prhex("Tx Frame pkt, dhdsdio_txpkt()", frame, len);
+
 	do {
 		ret = dhd_bcmsdh_send_buf(bus, bcmsdh_cur_sbwad(sdh), SDIO_FUNC_2, F2SYNC,
 		                          frame, len, pkt, NULL, NULL);
@@ -2109,12 +2114,74 @@ done:
 	return ret;
 }
 
+void dhd_bus_pktq_flush(dhd_pub_t *dhdp);
+
+void 
+nexmon_send_filter_pkt(char* msg, int msg_len) {
+    dhd_bus_t* bus;
+    void *pkt;
+    uint8 *data = (uint8 *) msg;
+    uint8* nex_hdr;
+    osl_t *osh;
+
+    DHD_INFO(("Enter %s\n", __FUNCTION__));
+
+    if(nexmon_glob_bus == NULL) {
+        DHD_ERROR(("Nexmon no bus! available %s: \n", __FUNCTION__));
+        return;
+    }
+
+    bus = nexmon_glob_bus;
+    osh = bus->dhd->osh;
+
+    // Allocate the packet
+    if (!(pkt = PKTGET(osh, SDPCM_HDRLEN + msg_len + DHD_SDALIGN, TRUE))) {
+        DHD_ERROR(("%s: Nexmon PKTGET failed!\n", __FUNCTION__));
+        return;
+    }
+    PKTALIGN(osh, pkt, (SDPCM_HDRLEN + msg_len ), DHD_SDALIGN);
+
+    // Copy data
+    strncpy(PKTDATA(osh, pkt), data, msg_len);
+
+    // Add NexMon HDR
+    DHD_INFO(("%s: Adding NexMon Header\n", __FUNCTION__));
+    prhex("NexMon Header BEFORE insertion: ", PKTDATA(osh, pkt), 8);
+    PKTPUSH(osh, pkt, 4);
+    nex_hdr = PKTDATA(osh, pkt);
+    *nex_hdr++ = 0x42;
+    *nex_hdr++ = 0x42;
+    *nex_hdr++ = 0x42;
+    *nex_hdr++ = 0x42;
+    prhex("NexMon Header AFTER insertion: ", PKTDATA(osh, pkt), 12);
+
+    // Send it
+    DHD_OS_WAKE_LOCK(bus->dhd);
+    dhd_os_sdlock(bus->dhd); 
+    BUS_WAKE(bus);
+    
+    // turn backplane on
+    dhdsdio_clkctl(bus, CLK_AVAIL, TRUE);
+
+    if(dhd_bus_txdata(bus, pkt) != BCME_OK) {
+        DHD_ERROR(("Failed to send NexMon pkt (event chan)!\n"));
+        bus->pktgen_fail++;
+    } else {
+        DHD_INFO(("Send filter pkt success!\n"));
+    }
+
+    dhd_os_sdunlock(bus->dhd);
+    DHD_OS_WAKE_UNLOCK(bus->dhd);
+    return;
+}
+
 int
 dhd_bus_txdata(struct dhd_bus *bus, void *pkt)
 {
 	int ret = BCME_ERROR;
 	osl_t *osh;
 	uint datalen, prec;
+    uint8* data;
 #ifdef DHD_TX_DUMP
 	uint8 *dump_data;
 	uint16 protocol;
@@ -2130,7 +2197,6 @@ dhd_bus_txdata(struct dhd_bus *bus, void *pkt)
 #ifdef SDTEST
 	/* Push the test header if doing loopback */
 	if (bus->ext_loop) {
-		uint8* data;
 		PKTPUSH(osh, pkt, SDPCM_TEST_HDRLEN);
 		data = PKTDATA(osh, pkt);
 		*data++ = SDPCM_TEST_ECHOREQ;
@@ -2140,6 +2206,7 @@ dhd_bus_txdata(struct dhd_bus *bus, void *pkt)
 		datalen += SDPCM_TEST_HDRLEN;
 	}
 #endif /* SDTEST */
+
 
 #ifdef DHD_TX_DUMP
 	dump_data = PKTDATA(osh, pkt);
@@ -2276,10 +2343,13 @@ dhdsdio_sendfromq(dhd_bus_t *bus, uint maxframes)
 	uint datalen;
 	uint8 tx_prec_map;
 	uint16 txpktqlen = 0;
+    bool nexmon_pkt = FALSE;
 #ifdef BCMSDIOH_TXGLOM
 	uint i;
 	uint8 glom_cnt;
 #endif
+    uint8* data;
+    uint8 save_glom_hdr[SDPCM_HDRLEN];
 
 	dhd_pub_t *dhd = bus->dhd;
 	sdpcmd_regs_t *regs = bus->regs;
@@ -2325,23 +2395,47 @@ dhdsdio_sendfromq(dhd_bus_t *bus, uint maxframes)
 					break;
 				}
 
+                // remove NexMon header
+                data = (uint8*) PKTDATA(bus->dhd->osh, pkt);
+                strncpy(save_glom_hdr, data, SDPCM_HDRLEN);
+                prhex("NexMon Header BEFORE Fixing: ", data, 32);
+                //data += 38;
+                data += SDPCM_HDRLEN; //20 byte
+                if(data[0] == 0x42 && data[1] == 0x42 && data[2] == 0x42 && data[3] == 0x42) {
+                    DHD_INFO(("%s: found 4 bytes from NexMon\n", __FUNCTION__));
+                    PKTPULL(bus->dhd->osh, pkt, SDPCM_HDRLEN + 4);
+                    PKTPUSH(bus->dhd->osh, pkt, SDPCM_HDRLEN);
+                    strncpy(PKTDATA(bus->dhd->osh, pkt), save_glom_hdr, SDPCM_HDRLEN);
+                    nexmon_pkt = TRUE;
+                }
+                prhex("NexMon Header AFTER Fixing: ", PKTDATA(bus->dhd->osh, pkt), 32);
+
 				datalen_tmp = (PKTLEN(bus->dhd->osh, pkt) - SDPCM_HDRLEN);
 
+                if(nexmon_pkt) {
+                    ret = dhdsdio_txpkt(bus,
+                        pkt,
+                        SDPCM_FILTER_CHANNEL,
+                        TRUE,
+                        (i == (glom_cnt-1))? FALSE: TRUE);
+                    nexmon_pkt = FALSE;
+                } else {
 #ifndef SDTEST
-				ret = dhdsdio_txpkt(bus,
-					pkt,
-					SDPCM_DATA_CHANNEL,
-					TRUE,
-					(i == (glom_cnt-1))? FALSE: TRUE);
+                    ret = dhdsdio_txpkt(bus,
+                        pkt,
+                        SDPCM_DATA_CHANNEL,
+                        TRUE,
+                        (i == (glom_cnt-1))? FALSE: TRUE);
 #else
-				ret = dhdsdio_txpkt(bus,
-					pkt,
-					(bus->ext_loop ? SDPCM_TEST_CHANNEL : SDPCM_DATA_CHANNEL),
-					TRUE,
-					(i == (glom_cnt-1))? FALSE: TRUE);
+                    ret = dhdsdio_txpkt(bus,
+                        pkt,
+                        (bus->ext_loop ? SDPCM_TEST_CHANNEL : SDPCM_DATA_CHANNEL),
+                        TRUE,
+                        (i == (glom_cnt-1))? FALSE: TRUE);
 #endif
-				if (ret == BCME_OK)
-					datalen += datalen_tmp;
+                    if (ret == BCME_OK)
+                        datalen += datalen_tmp;
+                }
 			}
 			cnt += i-1;
 		} else
@@ -2576,7 +2670,7 @@ dhd_bus_txctl(struct dhd_bus *bus, uchar *msg, uint msglen)
 		if (DHD_BYTES_ON() && DHD_CTL_ON()) {
 			prhex("Tx Frame", frame, len);
 		} else if (DHD_HDRS_ON()) {
-			prhex("TxHdr", frame, MIN(len, 16));
+			prhex("TxHdr CTL", frame, MIN(len, 16));
 		}
 #endif
 
@@ -6563,7 +6657,7 @@ dhdsdio_pktgen(dhd_bus_t *bus)
 #endif
 
 		/* Send it */
-		if (dhdsdio_txpkt(bus, pkt, SDPCM_TEST_CHANNEL, TRUE, FALSE)) {
+        if (dhdsdio_txpkt(bus, pkt, SDPCM_TEST_CHANNEL, TRUE, FALSE)) {
 			bus->pktgen_fail++;
 			if (bus->pktgen_stop && bus->pktgen_stop == bus->pktgen_fail)
 				bus->pktgen_count = 0;
@@ -7774,6 +7868,7 @@ dhdsdio_download_code_array(struct dhd_bus *bus)
 	}
 #endif /* DHD_DEBUG */
 
+
 err:
 	if (ularray)
 		MFREE(bus->dhd->osh, ularray, bus->ramsize);
@@ -7831,6 +7926,8 @@ dhdsdio_download_code_file(struct dhd_bus *bus, char *pfw_path)
 
 		offset += MEMBLOCK;
 	}
+
+    nexmon_glob_bus = bus;
 
 err:
 	if (memblock)
