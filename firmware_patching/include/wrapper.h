@@ -45,6 +45,5 @@ extern int wl_init(void *wl); // 0x2716C
 extern int wl_reset(void *wl); // 0x27138
 
 extern void *sdio_header_parsing_from_sk_buff(void *sdio, void *p); // 0x182A64
-extern unsigned int nexmon_filter(void *skb, void *filter); // 0x180050
 
 #endif /*WRAPPER_H*/
