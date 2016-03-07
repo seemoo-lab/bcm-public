@@ -2,15 +2,26 @@
 
 import sys
 sys.path.append('../../buildtools/binary_patcher')
+sys.path.append('../../buildtools/elffile')
+
 import binary_patcher
 from binary_patcher import *
+import elffile
+
+ef = elffile.open(name="wlc_bmac_recv.elf")
+
+def getSectionAddr(name):
+	return next((header for header in ef.sectionHeaders if header.name == name), None).addr
 
 FW_FILE = "../../bootimg_src/firmware/fw_bcmdhd.orig.bin"
 
+patchfile0 = 'filter.bin'
 patchfile1 = 'wlc_bmac_recv.bin'
 
 # wlc_bmac_recv()
-detour1 = ExernalArmPatch(0x1AAD98, patchfile1)
+detour0 = ExternalArmPatch(0x180050, patchfile0)
+detour1 = ExternalArmPatch(0x1AAD98, patchfile1)
+detour15 = ExternalArmPatch(getSectionAddr(".text"), "text.bin")
 
 #2nd call of wlc_bmac_mctrl() in wlc_coreinit()
 # mask
@@ -26,7 +37,9 @@ detour5 = GenericPatch4(0x1d3a4c, 0x29214F4F)
 #Android 6
 patch_firmware(FW_FILE,
     "fw_bcmdhd.bin", [
+        detour0,
         detour1,
+        detour15,
         detour2,
         detour3,
         detour4,
