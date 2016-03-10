@@ -6,6 +6,7 @@ SECTIONS
 
 	.text.interrupt_enable_hook 0x1804B4: { KEEP(patch.o (.text.interrupt_enable_hook)) }
 	.text.wlc_ucode_download_hook : { KEEP(patch.o (.text.wlc_ucode_download_hook)) }
+	.text.path_to_load_ucode_hook : { KEEP(patch.o (.text.path_to_load_ucode_hook)) }
 	.text.interrupt_handler : { KEEP(patch.o (.text.interrupt_handler)) }
 	.text.before_before_initialize_memory_hook : { KEEP(patch.o (.text.before_before_initialize_memory_hook)) }
 /* unused hooks

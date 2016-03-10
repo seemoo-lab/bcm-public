@@ -4826,9 +4826,10 @@ dhd_bus_init(dhd_pub_t *dhdp, bool enforce_mutex)
 	DHD_ERROR(("%s: enable 0x%02x, ready 0x%02x (waited %uus)\n",
 	          __FUNCTION__, enable, ready, tmo.elapsed));
 
-	dhd_check_d11_access(bus);
-	dhd_check_d11_access(bus);
-	dhd_check_d11_access(bus);
+	// if we stop the arm cpu in a while(1) loop after ucode download, we directly access the d11 core at this point.
+	//dhd_check_d11_access(bus);
+	//dhd_check_d11_access(bus);
+	//dhd_check_d11_access(bus);
 
 	dhdsdio_checkdied(bus, NULL, 0);
 
