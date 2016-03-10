@@ -37,17 +37,28 @@ testprint(void)
 __attribute__((naked)) void 
 interrupt_handler(void)
 {
-	asm("push {r0-r3,lr}\n"					// save the registers that might change as well as the link register
-		"bl interrupt_handler_do\n"
-		"pop {r0-r3,lr}\n"					// restore the saved registers
+	asm("push {r0-r3,lr}\n"
+		"mov r4, r0\n"
+		"ldr r3, [r0]\n"
+		"cmp r3, #3\n"													// check for hardware debugger exception
+		"beq label1\n"
+		"pop {r0-r3,lr}\n"
 		"b dump_stack_print_dbg_stuff_intr_handler\n"					// jump to the original function
+		"label1:\n"
+		"bl interrupt_handler_do\n"
+		"pop {r0-r3,lr}\n"
+		"b dump_stack_print_dbg_stuff_intr_handler\n"					// jump to the original function
+		//"pop {r0-r3,pc}\n"
 		);
 }
 
+int c = 0;
+
 void
-interrupt_handler_do(int a1, int a2, int a3)
+interrupt_handler_do(int a1, int a2, int a3, int a4)
 {
-	printf("intr %08x %08x %08x\n", a1, a2, a3);
+	if (c++ & 100)
+		printf("intr %08x %08x %08x %08x\n", a1, a2, a3, a4);
 }
 
 
@@ -140,6 +151,13 @@ wlc_ucode_download_hook(void *wlc_hw)
 	printf("wlc_ucode_download\n");
 	wlc_ucode_download(wlc_hw);
 	try_to_access_d11();
+	while(1);
+}
+
+int
+path_to_load_ucode_hook(int devid, void *osh, void *regs, int bustype, void *sdh)
+{
+	return path_to_load_ucode(devid, osh, regs, bustype, sdh);
 }
 
 /*

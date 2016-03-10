@@ -3097,6 +3097,19 @@ dhd_check_debug_system(struct dhd_bus *bus)
 	//DHD_TRACE(("%s: Enter D11 0x%08x\n", __FUNCTION__, *(uint32 *) dump));
 }
 
+void
+dhd_check_d11_access(struct dhd_bus *bus)
+{
+	uint8 dump[16];
+	dhdsdio_membytes(bus, FALSE, 0x1800101C, dump, 4);
+	//dhd_send_udp_msg(6670, dump, 4);
+	//udpprintf(6681, "0x%08x\n", *(uint32 *) dump);
+	DHD_TRACE(("%s: Enter DBG 0x%08x\n", __FUNCTION__, *(uint32 *) dump));
+
+	//dhdsdio_membytes(bus, FALSE, 0x18001000, dump, 4);
+	//DHD_TRACE(("%s: Enter D11 0x%08x\n", __FUNCTION__, *(uint32 *) dump));
+}
+
 #ifdef DHD_DEBUG
 static int
 dhdsdio_readshared(dhd_bus_t *bus, sdpcm_shared_t *sh)
@@ -4812,6 +4825,10 @@ dhd_bus_init(dhd_pub_t *dhdp, bool enforce_mutex)
 
 	DHD_ERROR(("%s: enable 0x%02x, ready 0x%02x (waited %uus)\n",
 	          __FUNCTION__, enable, ready, tmo.elapsed));
+
+	dhd_check_d11_access(bus);
+	dhd_check_d11_access(bus);
+	dhd_check_d11_access(bus);
 
 	dhdsdio_checkdied(bus, NULL, 0);
 

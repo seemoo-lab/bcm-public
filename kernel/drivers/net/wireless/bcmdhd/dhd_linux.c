@@ -2168,7 +2168,7 @@ dhd_get_stats(struct net_device *net)
 
 	DHD_TRACE(("%s: Enter\n", __FUNCTION__));
 
-	dhdsdio_checkdied(dhd->pub.bus, NULL, 0);
+	//dhdsdio_checkdied(dhd->pub.bus, NULL, 0);
 
 	ifidx = dhd_net2idx(dhd, net);
 	if (ifidx == DHD_BAD_IF) {
