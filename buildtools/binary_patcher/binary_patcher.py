@@ -24,7 +24,7 @@ class BasePatch(object):
         firmware += max(0, fw_pos - len(firmware)) * "\x00"
         return firmware[:fw_pos] + self.data + firmware[fw_pos+len(self.data):]
 
-class ExernalArmPatch(BasePatch):
+class ExternalArmPatch(BasePatch):
     def __init__(self, pos, infile, extra_data=""):
         self.pos = pos
         self.infile = infile
@@ -47,7 +47,7 @@ class ExernalArmPatch(BasePatch):
     
     def apply(self, firmware, **kargs):
         self.data = self._generate_bytes()
-        return super(ExernalArmPatch, self).apply(firmware)
+        return super(ExternalArmPatch, self).apply(firmware)
 
 
 class BPatch(BasePatch):

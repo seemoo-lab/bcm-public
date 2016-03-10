@@ -15,7 +15,7 @@ def getSectionAddr(name):
 
 patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin", 
     "fw_bcmdhd.bin", [
-	ExernalArmPatch(0x180050, "dngl_sendpkt.bin"),
+	ExternalArmPatch(0x180050, "dngl_sendpkt.bin"),
 	BLPatch(0x182796 - 0x2400, 0x184F14), # START some functions called by dngl_sendpkt or one of its subfunctions
 	BLPatch(0x1827A4 - 0x2400, 0x184F64),
 	BLPatch(0x1827CE - 0x2400, 0x184F64),

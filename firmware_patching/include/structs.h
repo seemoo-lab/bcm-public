@@ -43,6 +43,7 @@ struct wlc_hw_info {
 
 struct wlc_info {
     struct wlc_pub *pub;
+    struct osl_info *osh;
 };
 
 struct wlc_pub {
