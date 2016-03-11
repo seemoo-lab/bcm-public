@@ -10407,6 +10407,9 @@ s32 wl_update_wiphybands(struct wl_priv *wl, bool notify)
 	return err;
 }
 
+extern void dhd_dbg_dump(void * bus);
+extern void dhd_set_dbg_regs(void *bus);
+
 static s32 __wl_cfg80211_up(struct wl_priv *wl)
 {
 	s32 err = 0;
@@ -10417,6 +10420,9 @@ static s32 __wl_cfg80211_up(struct wl_priv *wl)
 
 	// here the debug system can be accessed
 	//dhd_check_debug_system(((dhd_pub_t *) wl->pub)->bus);
+	//dhd_dbg_dump(((dhd_pub_t *) wl->pub)->bus);
+	//dhd_set_dbg_regs(((dhd_pub_t *) wl->pub)->bus);
+	//dhd_dbg_dump(((dhd_pub_t *) wl->pub)->bus);
 
 	err = dhd_config_dongle(wl, false);
 	if (unlikely(err))

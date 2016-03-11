@@ -70,6 +70,8 @@ extern void *dma_rxfill(void *di); // 0x8c6cc
 extern void *dma_txfast(void *di, void *p, int commit); // 0x1844B2
 extern void *dngl_sendpkt(void *sdio, void *p, int chan); // 0x182750
 
+extern void *dump_stack_print_dbg_stuff_intr_handler(void); // 0x181E48
+
 extern void free(void *p); // 0x16620
 extern int function_with_huge_jump_table(void *wlc, int a2, int cmd, int a4, int a5, unsigned int a6, int a7, int a8, int a9, int a10); // 0x19B25C
 
@@ -79,6 +81,7 @@ extern void *malloc(unsigned int size, char x); // 0x1814F4
 extern int memcpy(void *dst, void *src, int len); // 0x181418
 extern void *memset(void *dst, int value, int len); // 0x1269C
 
+extern int path_to_load_ucode(int devid, void *osh, void *regs, int bustype, void *sdh); // 0x1FD78C
 extern void *pkt_buf_get_skb(void *osh, unsigned int len); // 0x184F14
 extern void *pkt_buf_free_skb(void *osh, void *p, int send); // 0x184F64
 extern int printf(const char *format, ...); // 0x126f0
@@ -93,13 +96,22 @@ extern int sum_buff_lengths(void *osh, void *p); // 0x1360C
 
 extern int towards_dma_txfast(void *sdio, void *p, int chan); // 0x18256C
 
+extern void sub_1ed41c(void); // 0x1ed41c
+extern void sub_1810a8(void); // 0x1810a8
+extern void sub_1ec7c8(void); // 0x1ec7c8
+extern void sub_1ed584(void); // 0x1ed584
+extern void sub_1ecab0(void); // 0x1ecab0
+extern void sub_1ec6fc(void); // 0x1ec6fc
+extern void sub_1816e4(void); // 0x1816e4
+
 extern void wlc_bmac_init(void *wlc_hw, unsigned int chanspec, unsigned int mute); // 0x1AB840
 extern void wlc_bmac_mctrl(void *wlc_hw, int mask, int val); // 0x4F080
 extern void wlc_bmac_write_template_ram(void *wlc_hw, int offset, int len, void *buf); // 0x504B0
 extern void wlc_coreinit(void *wlc_hw); // 0x1AB66C
 extern int wlc_init(void *wlc); // 0x199874
-extern void wlc_mctrl_write(void *wlc_hw); // 0x4df60
+extern void wlc_mctrl_write(void *wlc_hw); // 0x4DF60
 extern void wlc_txfifo(void *wlc, int fifo, void *p, void *txh, unsigned char commit, char txpktpend); // 0x193744
+extern void wlc_ucode_download(void *wlc_hw); // 0x1F4EF8
 extern void wlc_ucode_write(void *wlc_hw, const int ucode[], const unsigned int nbytes); // 0x4E0C8
 
 extern void *wl_add_if(void *wl, int wlcif, int unit, int wds_or_bss); // 0x26F50

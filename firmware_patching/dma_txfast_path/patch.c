@@ -34,6 +34,36 @@ testprint(void)
 }
 */
 
+// dump_stack_print_dbg_stuff_intr_handler
+__attribute__((naked)) void 
+interrupt_handler(void)
+{
+	asm("push {r0-r3,lr}\n"
+		"ldr r3, [r0]\n"
+		"cmp r3, #3\n"													// check for hardware debugger exception
+		"beq label1\n"
+		"pop {r0-r3,lr}\n"
+		"b dump_stack_print_dbg_stuff_intr_handler\n"					// jump to the original function
+		"label1:\n"
+		"pop {r0-r3,lr}\n"
+		"push {r0-r3,lr}\n"
+		"bl interrupt_handler_do\n"
+		"pop {r0-r3,pc}\n"
+		//"b dump_stack_print_dbg_stuff_intr_handler\n"					// jump to the original function
+		//"pop {r0-r3,pc}\n"
+		);
+}
+
+int c = 0;
+
+void
+interrupt_handler_do(int *a1, int a2, int a3, int a4)
+{
+	if (c++ % 1000)
+		printf("intr %08x %08x %08x %08x %08x %08x %08x %08x\n", *a1, *(a1+1), *(a1+2), *(a1+3), *(a1+4), *(a1+5), *(a1+6), *(a1+7));
+}
+
+
 __attribute__((naked)) void
 interrupt_enable_hook(void)
 {
@@ -61,6 +91,84 @@ interrupt_enable_do(int a1, int a2, int a3)
 	unsigned short offsets[] = { 0, 0x18, 0x1c, 0x28 };
 	for (i = 0; i < 4; i++)
 		printf("%08x: %08x\n", ((a2  & 0xFFFFFFF0) + (a3 & 0xFFFFFFF0) + offsets[i]), *(int *) ((a2  & 0xFFFFFFF0) + (a3 & 0xFFFFFFF0) + offsets[i]));
+
+//	printf("%08x: %08x\n", 0x18001120, *(int *) 0x18001120);
+}
+
+void
+set_debug_registers(void)
+{ 
+	int dbgdscr = *(volatile int *) 0x18007088;
+	printf("DBG %08x %08x %08x %08x\n", *(volatile int *) 0x18007088, *(volatile int *) 0x18007100, *(volatile int *) 0x18007140, *(volatile int *) 0x18007FB4);
+	*(volatile int *) 0x18007FB0 = 0xC5ACCE55;
+	*(volatile int *) 0x18007088 = dbgdscr | (1 << 15);
+	*(volatile int *) 0x18007140 = 0x0;
+	*(volatile int *) 0x18007100 = 0x61eb8 & 0xFFFFFFFC;
+	*(volatile int *) 0x18007140 = 7 | ((3 << (0x61eb8 & 2)) << 5);
+	printf("DBG %08x %08x %08x %08x\n", *(volatile int *) 0x18007088, *(volatile int *) 0x18007100, *(volatile int *) 0x18007140, *(volatile int *) 0x18007FB4);
+}
+
+__attribute__((naked)) void
+before_before_initialize_memory_hook(void)
+{
+	asm(//"push {r0-r3,lr}\n"					// save the registers that might change as well as the link register
+		//"bl try_to_access_d11\n"
+		//"pop {r0-r3,lr}\n"					// restore the saved registers
+		"push {r4, lr}\n"
+		//"push {r0-r3,lr}\n"
+		//"bl try_to_access_d11\n"
+		//"pop {r0-r3,lr}\n"
+		// no d11 access
+		"bl sub_1ed41c\n"						// call the function that was supposed to be called
+		// no d11 access
+		"bl sub_1810a8\n"						// call the function that was supposed to be called
+		// no d11 access
+		"bl sub_1ec7c8\n"						// call the function that was supposed to be called
+		// no d11 access
+		"bl sub_1ed584\n"						// call the function that was supposed to be called
+		// no d11 access
+		"mov r4, r0\n"
+		"bl sub_1ecab0\n"						// call the function that was supposed to be called
+		"bl sub_1ec6fc\n"						// call the function that was supposed to be called
+		"bl sub_1816e4\n"						// call the function that was supposed to be called
+		"mov r0, r4\n"
+		"pop {r4, lr}\n"
+		"push {r0-r3,lr}\n"
+		"bl set_debug_registers\n"
+		"pop {r0-r3,lr}\n"
+		"b interrupt_enable_hook\n"
+		);
+}
+
+void
+try_to_access_d11(void)
+{
+	printf("%08x: %08x\n", 0x1800101C, *(int *) 0x1800101C);
+}
+
+void
+wlc_ucode_download_hook(void *wlc_hw)
+{
+	printf("wlc_ucode_download\n");
+	wlc_ucode_download(wlc_hw);
+	try_to_access_d11();
+	//while(1);
+}
+
+int
+path_to_load_ucode_hook(int devid, void *osh, void *regs, int bustype, void *sdh)
+{
+	int ret;
+	
+	printf("path_to_load_ucode before\n");
+	// Here the d11 access does not work
+	//try_to_access_d11();
+	ret = path_to_load_ucode(devid, osh, regs, bustype, sdh);
+	// Here the d11 access works
+	try_to_access_d11();
+	printf("path_to_load_ucode after\n");
+
+	return ret;
 }
 
 /*

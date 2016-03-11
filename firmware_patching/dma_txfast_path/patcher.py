@@ -57,26 +57,34 @@ patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin",
 	BLPatch(0x1824C6 - 0x2400, 0x1844B2), # END some functions called by dngl_sendpkt or one of its subfunctions
 #	BPatch( 0x182CB0, 0x180350), # call to dngl_sendpkt
 #	BLPatch(0x182920, 0x180350), # call to dngl_sendpkt
-#	ExernalArmPatch(getSectionAddr(".text"), "text.bin"),
-#	ExernalArmPatch(getSectionAddr(".text.dma_txfast_hook"), "dma_txfast_hook.bin"),
+	ExternalArmPatch(getSectionAddr(".text"), "text.bin"),
+#	ExternalArmPatch(getSectionAddr(".text.dma_txfast_hook"), "dma_txfast_hook.bin"),
 #	GenericPatch4(0x180C34, getSectionAddr(".text.dma_txfast_hook")+1), # function pointer table entry to dma_txfast replaced by dma_txfast_hook
 #	GenericPatch4(0x1D53C4, getSectionAddr(".text.dma_txfast_hook")+1), # function pointer table entry to dma_txfast replaced by dma_txfast_hook
-#	ExernalArmPatch(getSectionAddr(".text.wlc_txfifo_hook"), "wlc_txfifo_hook.bin"),
+#	ExternalArmPatch(getSectionAddr(".text.wlc_txfifo_hook"), "wlc_txfifo_hook.bin"),
 #	BPatch(0x193744, getSectionAddr(".text.wlc_txfifo_hook")), # replace the push instrunction of the original wlc_txfifo function by a branch to our hook
-#	ExernalArmPatch(getSectionAddr(".text.interrupt_enable_hook"), "interrupt_enable_hook.bin"),
-#	BPatch(0x1838ac, getSectionAddr(".text.interrupt_enable_hook")),
-#	ExernalArmPatch(getSectionAddr(".text.setup_some_stuff_hook"), "setup_some_stuff_hook.bin"),
+	ExternalArmPatch(getSectionAddr(".text.interrupt_enable_hook"), "interrupt_enable_hook.bin"),
+	BPatch(0x1838ac, getSectionAddr(".text.interrupt_enable_hook")),
+	ExternalArmPatch(getSectionAddr(".text.wlc_ucode_download_hook"), "wlc_ucode_download_hook.bin"),
+	BLPatch(0x1FD7F2, getSectionAddr(".text.wlc_ucode_download_hook")),
+#	ExternalArmPatch(getSectionAddr(".text.path_to_load_ucode_hook"), "path_to_load_ucode_hook.bin"),
+#	BLPatch(0x1F31D0, getSectionAddr(".text.path_to_load_ucode_hook")),
+	ExternalArmPatch(getSectionAddr(".text.before_before_initialize_memory_hook"), "before_before_initialize_memory_hook.bin"),
+	GenericPatch4(0x181240, getSectionAddr(".text.before_before_initialize_memory_hook")+1),
+	ExternalArmPatch(getSectionAddr(".text.interrupt_handler"), "interrupt_handler.bin"),
+	GenericPatch4(0x1ECA84, getSectionAddr(".text.interrupt_handler")+1),
+#	ExternalArmPatch(getSectionAddr(".text.setup_some_stuff_hook"), "setup_some_stuff_hook.bin"),
 #	BLPatch(0x1F2358, getSectionAddr(".text.setup_some_stuff_hook")),
-#	ExernalArmPatch(getSectionAddr(".text.bus_binddev_rom_hook"), "bus_binddev_rom_hook.bin"),
+#	ExternalArmPatch(getSectionAddr(".text.bus_binddev_rom_hook"), "bus_binddev_rom_hook.bin"),
 #	GenericPatch4(0x1D9B08, getSectionAddr(".text.bus_binddev_rom_hook")+1), # function pointer in the dngl_pointer_table
-#	ExernalArmPatch(getSectionAddr(".text.sub_1ECAB0_hook"), "sub_1ECAB0_hook.bin"),
+#	ExternalArmPatch(getSectionAddr(".text.sub_1ECAB0_hook"), "sub_1ECAB0_hook.bin"),
 #	BLPatch(0x18389A, getSectionAddr(".text.sub_1ECAB0_hook")),
-#	ExernalArmPatch(getSectionAddr(".text.function_with_huge_jump_table_hook"), "function_with_huge_jump_table_hook.bin"),
+#	ExternalArmPatch(getSectionAddr(".text.function_with_huge_jump_table_hook"), "function_with_huge_jump_table_hook.bin"),
 #	BPatch(0x19b25c, getSectionAddr(".text.function_with_huge_jump_table_hook")),
-#	ExernalArmPatch(getSectionAddr(".text.handle_ioctl_cmd_hook"), "handle_ioctl_cmd_hook.bin"),
+#	ExternalArmPatch(getSectionAddr(".text.handle_ioctl_cmd_hook"), "handle_ioctl_cmd_hook.bin"),
 #	BPatch(0x18AE72, getSectionAddr(".text.handle_ioctl_cmd_hook")),
-#	ExernalArmPatch(getSectionAddr(".text.console_size_r0"), "console_size_r0.bin"), # change console size from 0x800 to 0x2000
-#	ExernalArmPatch(getSectionAddr(".text.console_size_r2"), "console_size_r2.bin"), # change console size from 0x800 to 0x2000
+#	ExternalArmPatch(getSectionAddr(".text.console_size_r0"), "console_size_r0.bin"), # change console size from 0x800 to 0x2000
+#	ExternalArmPatch(getSectionAddr(".text.console_size_r2"), "console_size_r2.bin"), # change console size from 0x800 to 0x2000
 #	GenericPatch4(0x1ED722, 0x00000000), # NOP the call to initialize_device_core to not initialize the D11 core
 #	GenericPatch4(0x1ED72A, 0x00000000), # NOP the check if D11 core initialization returned an error
 #	GenericPatch2(0x19B260, int('1011111000000000',2)), # replace function with huge jump table with a breakpoint
