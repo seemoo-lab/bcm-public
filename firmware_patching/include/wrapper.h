@@ -91,6 +91,8 @@ extern void *sub_1831A0(void *osh, void *a2, int a3, void *sdiodev); // 0x1831A0
 extern void sub_1ECAB0(int a1); // 0x1ECAB0
 extern int sum_buff_lengths(void *osh, void *p); // 0x1360C
 
+extern int towards_dma_txfast(void *sdio, void *p, int chan); // 0x18256C
+
 extern void wlc_bmac_init(void *wlc_hw, unsigned int chanspec, unsigned int mute); // 0x1AB840
 extern void wlc_bmac_mctrl(void *wlc_hw, int mask, int val); // 0x4F080
 extern void wlc_bmac_write_template_ram(void *wlc_hw, int offset, int len, void *buf); // 0x504B0
