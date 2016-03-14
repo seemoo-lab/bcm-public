@@ -4,12 +4,13 @@
 #include "bcm4339.h"
 #include "types.h"
 
-/* somehow the strings are not removed during optimization, so that they end up in the binary, hence, move the functions somewhere else, where they are only included if they are needed.
+// somehow the strings are not removed during optimization, so that they end up in the binary, hence, move the functions somewhere else, where they are only included if they are needed.
 inline uint16
 htons(uint16 a)
 {
 	return (a & 0xff00) >> 8 | (a & 0xff) << 8;
 }
+/*
 
 inline uint32
 htonl(uint32 a)
@@ -27,7 +28,7 @@ inline uint32
 ntohl(uint32 a)
 {
 	return htonl(a);
-}
+}*/
 
 inline void *
 get_stack_ptr() {
@@ -36,6 +37,7 @@ get_stack_ptr() {
     return stack;
 }
 
+/*
 inline int
 get_register(int reg_nr) {
     int reg_content = 0;

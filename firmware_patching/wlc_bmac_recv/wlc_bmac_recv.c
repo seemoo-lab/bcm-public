@@ -3,6 +3,35 @@
 #include "../include/helper.h"
 #include "../include/structs.h"
 #include "../include/nexmon_filter.h"
+#include "../include/bcmdhd/bcmsdpcm.h"
+
+#define NEXMON_MONITOR_CHANNEL 14
+
+unsigned char bdc_ethernet_ipv6_udp_header_array[] = {
+  0x20, 0x00, 0x00, 0x00,		/* BDC Header */
+  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,	/* ETHERNET: Destination MAC Address */
+  'N', 'E', 'X', 'M', 'O', 'N',		/* ETHERNET: Source MAC Address */
+  0x86, 0xDD,				/* ETHERNET: Type */
+  0x60, 0x00, 0x00, 0x00,		/* IPv6: Version / Traffic Class / Flow Label */
+  0x00, 0x08,				/* IPv6: Payload Length */
+  0x88,					/* IPv6: Next Header = UDPLite */
+  0x01,					/* IPv6: Hop Limit */
+  0xFF, 0x02, 0x00, 0x00,		/* IPv6: Source IP */
+  0x00, 0x00, 0x00, 0x00,		/* IPv6: Source IP */
+  0x00, 0x00, 0x00, 0x00,		/* IPv6: Source IP */
+  0x00, 0x00, 0x00, 0x01,		/* IPv6: Source IP */
+  0xFF, 0x02, 0x00, 0x00,		/* IPv6: Destination IP */
+  0x00, 0x00, 0x00, 0x00,		/* IPv6: Destination IP */
+  0x00, 0x00, 0x00, 0x00,		/* IPv6: Destination IP */
+  0x00, 0x00, 0x00, 0x01,		/* IPv6: Destination IP */
+  0xD6, 0xD8,				/* UDPLITE: Source Port = 55000 */
+  0xD6, 0xD8,				/* UDPLITE: Destination Port = 55000 */
+  0x00, 0x08,				/* UDPLITE: Checksum Coverage */
+  0x52, 0x46,				/* UDPLITE: Checksum only over UDPLITE header*/
+};
+
+unsigned int bdc_ethernet_ipv6_udp_header_length = sizeof(bdc_ethernet_ipv6_udp_header_array) / 
+        sizeof(bdc_ethernet_ipv6_udp_header_array[0]);
 
 // test if the wlc_pub struct got the correct size, 
 // WARNING: compilation fails if not
@@ -131,22 +160,21 @@ sk_run_filter(const struct sk_buff *skb, const struct sock_filter *fentry) {
         case BPF_S_ALU_SUB_K:
             A -= K;
             continue;
-        /* some thing is wrong here, see: https://stackoverflow.com/questions/6576517/what-is-the-cause-of-not-being-able-to-divide-numbers-in-gcc
-        case BPF_S_ALU_MUL_X:
-            A *= X;
-            continue;
-        case BPF_S_ALU_MUL_K:
-            A *= K;
-            continue;
-        case BPF_S_ALU_DIV_X:
-            if (X == 0)
-                return 0;
-            A /= X;
-            continue;
-        case BPF_S_ALU_DIV_K:
-            A = reciprocal_divide(A, K);
-            continue;
-        */
+        // some thing is wrong here, see: https://stackoverflow.com/questions/6576517/what-is-the-cause-of-not-being-able-to-divide-numbers-in-gcc
+        //case BPF_S_ALU_MUL_X:
+        //    A *= X;
+        //    continue;
+        //case BPF_S_ALU_MUL_K:
+        //    A *= K;
+        //    continue;
+        //case BPF_S_ALU_DIV_X:
+        //    if (X == 0)
+        //        return 0;
+        //    A /= X;
+        //    continue;
+        //case BPF_S_ALU_DIV_K:
+        //    A = reciprocal_divide(A, K);
+        //    continue;
         case BPF_S_ALU_AND_X:
             A &= X;
             continue;
@@ -456,12 +484,12 @@ int wlc_bmac_recv(struct wlc_hw_info *wlc_hw, unsigned int fifo, int bound, int 
         } else {
             printf("FILTER: keep!\n");
         }
-#endif /* NEXMON_FILTER */
+#endif // NEXMON_FILTER
 
         if(is_amsdu) {
             is_amsdu = 0;
         }
-        dngl_sendpkt(SDIO_INFO_ADDR, p, 0xF);
+        dngl_sendpkt(SDIO_INFO_ADDR, p, NEXMON_MONITOR_CHANNEL);
         ++n;
     } while(n < bound_limit);
 LEAVE:
@@ -475,3 +503,44 @@ LEAVE:
     }
 }
 
+
+struct sk_buff *
+create_frame(unsigned int hooked_fct, unsigned int arg0, unsigned int arg1, unsigned int arg2, void *start_address, unsigned int length) {
+	struct sk_buff *p = 0;
+	struct osl_info *osh = OSL_INFO_ADDR;
+	struct bdc_ethernet_ipv6_udp_header *hdr;
+	struct nexmon_header *nexmon_hdr;
+
+	p = pkt_buf_get_skb(osh, sizeof(struct bdc_ethernet_ipv6_udp_header) - 1 + sizeof(struct nexmon_header) - 1 + length);
+
+	// copy headers to target buffer
+	memcpy(p->data, bdc_ethernet_ipv6_udp_header_array, bdc_ethernet_ipv6_udp_header_length);
+
+	hdr = p->data;
+	hdr->ipv6.payload_length = htons(sizeof(struct udp_header) + sizeof(struct nexmon_header) - 1 + length);
+	nexmon_hdr = (struct nexmon_header *) hdr->payload;
+	nexmon_hdr->hooked_fct = hooked_fct;
+	nexmon_hdr->args[0] = arg0;
+	nexmon_hdr->args[1] = arg1;
+	nexmon_hdr->args[2] = arg2;
+
+	memcpy(nexmon_hdr->payload, start_address, length);
+
+	return p;
+}
+
+#define SDIO_SEQ_NUM 0x108
+
+int towards_dma_txfast_hook(void *sdio, void *p, int chan) {
+    if((chan & 0xf) == 3) {
+        //struct sk_buff *p1 = 0;
+        printf("DBG: chan: %d\n", chan & 0xf);
+        //p1 = create_frame((unsigned int) &towards_dma_txfast, 0, 0, 0, get_stack_ptr(), BOTTOM_OF_STACK - (unsigned int) get_stack_ptr());
+        //if(p1 != 0) {
+        //    ((unsigned char  *) sdio)[SDIO_SEQ_NUM]++;
+        //    dngl_sendpkt(sdio, p1, SDPCM_DATA_CHANNEL);
+        //    ((unsigned char  *) sdio)[SDIO_SEQ_NUM]--;
+        //}
+    }
+    return towards_dma_txfast(sdio, p, chan);
+}

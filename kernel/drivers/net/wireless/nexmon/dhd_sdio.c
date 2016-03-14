@@ -5037,7 +5037,7 @@ dhdsdio_rxglom(dhd_bus_t *bus, uint8 rxseq, int pkt_wake)
 	void *pfirst, *plast, *pnext;
 	void * list_tail[DHD_MAX_IFS] = { NULL };
 	void * list_head[DHD_MAX_IFS] = { NULL };
-	uint8 idx;
+	//uint8 idx; //NEXMON: we dont need this anymore
 	osl_t *osh = bus->dhd->osh;
 
 	int errcode;
@@ -5046,7 +5046,10 @@ dhdsdio_rxglom(dhd_bus_t *bus, uint8 rxseq, int pkt_wake)
 	uchar reorder_info_buf[WLHOST_REORDERDATA_TOTLEN];
 	uint reorder_info_len;
 
-	int ifidx = 0;
+	uint8 cnt = 0; //NEXMON
+    void *temp; //NEXMON
+
+    int ifidx = 0;
 	bool usechain = bus->use_rxchain;
 
 	/* If packets, issue read(s) and send up packet chain */
@@ -5281,7 +5284,8 @@ dhdsdio_rxglom(dhd_bus_t *bus, uint8 rxseq, int pkt_wake)
 			doff = SDPCM_DOFFSET_VALUE(&dptr[SDPCM_FRAMETAG_LEN]);
 #ifdef DHD_DEBUG
 			if (DHD_GLOM_ON()) {
-				prhex("subframe", dptr, 32);
+                DHD_ERROR(("%s: NEXMON subframe chan: %d\n", __FUNCTION__, chan)); 
+				prhex("NEXMON subframe", dptr, dlen);
 			}
 #endif
 
@@ -5295,8 +5299,10 @@ dhdsdio_rxglom(dhd_bus_t *bus, uint8 rxseq, int pkt_wake)
 				           "len 0x%04x, expect 0x%04x\n",
 				           __FUNCTION__, num, sublen, dlen));
 				errcode = -1;
-			} else if ((chan != SDPCM_DATA_CHANNEL) &&
-			           (chan != SDPCM_EVENT_CHANNEL)) {
+			} 
+            // NEXMON
+            else if ((chan != SDPCM_DATA_CHANNEL) &&
+			           (chan != SDPCM_EVENT_CHANNEL) && (chan != SDPCM_MONITOR_CHANNEL)) {
 				DHD_ERROR(("%s (subframe %d): bad channel %d\n",
 				           __FUNCTION__, num, chan));
 				errcode = -1;
@@ -5345,7 +5351,8 @@ dhdsdio_rxglom(dhd_bus_t *bus, uint8 rxseq, int pkt_wake)
 			          __FUNCTION__, num, pfirst, PKTDATA(osh, pfirst),
 			          PKTLEN(osh, pfirst), sublen, chan, seq));
 
-			ASSERT((chan == SDPCM_DATA_CHANNEL) || (chan == SDPCM_EVENT_CHANNEL));
+            // NEXMON
+			//ASSERT((chan == SDPCM_DATA_CHANNEL) || (chan == SDPCM_EVENT_CHANNEL));
 
 			if (rxseq != seq) {
 				DHD_GLOM(("%s: rx_seq %d, expected %d\n",
@@ -5359,6 +5366,22 @@ dhdsdio_rxglom(dhd_bus_t *bus, uint8 rxseq, int pkt_wake)
 				prhex("Rx Subframe Data", dptr, dlen);
 			}
 #endif
+
+            // << NEXMON: skipt messing with our headers!
+            // count packets in chain
+            cnt = 0;
+            temp = pfirst;
+            do {
+                temp = PKTNEXT(osh, temp);
+                cnt++;
+            } while (temp);
+            
+            dhd_os_sdunlock(bus->dhd);
+            dhd_rx_frame(bus->dhd, ifidx, pfirst, cnt, SDPCM_MONITOR_CHANNEL, pkt_wake, &bus->wake_counts);
+            pkt_wake = 0;
+            dhd_os_sdlock(bus->dhd);
+            continue;
+            // NEXMON >>
 
 			PKTSETLEN(osh, pfirst, sublen);
 			PKTPULL(osh, pfirst, doff);
@@ -5388,8 +5411,6 @@ dhdsdio_rxglom(dhd_bus_t *bus, uint8 rxseq, int pkt_wake)
 					continue;
 				}
 				else {
-					void *temp;
-
 					/*  go to the end of the chain and attach the pnext there */
 					temp = ppfirst;
 					while (PKTNEXT(osh, temp) != NULL) {
@@ -5430,6 +5451,7 @@ dhdsdio_rxglom(dhd_bus_t *bus, uint8 rxseq, int pkt_wake)
 		}
 		dhd_os_sdunlock_rxq(bus->dhd);
 
+        /*    
 		for (idx = 0; idx < DHD_MAX_IFS; idx++) {
 			if (list_head[idx]) {
 				void *temp;
@@ -5447,6 +5469,7 @@ dhdsdio_rxglom(dhd_bus_t *bus, uint8 rxseq, int pkt_wake)
 				}
 			}
 		}
+        */
 		bus->rxglomframes++;
 		bus->rxglompkts += num;
 	}
@@ -5915,7 +5938,7 @@ dhdsdio_readframes(dhd_bus_t *bus, uint maxframes, bool *finished)
 		}
 
 		ASSERT((chan == SDPCM_DATA_CHANNEL) || (chan == SDPCM_EVENT_CHANNEL) ||
-		       (chan == SDPCM_TEST_CHANNEL) || (chan == SDPCM_GLOM_CHANNEL));
+		       (chan == SDPCM_TEST_CHANNEL) || (chan == SDPCM_GLOM_CHANNEL) || (chan == SDPCM_MONITOR_CHANNEL));
 
 		/* Length to read */
 		rdlen = (len > firstread) ? (len - firstread) : 0;
@@ -6012,7 +6035,7 @@ deliver:
 		}
 
         /* NexMon */
-        if(chan == 15) {
+        if(chan == SDPCM_MONITOR_CHANNEL) {
             dhd_os_sdunlock(bus->dhd);
             DHD_TRACE(("%s: BEFORE dhd_rx_frame()\n", __FUNCTION__));
             dhd_rx_frame(bus->dhd, ifidx, pkt, 1, chan, pkt_wake, &bus->wake_counts);
