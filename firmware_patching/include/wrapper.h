@@ -94,6 +94,8 @@ extern void *sub_1831A0(void *osh, void *a2, int a3, void *sdiodev); // 0x1831A0
 extern void sub_1ECAB0(int a1); // 0x1ECAB0
 extern int sum_buff_lengths(void *osh, void *p); // 0x1360C
 
+extern int towards_dma_txfast(void *sdio, void *p, int chan); // 0x18256C
+
 extern void sub_1ed41c(void); // 0x1ed41c
 extern void sub_1810a8(void); // 0x1810a8
 extern void sub_1ec7c8(void); // 0x1ec7c8

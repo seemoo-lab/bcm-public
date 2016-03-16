@@ -54,6 +54,7 @@
 #include <bcmutils.h>
 #include <bcmendian.h>
 #include <bcmdevs.h>
+#include <bcmsdpcm.h>
 
 #include <proto/ethernet.h>
 #include <proto/bcmip.h>
@@ -1968,10 +1969,10 @@ dhd_rx_frame(dhd_pub_t *dhdp, int ifidx, void *pktbuf, int numpkt, uint8 chan,
 		ASSERT(ifp);
 		skb->dev = ifp->net;
 
-        /* NexMon: like bcmon we use the SDIO channel 15 
+        /* NexMon: like bcmon we use a special SDIO channel
          * to transport raw frames out out the firmware 
          */
-        if (chan == 15) {
+        if (chan == SDPCM_MONITOR_CHANNEL) {
             skb = nexmon_decode(skb);
             if (skb == NULL) {
                 return;
@@ -1988,7 +1989,7 @@ dhd_rx_frame(dhd_pub_t *dhdp, int ifidx, void *pktbuf, int numpkt, uint8 chan,
 		}
 
         /* NexMon */
-        if (chan != 15) {
+        if (chan != SDPCM_MONITOR_CHANNEL) {
             skb->data = eth;
             skb->len = len;
         }
@@ -1997,7 +1998,7 @@ dhd_rx_frame(dhd_pub_t *dhdp, int ifidx, void *pktbuf, int numpkt, uint8 chan,
 		dhd_htsf_addrxts(dhdp, pktbuf);
 #endif
         /* NexMon */
-        if (chan != 15) {
+        if (chan != SDPCM_MONITOR_CHANNEL) {
             /* Strip header, count, deliver upward */
             skb_pull(skb, ETH_HLEN);
         }

@@ -115,6 +115,31 @@ handle_exceptions(void)
 		"mov r2, r8\n"
 		"add sp, sp, #72\n"
 		"push {r2-r7}\n"
+		/*
+		 * Now the stack looks like this:
+		 * SPSR -> CPSR_SYS
+		 * LR_ABT -> PC_SYS
+		 * PC_SYS
+		 * LR_ABT call fix_sp_lr to change this to LR_SYS
+		 * SP_ABT call fix_sp_lr to change this to SP_SYS
+		 * R12
+		 * R11
+		 * R10
+		 * R9
+		 * R8
+		 * R7
+		 * R6
+		 * R5
+		 * R4
+		 * R3
+		 * R2
+		 * R1
+		 * R0
+		 * CPSR_SYS
+		 * CPSR_ABT
+		 * PC_SYS
+		 * Exception ID
+		 */
 		"sub sp, sp, #48\n"
 		"bl choose_exception_handler\n"
 		"cpsid if\n"

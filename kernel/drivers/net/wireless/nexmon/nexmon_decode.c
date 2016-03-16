@@ -16,12 +16,15 @@ struct sk_buff *nexmon_decode(struct sk_buff* skb)
 	int rssi = 0;
     ieee80211_radiotap_header_t radiotaph;
     nexmon_radiotap_present_fields_t present_fields;
-	
+    
     data = skb->data;
 	pkt_len = *(unsigned short*) data;
-	skb_trim(skb, pkt_len);
     // offset before the 802.11 header starts
-	data_offset = 60;
+    skb_trim(skb, pkt_len);
+    data_offset = 58;
+    if (data[28] & 4) {
+        data_offset += 2;
+    }
 
     //skip packets which are smaller than the 802.11 header
 	if(pkt_len < 24) {
