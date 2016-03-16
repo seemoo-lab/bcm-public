@@ -84,10 +84,10 @@ choose_exception_handler(void)
 			"b dump_stack_print_dbg_stuff_intr_handler\n"
 		"label_pref_abort:\n"
 			"mov r0, sp\n"
-			"b interrupt_handler_do\n"
+			"b handle_pref_abort_exception\n"
 		"label_data_abort:\n"
 			"mov r0, sp\n"
-			"b interrupt_handler_do\n"
+			"b handle_data_abort_exception\n"
 		);
 }
 
@@ -176,7 +176,7 @@ fix_sp_lr(struct trace *trace)
 unsigned int breakpoint_hit = 0;
 
 void
-interrupt_handler_do(struct trace *trace)
+handle_pref_abort_exception(struct trace *trace)
 {
 	fix_sp_lr(trace);
 	printf("BP(%08x): %08x %08x %08x\n", trace->PC, trace->sp, trace->lr, breakpoint_hit);
@@ -223,6 +223,12 @@ interrupt_handler_do(struct trace *trace)
 			breakpoint_hit &= ~DBGBP3;
 		}
 	}
+}
+
+void
+handle_data_abort_exception(struct trace *trace)
+{
+	; // not yet implemented
 }
 
 /**
