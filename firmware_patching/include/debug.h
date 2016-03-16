@@ -24,6 +24,10 @@ struct trace  {
 	unsigned int pc;
 } __attribute__((packed));
 
+/* the number of available watch- and breakpoints */
+#define DBG_NUMBER_OF_WATCHPOINTS 4
+#define DBG_NUMBER_OF_BREAKPOINTS 4
+
 #define SET_DBG_VALUE(name, value) (((value) & name ## _MASK) << name ## _SHIFT)
 #define GET_DBG_VALUE(name, reg) (((reg) >> name ## _SHIFT) & name ## _MASK)
 #define GET_DBG_MASK(name) (name ## _MASK << name ## _SHIFT)
@@ -218,12 +222,12 @@ struct trace  {
 /* Breakpoint type */
 #define DBGBCR_BT_SHIFT 20
 #define DBGBCR_BT_MASK 0xF
-#define DBGRCR_BT_UNLINKED_INSTR_ADDR_MATCH 0
-#define DBGRCR_BT_LINKED_INSTR_ADDR_MATCH 1
-#define DBGRCR_BT_UNLINKED_CONTEXT_ID_MATCH 2
-#define DBGRCR_BT_LINKED_CONTEXT_ID_MATCH 3
-#define DBGRCR_BT_UNLINKED_INSTR_ADDR_MISMATCH 4
-#define DBGRCR_BT_LINKED_INSTR_ADDR_MISMATCH 5
+#define DBGBCR_BT_UNLINKED_INSTR_ADDR_MATCH 0
+#define DBGBCR_BT_LINKED_INSTR_ADDR_MATCH 1
+#define DBGBCR_BT_UNLINKED_CONTEXT_ID_MATCH 2
+#define DBGBCR_BT_LINKED_CONTEXT_ID_MATCH 3
+#define DBGBCR_BT_UNLINKED_INSTR_ADDR_MISMATCH 4
+#define DBGBCR_BT_LINKED_INSTR_ADDR_MISMATCH 5
 
 /* Linked breakpoint number */
 #define DBGBCR_LBN_SHIFT 16
@@ -288,6 +292,132 @@ struct trace  {
 #define DBGBP2 (1 << 2)
 #define DBGBP3 (1 << 3)
 
+/* Watch numbers one-hot encoded */
+#define DBGWP0 (1 << 0)
+#define DBGWP1 (1 << 1)
+#define DBGWP2 (1 << 2)
+#define DBGWP3 (1 << 3)
+
+/* C11.11.46 DBGWVR - Watchpoint Value Registers */
+#define DBGWVR0 (*(volatile int *) (DBGBASE + 0x180))
+#define DBGWVR1 (*(volatile int *) (DBGBASE + 0x184))
+#define DBGWVR2 (*(volatile int *) (DBGBASE + 0x188))
+#define DBGWVR3 (*(volatile int *) (DBGBASE + 0x18C))
+#define DBGWVR4 (*(volatile int *) (DBGBASE + 0x190))
+#define DBGWVR5 (*(volatile int *) (DBGBASE + 0x194))
+#define DBGWVR6 (*(volatile int *) (DBGBASE + 0x198))
+#define DBGWVR7 (*(volatile int *) (DBGBASE + 0x19C))
+
+/* The last two bits of an address needs to be set to 0 */
+#define DBGWVR_ADDRMASK (0xFFFFFFFC)
+
+/* C11.11.44 DBGWCR - Watchpoint Control Registers */
+#define DBGWCR0 (*(volatile int *) (DBGBASE + 0x1C0))
+#define DBGWCR1 (*(volatile int *) (DBGBASE + 0x1C4))
+#define DBGWCR2 (*(volatile int *) (DBGBASE + 0x1C8))
+#define DBGWCR3 (*(volatile int *) (DBGBASE + 0x1CC))
+#define DBGWCR4 (*(volatile int *) (DBGBASE + 0x1D0))
+#define DBGWCR5 (*(volatile int *) (DBGBASE + 0x1D4))
+#define DBGWCR6 (*(volatile int *) (DBGBASE + 0x1D8))
+#define DBGWCR7 (*(volatile int *) (DBGBASE + 0x1DC))
+
+/* Address range mask */
+#define DBGWCR_MASK_SHIFT 24
+#define DBGWCR_MASK_MASK 0x1F
+#define DBGWCR_MASK_NO_MASK  0
+#define DBGWCR_MASK_00000007 3
+#define DBGWCR_MASK_0000000F 4
+#define DBGWCR_MASK_0000001F 5
+#define DBGWCR_MASK_0000003F 6
+#define DBGWCR_MASK_0000007F 7
+#define DBGWCR_MASK_000000FF 8
+#define DBGWCR_MASK_000001FF 9
+#define DBGWCR_MASK_000003FF 10
+#define DBGWCR_MASK_000007FF 11
+#define DBGWCR_MASK_00000FFF 12
+#define DBGWCR_MASK_00001FFF 13
+#define DBGWCR_MASK_00003FFF 14
+#define DBGWCR_MASK_00007FFF 15
+#define DBGWCR_MASK_0000FFFF 16
+#define DBGWCR_MASK_0001FFFF 17
+#define DBGWCR_MASK_0003FFFF 18
+#define DBGWCR_MASK_0007FFFF 19
+#define DBGWCR_MASK_000FFFFF 20
+#define DBGWCR_MASK_001FFFFF 21
+#define DBGWCR_MASK_003FFFFF 22
+#define DBGWCR_MASK_007FFFFF 23
+#define DBGWCR_MASK_00FFFFFF 24
+#define DBGWCR_MASK_01FFFFFF 25
+#define DBGWCR_MASK_03FFFFFF 26
+#define DBGWCR_MASK_07FFFFFF 27
+#define DBGWCR_MASK_0FFFFFFF 28
+#define DBGWCR_MASK_1FFFFFFF 29
+#define DBGWCR_MASK_3FFFFFFF 30
+#define DBGWCR_MASK_7FFFFFFF 31
+
+/* Watchpoint type */
+#define DBGWCR_WT_SHIFT 20
+#define DBGWCR_WT_MASK 1
+#define DBGWCR_WT_UNLINKED_DATA_ADDR_MATCH 0
+#define DBGWCR_WT_LINKED_DATA_ADDR_MATCH 1
+
+/* Linked watchpoint number */
+#define DBGWCR_LBN_SHIFT 16
+#define DBGWCR_LBN_MASK 0xF
+
+/* Security state control */
+#define DBGWCR_SSC_SHIFT 14
+#define DBGWCR_SSC_MASK 3
+
+/* Hyp mode control bit */
+#define DBGWCR_HMC_SHIFT 13
+#define DBGWCR_HMC_MASK 1
+
+/* Byte address select */
+#define DBGWCR_BAS_4BIT_SHIFT 5
+#define DBGWCR_BAS_4BIT_MASK 0xF
+#define DBGWCR_BAS_8BIT_SHIFT 5
+#define DBGWCR_BAS_8BIT_MASK 0xFF
+
+/* Load/store access control */
+#define DBGWCR_LSC_SHIFT 3
+#define DBGWCR_LSC_MASK 3
+#define DBGWCR_LSC_MATCH_LOAD 1
+#define DBGWCR_LSC_MATCH_STORE 2
+#define DBGWCR_LSC_MATCH_ALL 3
+
+/* Privileged access control */
+#define DBGWCR_PAC_SHIFT 1
+#define DBGWCR_PAC_MASK 3
+
+/* combined options for SSC, HMC and PAC */
+/* secure and non secure modes */
+#define DBGWCR_SSC_HMC_PAC__PL1								(SET_DBG_VALUE(DBGWCR_SSC, 0) | SET_DBG_VALUE(DBGWCR_HMC, 0) | SET_DBG_VALUE(DBGWCR_PAC, 1))
+#define DBGWCR_SSC_HMC_PAC__PL0								(SET_DBG_VALUE(DBGWCR_SSC, 0) | SET_DBG_VALUE(DBGWCR_HMC, 0) | SET_DBG_VALUE(DBGWCR_PAC, 2))
+#define DBGWCR_SSC_HMC_PAC__PL1_PL0							(SET_DBG_VALUE(DBGWCR_SSC, 0) | SET_DBG_VALUE(DBGWCR_HMC, 0) | SET_DBG_VALUE(DBGWCR_PAC, 3))
+#define DBGWCR_SSC_HMC_PAC__SEC_PL1__NON_SEC_PL2_PL1		(SET_DBG_VALUE(DBGWCR_SSC, 0) | SET_DBG_VALUE(DBGWCR_HMC, 1) | SET_DBG_VALUE(DBGWCR_PAC, 1))
+#define DBGWCR_SSC_HMC_PAC__ALL								(SET_DBG_VALUE(DBGWCR_SSC, 0) | SET_DBG_VALUE(DBGWCR_HMC, 1) | SET_DBG_VALUE(DBGWCR_PAC, 3))
+/* only non-secure modes */
+#define DBGWCR_SSC_HMC_PAC__NON_SEC_PL2						(SET_DBG_VALUE(DBGWCR_SSC, 3) | SET_DBG_VALUE(DBGWCR_HMC, 1) | SET_DBG_VALUE(DBGWCR_PAC, 0))
+#define DBGWCR_SSC_HMC_PAC__NON_SEC_PL1						(SET_DBG_VALUE(DBGWCR_SSC, 1) | SET_DBG_VALUE(DBGWCR_HMC, 0) | SET_DBG_VALUE(DBGWCR_PAC, 1))
+#define DBGWCR_SSC_HMC_PAC__NON_SEC_PL0						(SET_DBG_VALUE(DBGWCR_SSC, 1) | SET_DBG_VALUE(DBGWCR_HMC, 0) | SET_DBG_VALUE(DBGWCR_PAC, 2))
+#define DBGWCR_SSC_HMC_PAC__NON_SEC_PL1_PL0					(SET_DBG_VALUE(DBGWCR_SSC, 1) | SET_DBG_VALUE(DBGWCR_HMC, 0) | SET_DBG_VALUE(DBGWCR_PAC, 3))
+#define DBGWCR_SSC_HMC_PAC__NON_SEC_PL2_PL1					(SET_DBG_VALUE(DBGWCR_SSC, 1) | SET_DBG_VALUE(DBGWCR_HMC, 1) | SET_DBG_VALUE(DBGWCR_PAC, 1))
+#define DBGWCR_SSC_HMC_PAC__NON_SEC_PL2_PL1_PL0				(SET_DBG_VALUE(DBGWCR_SSC, 1) | SET_DBG_VALUE(DBGWCR_HMC, 1) | SET_DBG_VALUE(DBGWCR_PAC, 3))
+/* only secure modes */
+#define DBGWCR_SSC_HMC_PAC__SEC_PL1							(SET_DBG_VALUE(DBGWCR_SSC, 2) | SET_DBG_VALUE(DBGWCR_HMC, 0) | SET_DBG_VALUE(DBGWCR_PAC, 1))
+#define DBGWCR_SSC_HMC_PAC__SEC_PL0							(SET_DBG_VALUE(DBGWCR_SSC, 2) | SET_DBG_VALUE(DBGWCR_HMC, 0) | SET_DBG_VALUE(DBGWCR_PAC, 2))
+#define DBGWCR_SSC_HMC_PAC__SEC_PL1_PL0						(SET_DBG_VALUE(DBGWCR_SSC, 2) | SET_DBG_VALUE(DBGWCR_HMC, 0) | SET_DBG_VALUE(DBGWCR_PAC, 3))
+
+#define DBGWCR_SSC_HMC_PAC_SHIFT 0
+#define DBGWCR_SSC_HMC_PAC_MASK (GET_DBG_MASK(DBGWCR_SSC) | GET_DBG_MASK(DBGWCR_HMC) | GET_DBG_MASK(DBGWCR_PAC))
+
+/* Watchpoint enable */
+#define DBGWCR_E_SHIFT 0
+#define DBGWCR_E_MASK 1
+#define DBGWCR_E_DISABLED 0
+#define DBGWCR_E_ENABLED 1
+
 /* Processor modes */
 #define DBG_PROCESSOR_MODE_USR 0x10
 #define DBG_PROCESSOR_MODE_FIQ 0x11
@@ -326,18 +456,18 @@ struct trace  {
 	} while (0)
 
 #define dbg_set_breakpoint_type_to_instr_addr_match(number) do { \
-		DBGBCR ## number = UPDATE_DBG_REG(DBGBCR ## number, GET_DBG_MASK(DBGBCR_BT), SET_DBG_VALUE(DBGBCR_BT, DBGRCR_BT_UNLINKED_INSTR_ADDR_MATCH)); \
+		DBGBCR ## number = UPDATE_DBG_REG(DBGBCR ## number, GET_DBG_MASK(DBGBCR_BT), SET_DBG_VALUE(DBGBCR_BT, DBGBCR_BT_UNLINKED_INSTR_ADDR_MATCH)); \
 	} while (0)
 
 #define dbg_set_breakpoint_type_to_instr_addr_mismatch(number) do { \
-		DBGBCR ## number = UPDATE_DBG_REG(DBGBCR ## number, GET_DBG_MASK(DBGBCR_BT), SET_DBG_VALUE(DBGBCR_BT, DBGRCR_BT_UNLINKED_INSTR_ADDR_MISMATCH)); \
+		DBGBCR ## number = UPDATE_DBG_REG(DBGBCR ## number, GET_DBG_MASK(DBGBCR_BT), SET_DBG_VALUE(DBGBCR_BT, DBGBCR_BT_UNLINKED_INSTR_ADDR_MISMATCH)); \
 	} while (0)
 
 #define dbg_is_breakpoint_enabled(number) (GET_DBG_VALUE(DBGBCR_E, DBGBCR ## number))
 
-#define dbg_is_breakpoint_type_instr_addr_match(number) (GET_DBG_VALUE(DBGBCR_BT, DBGBCR ## number) == DBGRCR_BT_UNLINKED_INSTR_ADDR_MATCH)
+#define dbg_is_breakpoint_type_instr_addr_match(number) (GET_DBG_VALUE(DBGBCR_BT, DBGBCR ## number) == DBGBCR_BT_UNLINKED_INSTR_ADDR_MATCH)
 
-#define dbg_is_breakpoint_type_instr_addr_mismatch(number) (GET_DBG_VALUE(DBGBCR_BT, DBGBCR ## number) == DBGRCR_BT_UNLINKED_INSTR_ADDR_MISMATCH)
+#define dbg_is_breakpoint_type_instr_addr_mismatch(number) (GET_DBG_VALUE(DBGBCR_BT, DBGBCR ## number) == DBGBCR_BT_UNLINKED_INSTR_ADDR_MISMATCH)
 
 #define dbg_triggers_on_breakpoint_address(number, address) ((DBGBVR ## number == (address & DBGBVR_ADDRMASK)) && (GET_DBG_VALUE(DBGBCR_BAS, DBGBCR ## number) == GET_BAS_FOR_THUMB_ADDR(address)))
 
@@ -345,7 +475,7 @@ struct trace  {
 		DBGBCR ## number = 0x0; \
 		DBGBVR ## number = address & DBGBVR_ADDRMASK; \
 		DBGBCR ## number =  \
-			SET_DBG_VALUE(DBGBCR_BT, DBGRCR_BT_UNLINKED_INSTR_ADDR_MATCH) |  \
+			SET_DBG_VALUE(DBGBCR_BT, DBGBCR_BT_UNLINKED_INSTR_ADDR_MATCH) |  \
 			SET_DBG_VALUE(DBGBCR_MASK, DBGBCR_MASK_NO_MASK) |  \
 			SET_DBG_VALUE(DBGBCR_E, DBGBCR_E_ENABLED) | \
 			SET_DBG_VALUE(DBGBCR_SSC_HMC_PMC, DBGBCR_SSC_HMC_PMC__PL0_SUP_SYS) |  \
@@ -356,11 +486,32 @@ struct trace  {
 		DBGBCR ## number = 0x0; \
 		DBGBVR ## number = address & DBGBVR_ADDRMASK; \
 		DBGBCR ## number =  \
-			SET_DBG_VALUE(DBGBCR_BT, DBGRCR_BT_UNLINKED_INSTR_ADDR_MISMATCH) |  \
+			SET_DBG_VALUE(DBGBCR_BT, DBGBCR_BT_UNLINKED_INSTR_ADDR_MISMATCH) |  \
 			SET_DBG_VALUE(DBGBCR_MASK, DBGBCR_MASK_NO_MASK) |  \
 			SET_DBG_VALUE(DBGBCR_E, DBGBCR_E_ENABLED) | \
 			SET_DBG_VALUE(DBGBCR_SSC_HMC_PMC, DBGBCR_SSC_HMC_PMC__PL0_SUP_SYS) |  \
 			SET_DBG_VALUE(DBGBCR_BAS, GET_BAS_FOR_THUMB_ADDR(address)); \
+	} while (0)
+
+
+#define dbg_enable_watchpoint(number) do { \
+		DBGWCR ## number = UPDATE_DBG_REG(DBGWCR ## number, GET_DBG_MASK(DBGWCR_E), SET_DBG_VALUE(DBGWCR_E, DBGWCR_E_ENABLED)); \
+	} while (0)
+
+#define dbg_disable_watchpoint(number) do { \
+		DBGWCR ## number = UPDATE_DBG_REG(DBGWCR ## number, GET_DBG_MASK(DBGWCR_E), SET_DBG_VALUE(DBGWCR_E, DBGWCR_E_DISABLED)); \
+	} while (0)
+
+#define dbg_set_watchpoint_for_addr_match(number, address) do { \
+		DBGWCR ## number = 0x0; \
+		DBGWVR ## number = address & DBGWVR_ADDRMASK; \
+		DBGWCR ## number = \
+			SET_DBG_VALUE(DBGWCR_WT, DBGWCR_WT_UNLINKED_DATA_ADDR_MATCH) | \
+			SET_DBG_VALUE(DBGWCR_MASK, DBGWCR_MASK_NO_MASK) | \
+			SET_DBG_VALUE(DBGWCR_E, DBGWCR_E_ENABLED) | \
+			SET_DBG_VALUE(DBGWCR_SSC_HMC_PAC, DBGWCR_SSC_HMC_PAC__ALL) | \
+			SET_DBG_VALUE(DBGWCR_LSC, DBGWCR_LSC_MATCH_ALL) | \
+			SET_DBG_VALUE(DBGWCR_BAS_4BIT, 0xF); \
 	} while (0)
 
 #endif /* DEBUG_H */

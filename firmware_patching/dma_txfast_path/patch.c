@@ -74,6 +74,7 @@ choose_exception_handler(void)
 			"beq label_pref_abort\n"
 			"cmp r0, #4\n"
 			"beq label_data_abort\n"
+		"label_continue_exception:\n"
 			"cmp r0, #6\n"									// check if fast interrupt
 			"bne label_other_exception\n"					// if interrupt was not a fast interrupt
 			"cmp r1, #64\n"									// if FIQ was enabled, enable it again
@@ -86,6 +87,10 @@ choose_exception_handler(void)
 			"mov r0, sp\n"
 			"b handle_pref_abort_exception\n"
 		"label_data_abort:\n"
+			"mrc p15, 0, r0, c5, c0, 0\n"					// read DFSR
+			"and r0, r0, #0x1F\n"							// select FS bits from DFSR
+			"cmp r0, #2\n"									// compare FS to "debug event"
+			"bne label_continue_exception\n"				// if data abort not caused by a "debug event", go to regular exception handler
 			"mov r0, sp\n"
 			"b handle_data_abort_exception\n"
 		);
@@ -200,6 +205,21 @@ fix_sp_lr(struct trace *trace)
  */
 unsigned int breakpoint_hit = 0;
 
+/**
+ *	Saves one-hot encoded which watchpoint was hit
+ */
+unsigned int watchpoint_hit = 0;
+
+/**
+ *	Watchpoint hit counter, saves how often a watchpoint was hit
+ */
+ unsigned int watchpoint_hit_counter[DBG_NUMBER_OF_WATCHPOINTS] = { 0 };
+
+/**
+ *	Watchpoint hit limit, defines how often a watchpoint should trigger
+ */
+ unsigned int watchpoint_hit_limit[DBG_NUMBER_OF_WATCHPOINTS] = { 4 };
+
 void
 handle_pref_abort_exception(struct trace *trace)
 {
@@ -211,7 +231,8 @@ handle_pref_abort_exception(struct trace *trace)
 		dbg_set_breakpoint_type_to_instr_addr_mismatch(0);
 		// to know which breakpoint mismatch was triggerd on a next breakpoint hit, we set a bit in the breakpoint_hit variable
 		breakpoint_hit |= DBGBP0;
-		printf("BP0 hit\n");
+		printf("BP0 hit %08x %08x %08x %08x %08x\n", trace->r0, trace->r1, trace->r2, trace->r3, trace->r4);
+		try_to_access_d11();
 	} else if (dbg_is_breakpoint_enabled(1) && dbg_triggers_on_breakpoint_address(1, trace->pc)) {
 		dbg_set_breakpoint_type_to_instr_addr_mismatch(1);
 		breakpoint_hit |= DBGBP1;
@@ -221,6 +242,7 @@ handle_pref_abort_exception(struct trace *trace)
 		breakpoint_hit |= DBGBP2;
 		printf("BP2 hit\n");
 	} else if (dbg_is_breakpoint_enabled(3) && dbg_triggers_on_breakpoint_address(3, trace->pc)) {
+		// We intend to use Breakpoint 3 to handle resetting watchpoints
 		dbg_set_breakpoint_type_to_instr_addr_mismatch(3);
 		breakpoint_hit |= DBGBP3;
 		printf("BP3 hit\n");
@@ -231,29 +253,110 @@ handle_pref_abort_exception(struct trace *trace)
 			dbg_set_breakpoint_type_to_instr_addr_match(0);
 			// we set the bit in the breakpoint_hit variable to 0
 			breakpoint_hit &= ~DBGBP0;
+			printf("BP0 reset\n");
 		}
 
 		if(dbg_is_breakpoint_enabled(1) && (breakpoint_hit & DBGBP1)) {
 			dbg_set_breakpoint_type_to_instr_addr_match(1);
 			breakpoint_hit &= ~DBGBP1;
+			printf("BP1 reset\n");
 		}
 
 		if(dbg_is_breakpoint_enabled(2) && (breakpoint_hit & DBGBP2)) {
 			dbg_set_breakpoint_type_to_instr_addr_match(2);
 			breakpoint_hit &= ~DBGBP2;
+			printf("BP2 reset\n");
 		}
 
 		if(dbg_is_breakpoint_enabled(3) && (breakpoint_hit & DBGBP3)) {
 			dbg_set_breakpoint_type_to_instr_addr_match(3);
 			breakpoint_hit &= ~DBGBP3;
+			printf("BP3 reset\n");
+		}
+
+		// Used to reset watchpoint 0
+		if(dbg_is_breakpoint_enabled(3) && (watchpoint_hit & DBGWP0)) {
+			dbg_disable_breakpoint(3);
+			watchpoint_hit &= ~DBGWP0;
+			if (++watchpoint_hit_counter[0] < watchpoint_hit_limit[0]) {
+				dbg_enable_watchpoint(0);
+				printf("WP0 reset (%d)\n", watchpoint_hit_counter[0]);
+			} else {
+				printf("WP0 not reset (%d)\n", watchpoint_hit_counter[0]);
+			}
+		}
+
+		// Used to reset watchpoint 1
+		if(dbg_is_breakpoint_enabled(3) && (watchpoint_hit & DBGWP1)) {
+			dbg_disable_breakpoint(3);
+			watchpoint_hit &= ~DBGWP1;
+			if (++watchpoint_hit_counter[1] < watchpoint_hit_limit[1]) {
+				dbg_enable_watchpoint(1);
+				printf("WP1 reset (%d)\n", watchpoint_hit_counter[1]);
+			} else {
+				printf("WP1 not reset (%d)\n", watchpoint_hit_counter[1]);
+			}
+		}
+
+		// Used to reset watchpoint 2
+		if(dbg_is_breakpoint_enabled(3) && (watchpoint_hit & DBGWP2)) {
+			dbg_disable_breakpoint(3);
+			watchpoint_hit &= ~DBGWP2;
+			if (++watchpoint_hit_counter[2] < watchpoint_hit_limit[2]) {
+				dbg_enable_watchpoint(2);
+				printf("WP2 reset (%d)\n", watchpoint_hit_counter[2]);
+			} else {
+				printf("WP2 not reset (%d)\n", watchpoint_hit_counter[2]);
+			}
+		}
+
+		// Used to reset watchpoint 3
+		if(dbg_is_breakpoint_enabled(3) && (watchpoint_hit & DBGWP3)) {
+			dbg_disable_breakpoint(3);
+			watchpoint_hit &= ~DBGWP3;
+			if (++watchpoint_hit_counter[3] < watchpoint_hit_limit[3]) {
+				dbg_enable_watchpoint(3);
+				printf("WP3 reset (%d)\n", watchpoint_hit_counter[3]);
+			} else {
+				printf("WP3 not reset (%d)\n", watchpoint_hit_counter[3]);
+			}
 		}
 	}
+}
+
+unsigned int
+read_dfar()
+{
+	unsigned int dfar;
+
+	asm("mrc p15, 0, %[result], c6, c0, 0" : [result] "=r" (dfar));
+
+	return dfar;
+}
+
+unsigned int
+read_dfsr()
+{
+	unsigned int dfsr;
+
+	asm("mrc p15, 0, %[result], c5, c0, 0" : [result] "=r" (dfsr));
+
+	return dfsr;
 }
 
 void
 handle_data_abort_exception(struct trace *trace)
 {
-	; // not yet implemented
+	fix_sp_lr(trace);
+	printf("WP(%08x): %08x %08x %08x %08x\n", trace->PC, trace->sp, trace->lr, read_dfar(), read_dfsr());
+
+	// TODO
+	// Currently I do not know how to find out, which watchpoint was triggered, so here I always handle watchpoint 0
+	watchpoint_hit |= DBGBP0;
+	// Disable the watchpoint so that the instruction that triggered the watchpoint can be executed without triggering the watchpoint again.
+	dbg_disable_watchpoint(0);
+	// Set breakpoint 3 to reset the watchpoint after executing the instruction that triggered the watchpoint.
+	dbg_set_breakpoint_for_addr_mismatch(3, trace->PC);
 }
 
 /**
@@ -277,8 +380,20 @@ set_debug_registers(void)
 	dbg_enable_monitor_mode_debugging();
 	
 	// Programm Breakpoint to match the instruction we want to hit
-	dbg_set_breakpoint_for_addr_match(0, 0x1F319C);
+	//dbg_set_breakpoint_for_addr_match(0, 0x1f59aa); // d11 access before sub_5054C
+	//dbg_set_breakpoint_for_addr_match(0, 0x50554); // d11 access before sub_60DA4
+	//dbg_set_breakpoint_for_addr_match(0, 0x50558); // d11 access after sub_60DA4
+	//dbg_set_breakpoint_for_addr_match(0, 0x50570); // d11 access after sub_8C0FC
+	//dbg_set_breakpoint_for_addr_match(0, 0x5057C); // d11 access after sub_8BE1C
+	//dbg_set_breakpoint_for_addr_match(0, 0x50584); // d11 access after sub_4EB04
+	//dbg_set_breakpoint_for_addr_match(0, 0x50594); // no breakpoint hit before sub_1D848
+	//dbg_set_breakpoint_for_addr_match(0, 0x505A2); // d11 access before sub_1D444
+	//dbg_set_breakpoint_for_addr_match(0, 0xfcb2); // d11 access
+	//dbg_set_breakpoint_for_addr_match(0, 0x505A6); // no d11 access after sub_1D444
+	//dbg_set_breakpoint_for_addr_match(0, 0x1f59ae); // no d11 access after sub_5054C
+	//dbg_set_breakpoint_for_addr_match(0, 0x1f59b8); // no d11 access
 	//dbg_set_breakpoint_for_addr_match(3, 0x1F31A2);
+	dbg_set_watchpoint_for_addr_match(0, 0x1f4f14);
 }
 
 __attribute__((naked)) void
