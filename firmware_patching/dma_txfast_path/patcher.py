@@ -20,12 +20,11 @@ patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin",
 	ExternalArmPatch(getSectionAddr(".text.before_before_initialize_memory_hook"), "before_before_initialize_memory_hook.bin"),
 	GenericPatch4(0x181240, getSectionAddr(".text.before_before_initialize_memory_hook")+1),
 
-	ExternalArmPatch(getSectionAddr(".text.interrupt_handler"), "interrupt_handler.bin"),
-	GenericPatch4(0x1ECA84, getSectionAddr(".text.interrupt_handler")+1),
-
 	ExternalArmPatch(getSectionAddr(".text.tr_pref_abort_hook"), "tr_pref_abort_hook.bin"), # patch to stay in abort mode to handle exception, original codes switches to system mode
 
 	ExternalArmPatch(getSectionAddr(".text.tr_data_abort_hook"), "tr_data_abort_hook.bin"), # patch to stay in abort mode to handle exception, original codes switches to system mode
+
+	ExternalArmPatch(getSectionAddr(".text.handle_exceptions"), "handle_exceptions.bin"), # patch to stay in abort mode to handle exception, original codes switches to system mode
 
 	StringPatch(0x1FD31B, "build: " + time.strftime("%d.%m.%Y %H:%M:%S") + "\n"), # 53 character string
 	])

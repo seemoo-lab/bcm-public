@@ -58,6 +58,93 @@ tr_data_abort_hook(void)
 		);
 }
 
+void
+dbgout(void)
+{
+	asm("push {r0-r3}");
+	printf("enable FIQ\n");
+	asm("pop {r0-r3}");
+}
+
+__attribute__((naked)) void
+choose_exception_handler(void)
+{
+	asm(
+			"cmp r0, #3\n"
+			"beq label_pref_abort\n"
+			"cmp r0, #4\n"
+			"beq label_data_abort\n"
+			"cmp r0, #6\n"									// check if fast interrupt
+			"bne label_other_exception\n"					// if interrupt was not a fast interrupt
+			"cmp r1, #64\n"									// if FIQ was enabled, enable it again
+			"beq label_other_exception\n"
+			"cpsie f\n"
+		"label_other_exception:\n"
+			"mov r0, sp\n"
+			"b dump_stack_print_dbg_stuff_intr_handler\n"
+		"label_pref_abort:\n"
+			"mov r0, sp\n"
+			"b interrupt_handler_do\n"
+		"label_data_abort:\n"
+			"mov r0, sp\n"
+			"b interrupt_handler_do\n"
+		);
+}
+
+/**
+ *
+ */
+__attribute__((naked)) void
+handle_exceptions(void)
+{
+	asm(
+		"mov r4, sp\n"
+		"add r4, r4, #64\n"
+		"ldmia r4!, {r1,r3}\n"
+		"mrs r2, cpsr\n"
+		"push {r0-r3}\n"
+		"sub r4, r4, #12\n"
+		"str r1, [r4]\n"
+		"and r1, r3, #64\n"				// r3 is CPSR_SYS, bit 6 is the FIQ mask bit
+		"mov r7, sp\n"
+		"add r7, r7, #88\n"
+		"mov r6, r12\n"
+		"mov r5, r11\n"
+		"mov r4, r10\n"
+		"mov r3, r9\n"
+		"mov r2, r8\n"
+		"add sp, sp, #72\n"
+		"push {r2-r7}\n"
+		"sub sp, sp, #48\n"
+		"bl choose_exception_handler\n"
+		"cpsid if\n"
+		"add sp, sp, #48\n"
+		"pop {r0-r6}\n"
+		"mov r8, r0\n"
+		"mov r9, r1\n"
+		"mov r10, r2\n"
+		"mov r11, r3\n"
+		"mov r12, r4\n"
+		"mov lr, r6\n"
+		"sub sp, sp, #60\n"
+		"pop {r0-r7}\n"
+		"add sp, sp, #32\n"
+		"rfefd sp!\n"
+		);
+}
+
+/**
+ *	Enables IRQ interrupt in CPSR
+ */
+__attribute__((naked)) void
+enable_irq_interrupt(void)
+{
+	asm(
+		"cpsie i\n"
+		"bx lr\n"
+		);
+}
+
 /**
  *	Replaces the SP and LR registers on the stack with those of the system mode.
  *	As we decided to stay in abort mode to handle breakpoints and watchpoints, we need to 
@@ -83,29 +170,6 @@ fix_sp_lr(struct trace *trace)
 	return trace;
 }
 
-// dump_stack_print_dbg_stuff_intr_handler
-__attribute__((naked)) void 
-interrupt_handler(void)
-{
-	asm("push {r0-r3,lr}\n"
-		"ldr r3, [r0]\n"
-		"cmp r3, #3\n"										// check for hardware debugger exception
-		"beq handle_pref_abort\n"
-		"cmp r3, #4\n"
-		"beq handle_data_abort\n"
-		"pop {r0-r3,lr}\n"
-		"b dump_stack_print_dbg_stuff_intr_handler\n"		// jump to the original function
-		"handle_pref_abort:\n"
-		"bl fix_sp_lr\n"									// replaces the sp and lr registers on the stack with those of the system mode
-		"bl interrupt_handler_do\n"
-		"pop {r0-r3,pc}\n"
-		"handle_data_abort:\n"
-		"bl fix_sp_lr\n"									// replaces the sp and lr registers on the stack with those of the system mode
-		"bl interrupt_handler_do\n"
-		"pop {r0-r3,pc}\n"
-		);
-}
-
 /**
  *	Saves one-hot encoded which breakpoint was hit
  */
@@ -114,6 +178,7 @@ unsigned int breakpoint_hit = 0;
 void
 interrupt_handler_do(struct trace *trace)
 {
+	fix_sp_lr(trace);
 	printf("BP(%08x): %08x %08x %08x\n", trace->PC, trace->sp, trace->lr, breakpoint_hit);
 
 	if (dbg_is_breakpoint_enabled(0) && dbg_triggers_on_breakpoint_address(0, trace->pc)) {
