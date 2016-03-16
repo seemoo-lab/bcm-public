@@ -130,7 +130,7 @@ extern bool  bcmsdh_fatal_error(void *sdh);
 #define MAX_RX_DATASZ	2048
 
 /* Maximum milliseconds to wait for F2 to come up */
-#define DHD_WAIT_F2RDY	3000
+#define DHD_WAIT_F2RDY	1000
 
 /* Bump up limit on waiting for HT to account for first startup;
  * if the image is doing a CRC calculation before programming the PMU
