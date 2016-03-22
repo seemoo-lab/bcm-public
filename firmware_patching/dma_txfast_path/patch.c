@@ -64,7 +64,7 @@ dbgout(void)
 	asm("push {r0-r3}");
 	printf("enable FIQ\n");
 	asm("pop {r0-r3}");
-}
+} 
 
 __attribute__((naked)) void
 choose_exception_handler(void)
