@@ -2437,6 +2437,7 @@ dhd_consoledump(void *dhd, cmd_t *cmd, char **argv)
 
 	int params[2];
 	char *ptr;
+	int i;
 
 	unsigned int start;
 	unsigned int size;
@@ -2515,7 +2516,11 @@ dhd_consoledump(void *dhd, cmd_t *cmd, char **argv)
 			break;
 		}
 
-		printf("%s", ptr);
+		printf("start=0x%08x len=0x%08x\n", start, len);
+		// Sometimes a 0x00 is inserted between console messages, so that simply printing a string does not work.
+		for (i = 0; i < len; i++)
+			printf("%c", ptr[i]);
+		printf("\n");
 
 		start += len;
 		size -= len;
