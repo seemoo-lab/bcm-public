@@ -40,7 +40,9 @@ Our software may damage your hardware and may void your hardware’s warranty! Y
 
 ## Caveats
 * ~~The current patch is unable to handle aggregated frames (A-MSDU's). This makes it impossible to receive frames in an 802.11n/802.11ac enabled environment.~~
- * Current Monitor Mode was tested and works for 802.11n with 20MHz wide channels (2.4 as well as 5GHz), 40MHz channels seems to be a problem. We keep working on it ;-)
+ * Current Monitor Mode was tested and works for 802.11n with 20MHz wide channels (2.4 as well as 5GHz), ~~40MHz channels seems to be a problem. We keep working on it ;-)~~
+ * Using this [patch](https://dev.seemoo.tu-darmstadt.de/bcm/bcm-public/blob/90bed6e1c3ad70ddc23ccf44033b152e0db300b6/kernel_patches/40mhz_channels_5GHz.patch) should enalbe `iw` to set 40MHz channels. It currently only works for 5GHz frequencies. 
+   Capturing WiFi packets which use mutliple spatial streams is still not possible, this is caused by a hardware limitation of the Nexus 5
 
 ## Read our paper
 
