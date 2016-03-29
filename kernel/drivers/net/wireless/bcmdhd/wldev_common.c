@@ -31,6 +31,8 @@
 
 #include <wldev_common.h>
 #include <bcmutils.h>
+#include <dhd_dbg.h>
+#include <include/wlioctl.h>
 
 #define htod32(i) (i)
 #define htod16(i) (i)
@@ -52,8 +54,7 @@ s32 wldev_ioctl(
 {
 	s32 ret = 0;
 	struct wl_ioctl ioc;
-
-
+	
 	memset(&ioc, 0, sizeof(ioc));
 	ioc.cmd = cmd;
 	ioc.buf = arg;

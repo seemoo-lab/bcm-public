@@ -27,12 +27,12 @@
 #ifndef __BCMSDH_SDMMC_H__
 #define __BCMSDH_SDMMC_H__
 
-#define sd_err(x)
-#define sd_trace(x)
-#define sd_info(x)
-#define sd_debug(x)
-#define sd_data(x)
-#define sd_ctrl(x)
+#define sd_err(x)		/*do {printf x;} while (0)*/
+#define sd_trace(x)		/*do {printf x;} while (0)*/
+#define sd_info(x)		/*do {printf x;} while (0)*/
+#define sd_debug(x)		/*do {printf x;} while (0)*/
+#define sd_data(x)		/*do {printf x;} while (0)*/
+#define sd_ctrl(x)		/*do {printf x;} while (0)*/
 
 
 #define sd_sync_dma(sd, read, nbytes)

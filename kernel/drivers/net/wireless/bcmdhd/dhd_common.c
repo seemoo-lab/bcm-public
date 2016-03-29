@@ -285,11 +285,125 @@ dhd_wl_ioctl_cmd(dhd_pub_t *dhd_pub, int cmd, void *arg, int len, uint8 set, int
 	return dhd_wl_ioctl(dhd_pub, ifindex, &ioc, arg, len);
 }
 
+extern void prhex(const char *msg, uchar *buf, uint len);
+extern int dhdsdio_print_console(void *bus);
+
+void
+dhd_print_ioctl_cmd(wl_ioctl_t *ioc, bool dump) {
+	#define CMD_TRACE(cmd) do { \
+		DHD_TRACE(("%s(%d): " cmd " len=%d set=%d\n", __FUNCTION__, dump, ioc->len, ioc->set)); \
+		if(dump && ioc->len > 0 && ioc->buf != 0) prhex("IOCTL_BUF", ioc->buf, ioc->len); \
+	} while(0)
+
+	switch(ioc->cmd) {
+		case WLC_GET_REVINFO:
+			CMD_TRACE("WLC_GET_REVINFO");
+			break;
+		case WLC_SET_ROAM_DELTA:
+			CMD_TRACE("WLC_SET_ROAM_DELTA");
+			break;
+		case WLC_SET_ROAM_SCAN_PERIOD:
+			CMD_TRACE("WLC_SET_ROAM_SCAN_PERIOD");
+			break;
+		case WLC_SET_FAKEFRAG:
+			CMD_TRACE("WLC_SET_FAKEFRAG");
+			break;
+		case WLC_SET_SCAN_CHANNEL_TIME:
+			CMD_TRACE("WLC_SET_SCAN_CHANNEL_TIME");
+			break;
+		case WLC_SET_SCAN_UNASSOC_TIME:
+			CMD_TRACE("WLC_SET_SCAN_UNASSOC_TIME");
+			break;
+		case WLC_SET_SCAN_PASSIVE_TIME:
+			CMD_TRACE("WLC_SET_SCAN_PASSIVE_TIME");
+			break;
+		case WLC_DOWN:
+			CMD_TRACE("WLC_DOWN");
+			break;
+		case WLC_SET_PROMISC:
+			CMD_TRACE("WLC_SET_PROMISC");
+			break;
+		case WLC_GET_BCNPRD:
+			CMD_TRACE("WLC_GET_BCNPRD");
+			break;
+		case WLC_GET_VERSION:
+			CMD_TRACE("WLC_GET_VERSION");
+			break;
+		case WLC_UP:
+			CMD_TRACE("WLC_UP");
+			break;
+		case WLC_GET_VAR:
+			CMD_TRACE("WLC_GET_VAR");
+			DHD_TRACE(("%s: varname=%s (%08x)\n", __FUNCTION__, (char *) ioc->buf, *(int *) ioc->buf));
+			break;
+		case WLC_SET_VAR:
+			CMD_TRACE("WLC_SET_VAR");
+			DHD_TRACE(("%s: varname=%s (%08x)\n", __FUNCTION__, (char *) ioc->buf, *(int *) ioc->buf));
+			break;
+		case WLC_SET_INFRA:
+			CMD_TRACE("WLC_SET_INFRA");
+			break;
+		case WLC_DUMP_RATE:
+			CMD_TRACE("WLC_DUMP_RATE");
+			break;
+		case WLC_SET_RATE_PARAMS:
+			CMD_TRACE("WLC_SET_RATE_PARAMS");
+			break;
+		case WLC_GET_BANDLIST:
+			CMD_TRACE("WLC_GET_BANDLIST");
+			break;
+		case WLC_GET_BAND:
+			CMD_TRACE("WLC_GET_BAND");
+			break;
+		case WLC_SET_PASSIVE_SCAN:
+			CMD_TRACE("WLC_SET_PASSIVE_SCAN");
+			break;
+		case WLC_GET_BSSID:
+			CMD_TRACE("WLC_GET_BSSID");
+			break;
+		case WLC_SCAN:
+			CMD_TRACE("WLC_SCAN");
+			break;
+		case WLC_SET_ROAM_TRIGGER:
+			CMD_TRACE("WLC_SET_ROAM_TRIGGER");
+			break;
+		case WLC_GET_RSSI:
+			CMD_TRACE("WLC_GET_RSSI");
+			break;
+		case WLC_GET_DTIMPRD:
+			CMD_TRACE("WLC_GET_DTIMPRD");
+			break;
+		case WLC_SET_PM:
+			CMD_TRACE("WLC_SET_PM");
+			break;
+		case WLC_GET_PM:
+			CMD_TRACE("WLC_GET_PM");
+			break;
+		case WLC_GET_PKTCNTS:
+			CMD_TRACE("WLC_GET_PKTCNTS");
+			break;
+		case WLC_GET_RATE:
+			CMD_TRACE("WLC_GET_RATE");
+			break;
+		case WLC_DISASSOC:
+			CMD_TRACE("WLC_DISASSOC");
+			break;
+		
+
+		default:
+			DHD_TRACE(("%s: cmd=%d len=%d set=%d\n", __FUNCTION__, ioc->cmd, ioc->len, ioc->set));
+	}
+}
 
 int
 dhd_wl_ioctl(dhd_pub_t *dhd_pub, int ifindex, wl_ioctl_t *ioc, void *buf, int len)
 {
 	int ret = 0;
+
+	DHD_TRACE(("%s: Enter\n", __FUNCTION__));
+
+	dhd_print_ioctl_cmd(ioc, 0);
+	dhdsdio_print_console(dhd_pub->bus);
 
 	if (dhd_os_proto_block(dhd_pub))
 	{
@@ -310,6 +424,9 @@ dhd_wl_ioctl(dhd_pub_t *dhd_pub, int ifindex, wl_ioctl_t *ioc, void *buf, int le
 
 
 	}
+
+	dhd_print_ioctl_cmd(ioc, 1);
+
 	return ret;
 }
 

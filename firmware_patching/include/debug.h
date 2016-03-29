@@ -473,7 +473,7 @@ struct trace  {
 
 #define dbg_set_breakpoint_for_addr_match(number, address) do { \
 		DBGBCR ## number = 0x0; \
-		DBGBVR ## number = address & DBGBVR_ADDRMASK; \
+		DBGBVR ## number = (address) & DBGBVR_ADDRMASK; \
 		DBGBCR ## number =  \
 			SET_DBG_VALUE(DBGBCR_BT, DBGBCR_BT_UNLINKED_INSTR_ADDR_MATCH) |  \
 			SET_DBG_VALUE(DBGBCR_MASK, DBGBCR_MASK_NO_MASK) |  \
@@ -484,7 +484,7 @@ struct trace  {
 
 #define dbg_set_breakpoint_for_addr_mismatch(number, address) do { \
 		DBGBCR ## number = 0x0; \
-		DBGBVR ## number = address & DBGBVR_ADDRMASK; \
+		DBGBVR ## number = (address) & DBGBVR_ADDRMASK; \
 		DBGBCR ## number =  \
 			SET_DBG_VALUE(DBGBCR_BT, DBGBCR_BT_UNLINKED_INSTR_ADDR_MISMATCH) |  \
 			SET_DBG_VALUE(DBGBCR_MASK, DBGBCR_MASK_NO_MASK) |  \
@@ -504,7 +504,7 @@ struct trace  {
 
 #define dbg_set_watchpoint_for_addr_match(number, address) do { \
 		DBGWCR ## number = 0x0; \
-		DBGWVR ## number = address & DBGWVR_ADDRMASK; \
+		DBGWVR ## number = (address) & DBGWVR_ADDRMASK; \
 		DBGWCR ## number = \
 			SET_DBG_VALUE(DBGWCR_WT, DBGWCR_WT_UNLINKED_DATA_ADDR_MATCH) | \
 			SET_DBG_VALUE(DBGWCR_MASK, DBGWCR_MASK_NO_MASK) | \

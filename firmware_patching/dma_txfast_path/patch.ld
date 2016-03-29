@@ -1,5 +1,6 @@
 SECTIONS
 {
+	.text.tr_reset_hook 0x180880: { KEEP(patch.o (.text.tr_reset_hook)) }
 	.text.tr_pref_abort_hook 0x180F88: { KEEP(patch.o (.text.tr_pref_abort_hook)) }
 	.text.tr_data_abort_hook 0x180FAA: { KEEP(patch.o (.text.tr_data_abort_hook)) }
 	.text.handle_exceptions 0x181032: { KEEP(patch.o (.text.handle_exceptions)) }

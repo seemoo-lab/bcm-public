@@ -3175,7 +3175,7 @@ dhdsdio_readshared(dhd_bus_t *bus, sdpcm_shared_t *sh)
 
 #define CONSOLE_LINE_MAX	192
 
-static int
+int
 dhdsdio_readconsole(dhd_bus_t *bus)
 {
 	dhd_console_t *c = &bus->console;
