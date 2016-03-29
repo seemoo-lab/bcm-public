@@ -268,7 +268,7 @@ handle_pref_abort_exception(struct trace *trace)
 		// to know which breakpoint mismatch was triggerd on a next breakpoint hit, we set a bit in the breakpoint_hit variable
 		breakpoint_hit |= DBGBP0;
 		breakpoint_hit_counter[0]++;
-		printf("BP0 PC=%08x LR=%08x CNT=%d hit\n", trace->PC, trace->lr, breakpoint_hit_counter[0]);
+		//printf("BP0 PC=%08x LR=%08x CNT=%d hit\n", trace->PC, trace->lr, breakpoint_hit_counter[0]);
 		//printf("BP0 hit %08x %08x %08x %08x %08x\n", trace->r0, trace->r1, trace->r2, trace->r3, trace->r4);
 		//try_to_access_d11();
 	} else if (dbg_is_breakpoint_enabled(1) && dbg_triggers_on_breakpoint_address(1, trace->pc)) {
@@ -298,7 +298,7 @@ handle_pref_abort_exception(struct trace *trace)
 			}
 			// we set the bit in the breakpoint_hit variable to 0
 			breakpoint_hit &= ~DBGBP0;
-			printf("BP0 PC=%08x LR=%08x reset\n", trace->PC, trace->lr);
+			//printf("BP0 PC=%08x LR=%08x reset\n", trace->PC, trace->lr);
 		}
 
 		if(dbg_is_breakpoint_enabled(1) && (breakpoint_hit & DBGBP1)) {
@@ -307,13 +307,13 @@ handle_pref_abort_exception(struct trace *trace)
 				dbg_disable_breakpoint(1);
 			}
 			breakpoint_hit &= ~DBGBP1;
-			printf("BP1 PC=%08x LR=%08x reset\n", trace->PC, trace->lr);
+			//printf("BP1 PC=%08x LR=%08x reset\n", trace->PC, trace->lr);
 		}
 
 		if(dbg_is_breakpoint_enabled(2) && (breakpoint_hit & DBGBP2)) {
 			dbg_set_breakpoint_type_to_instr_addr_match(2);
 			breakpoint_hit &= ~DBGBP2;
-			printf("BP2 reset\n");
+			//printf("BP2 reset\n");
 		}
 
 		if(dbg_is_breakpoint_enabled(3) && (breakpoint_hit & DBGBP3)) {
@@ -407,7 +407,7 @@ set_debug_registers(void)
 	//dbg_set_breakpoint_for_addr_match(3, 0x1F31A2);
 	//dbg_set_breakpoint_for_addr_match(0, 0x1aad98); // breakpoint in wlc_bmac_recv works, but the debug handler cannot access the debug registers without crashing the chip
 	dbg_set_breakpoint_for_addr_match(0, 0x181aa8);
-	dbg_set_breakpoint_for_addr_match(2, 0x19b25c);
+	dbg_set_breakpoint_for_addr_match(2, 0x18bb6c);
 	//dbg_set_watchpoint_for_addr_match(0, 0x1e94d8 + 4*149);
 }
 
