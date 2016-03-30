@@ -239,7 +239,7 @@ unsigned char breakpoint_hit_counter[DBG_NUMBER_OF_BREAKPOINTS] = { 0 };
 /**
  *	Breakpoint hit limit, defines how often a breakpoint should trigger
  */
-unsigned char breakpoint_hit_limit[DBG_NUMBER_OF_BREAKPOINTS] = { 200 };
+unsigned char breakpoint_hit_limit[DBG_NUMBER_OF_BREAKPOINTS] = { 1 };
 
 /**
  *	Saves one-hot encoded which watchpoint was hit
@@ -254,7 +254,7 @@ unsigned char watchpoint_hit_counter = 0;
 /**
  *	Watchpoint hit limit, defines how often a watchpoint should trigger
  */
-unsigned char watchpoint_hit_limit = 10;
+unsigned char watchpoint_hit_limit = 3;
 
 void
 handle_pref_abort_exception(struct trace *trace)
@@ -268,18 +268,19 @@ handle_pref_abort_exception(struct trace *trace)
 		// to know which breakpoint mismatch was triggerd on a next breakpoint hit, we set a bit in the breakpoint_hit variable
 		breakpoint_hit |= DBGBP0;
 		breakpoint_hit_counter[0]++;
-		//printf("BP0 PC=%08x LR=%08x CNT=%d hit\n", trace->PC, trace->lr, breakpoint_hit_counter[0]);
-		//printf("BP0 hit %08x %08x %08x %08x %08x\n", trace->r0, trace->r1, trace->r2, trace->r3, trace->r4);
+		printf("BP0 PC=%08x LR=%08x CNT=%d hit\n", trace->PC, trace->lr, breakpoint_hit_counter[0]);
+		printf("BP0 hit 0=%08x 1=%08x 1=%08x 3=%08x 4=%08x 5=%08x\n", trace->r0, trace->r1, trace->r2, trace->r3, trace->r4, trace->r5);
 		//try_to_access_d11();
 	} else if (dbg_is_breakpoint_enabled(1) && dbg_triggers_on_breakpoint_address(1, trace->pc)) {
 		dbg_set_breakpoint_type_to_instr_addr_mismatch(1);
 		breakpoint_hit |= DBGBP1;
 		breakpoint_hit_counter[1]++;
-		printf("BP1 PC=%08x LR=%08x R3=%08x R4=%08x CNT=%d hit\n", trace->PC, trace->lr, trace->r3, trace->r4, breakpoint_hit_counter[1]);
+		printf("BP1 PC=%08x LR=%08x R0=%08x R1=%08x R2=%08x R3=%08x R4=%08x CNT=%d hit\n", trace->PC, trace->lr, trace->r0, trace->r1, trace->r2, trace->r3, trace->r4, breakpoint_hit_counter[1]);
 	} else if (dbg_is_breakpoint_enabled(2) && dbg_triggers_on_breakpoint_address(2, trace->pc)) {
 		dbg_set_breakpoint_type_to_instr_addr_mismatch(2);
 		breakpoint_hit |= DBGBP2;
-		printf("BP2 PC=%08x LR=%08x R0=%08x R1=%08x R2=%08x R3=%08x hit\n", trace->PC, trace->lr, trace->r0, trace->r1, trace->r2, trace->r3);
+		breakpoint_hit_counter[2]++;
+		printf("BP2 PC=%08x LR=%08x R0=%08x R1=%08x R2=%08x R3=%08x R4=%08x CNT=%d hit\n", trace->PC, trace->lr, trace->r0, trace->r1, trace->r2, trace->r3, trace->r4, breakpoint_hit_counter[2]);
 	} else if (dbg_is_breakpoint_enabled(3) && dbg_triggers_on_breakpoint_address(3, trace->pc)) {
 		// We intend to use Breakpoint 3 to handle resetting watchpoints
 		dbg_set_breakpoint_type_to_instr_addr_mismatch(3);
@@ -290,15 +291,19 @@ handle_pref_abort_exception(struct trace *trace)
 		if(dbg_is_breakpoint_enabled(0) && (breakpoint_hit & DBGBP0)) {
 			// we reset the the breakpoint for address matching
 			dbg_set_breakpoint_type_to_instr_addr_match(0);
+			//dbg_set_breakpoint_for_addr_mismatch(0, trace->PC);
 			if (breakpoint_hit_counter[0] == breakpoint_hit_limit[0]) {
 				dbg_disable_breakpoint(0);
-				//dbg_set_breakpoint_for_addr_match(1, 0x181AA8);
-				//breakpoint_hit_counter[1] = 0;
-				//breakpoint_hit_limit[1] = 1;
+				dbg_set_breakpoint_for_addr_match(1, 0xfdb4);
+				breakpoint_hit_counter[1] = 0;
+				breakpoint_hit_limit[1] = 4;
+				dbg_set_breakpoint_for_addr_match(2, 0x184878);
+				breakpoint_hit_counter[2] = 0;
+				breakpoint_hit_limit[2] = 2;
 			}
 			// we set the bit in the breakpoint_hit variable to 0
 			breakpoint_hit &= ~DBGBP0;
-			//printf("BP0 PC=%08x LR=%08x reset\n", trace->PC, trace->lr);
+			printf("BP0 PC=%08x LR=%08x reset\n", trace->PC, trace->lr);
 		}
 
 		if(dbg_is_breakpoint_enabled(1) && (breakpoint_hit & DBGBP1)) {
@@ -312,6 +317,9 @@ handle_pref_abort_exception(struct trace *trace)
 
 		if(dbg_is_breakpoint_enabled(2) && (breakpoint_hit & DBGBP2)) {
 			dbg_set_breakpoint_type_to_instr_addr_match(2);
+			if (breakpoint_hit_counter[2] == breakpoint_hit_limit[2]) {
+				dbg_disable_breakpoint(2);
+			}
 			breakpoint_hit &= ~DBGBP2;
 			//printf("BP2 reset\n");
 		}
@@ -360,7 +368,7 @@ void
 handle_data_abort_exception(struct trace *trace)
 {
 	fix_sp_lr(trace);
-	printf("WP(%08x): %08x %08x %08x %08x %08x\n", trace->PC, trace->r0, trace->r1, trace->r2, trace->r3, trace->r4);
+	printf("WP(%08x): LR=%08x %08x %08x %08x %08x %08x\n", trace->PC, trace->lr, trace->r0, trace->r1, trace->r2, trace->r3, trace->r4);
 
 	// TODO
 	// Currently I do not know how to find out, which watchpoint was triggered, so here I always handle watchpoint 0
@@ -406,9 +414,9 @@ set_debug_registers(void)
 	//dbg_set_breakpoint_for_addr_match(0, 0x1f59b8); // no d11 access
 	//dbg_set_breakpoint_for_addr_match(3, 0x1F31A2);
 	//dbg_set_breakpoint_for_addr_match(0, 0x1aad98); // breakpoint in wlc_bmac_recv works, but the debug handler cannot access the debug registers without crashing the chip
-	dbg_set_breakpoint_for_addr_match(0, 0x181aa8);
-	dbg_set_breakpoint_for_addr_match(2, 0x18bb6c);
-	//dbg_set_watchpoint_for_addr_match(0, 0x1e94d8 + 4*149);
+	dbg_set_breakpoint_for_addr_match(0, 0x185316);
+	//dbg_set_breakpoint_for_addr_match(2, 0x18bb6c);
+	//dbg_set_watchpoint_for_addr_match(0, 0x23cafc);
 }
 
 __attribute__((naked)) void
