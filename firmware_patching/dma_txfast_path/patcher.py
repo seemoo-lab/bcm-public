@@ -26,8 +26,8 @@ patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin",
 
 	ExternalArmPatch(getSectionAddr(".text.handle_exceptions"), "handle_exceptions.bin"), # patch to stay in abort mode to handle exception, original codes switches to system mode
 
-	GenericPatch4(0x18534E, 0xBF00BF00), # write nops over the si_update_chipcontrol_shm(sii, 5, 1, 0) call in si_setup_cores
-	GenericPatch4(0x18535E, 0xBF00BF00), # write nops over the si_update_chipcontrol_shm(sii, 5, 8, 0) call in si_setup_cores
+	#GenericPatch4(0x18534E, 0xBF00BF00), # write nops over the si_update_chipcontrol_shm(sii, 5, 1, 0) call in si_setup_cores
+	#GenericPatch4(0x18535E, 0xBF00BF00), # write nops over the si_update_chipcontrol_shm(sii, 5, 8, 0) call in si_setup_cores
 	GenericPatch4(0x18536A, 0xBF00BF00), # write nops over the si_update_chipcontrol_shm(sii, 5, 16, 0) call in si_setup_cores
 
 	StringPatch(0x1FD31B, "build: " + time.strftime("%d.%m.%Y %H:%M:%S") + "\n"), # 53 character string
