@@ -294,12 +294,9 @@ handle_pref_abort_exception(struct trace *trace)
 			//dbg_set_breakpoint_for_addr_mismatch(0, trace->PC);
 			if (breakpoint_hit_counter[0] == breakpoint_hit_limit[0]) {
 				dbg_disable_breakpoint(0);
-				dbg_set_breakpoint_for_addr_match(1, 0xfdb4);
+				dbg_set_breakpoint_for_addr_match(1, 0x185320);
 				breakpoint_hit_counter[1] = 0;
-				breakpoint_hit_limit[1] = 4;
-				dbg_set_breakpoint_for_addr_match(2, 0x184878);
-				breakpoint_hit_counter[2] = 0;
-				breakpoint_hit_limit[2] = 2;
+				breakpoint_hit_limit[1] = 1;
 			}
 			// we set the bit in the breakpoint_hit variable to 0
 			breakpoint_hit &= ~DBGBP0;
@@ -310,18 +307,27 @@ handle_pref_abort_exception(struct trace *trace)
 			dbg_set_breakpoint_type_to_instr_addr_match(1);
 			if (breakpoint_hit_counter[1] == breakpoint_hit_limit[1]) {
 				dbg_disable_breakpoint(1);
+				dbg_set_breakpoint_for_addr_mismatch(2, trace->PC);
+				breakpoint_hit_counter[2] = 0;
+				breakpoint_hit_limit[2] = 1;
+				breakpoint_hit |= DBGBP2;
 			}
 			breakpoint_hit &= ~DBGBP1;
-			//printf("BP1 PC=%08x LR=%08x reset\n", trace->PC, trace->lr);
+			printf("BP1 PC=%08x LR=%08x reset\n", trace->PC, trace->lr);
 		}
 
 		if(dbg_is_breakpoint_enabled(2) && (breakpoint_hit & DBGBP2)) {
-			dbg_set_breakpoint_type_to_instr_addr_match(2);
+			//dbg_set_breakpoint_type_to_instr_addr_match(2);
+			dbg_set_breakpoint_for_addr_mismatch(2, trace->PC);
+			//dbg_disable_breakpoint(2);
+			breakpoint_hit_counter[2]++;
 			if (breakpoint_hit_counter[2] == breakpoint_hit_limit[2]) {
 				dbg_disable_breakpoint(2);
+				printf("BP2 limit reached\n");
+				breakpoint_hit &= ~DBGBP2;
 			}
-			breakpoint_hit &= ~DBGBP2;
-			//printf("BP2 reset\n");
+			//breakpoint_hit &= ~DBGBP2;
+			printf("BP2 PC=%08x LR=%08x reset\n", trace->PC, trace->lr);
 		}
 
 		if(dbg_is_breakpoint_enabled(3) && (breakpoint_hit & DBGBP3)) {
@@ -397,6 +403,10 @@ set_debug_registers(void)
 {
 	set_abort_stack_pointer();
 	dbg_unlock_debug_registers();
+	//dbg_disable_breakpoint(0);
+	//dbg_disable_breakpoint(1);
+	//dbg_disable_breakpoint(2);
+	//dbg_disable_breakpoint(3);
 	dbg_enable_monitor_mode_debugging();
 	
 	// Programm Breakpoint to match the instruction we want to hit
