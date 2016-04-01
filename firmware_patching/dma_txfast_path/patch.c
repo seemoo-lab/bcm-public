@@ -257,86 +257,86 @@ unsigned char watchpoint_hit_counter = 0;
 unsigned char watchpoint_hit_limit = 3;
 
 void
+print_breakpoint_infos(int breakpoint_number, struct trace *trace, int dump_size)
+{
+	switch(dump_size) {
+		case 0:
+			printf("BP%d(%d) PC=%08x LR=%08x 0=%08x 1=%08x 1=%08x 3=%08x 4=%08x 5=%08x 6=%08x\n", 
+				breakpoint_number, 
+				breakpoint_hit_counter[breakpoint_number], 
+				trace->PC, 
+				trace->lr, 
+				trace->r0, 
+				trace->r1, 
+				trace->r2, 
+				trace->r3, 
+				trace->r4, 
+				trace->r5, 
+				trace->r6);
+		case 1:
+			printf("BP%d(%d) PC=%08x LR=%08x\n", 
+				breakpoint_number, 
+				breakpoint_hit_counter[breakpoint_number], 
+				trace->PC, 
+				trace->lr);
+	}
+}
+
+void
 handle_pref_abort_exception(struct trace *trace)
 {
 	fix_sp_lr(trace);
 	//printf("BP(%08x): %08x %08x %08x\n", trace->PC, trace->sp, trace->lr, breakpoint_hit);
 	
-	if (dbg_is_breakpoint_enabled(0) && dbg_triggers_on_breakpoint_address(0, trace->pc)) {
-		// to continue executed on the instruction where breakpoint 0 triggered, we set the breakpoint type to address mismatch to trigger on any instruction except the breakpoint address
-		dbg_set_breakpoint_type_to_instr_addr_mismatch(0);
-		// to know which breakpoint mismatch was triggerd on a next breakpoint hit, we set a bit in the breakpoint_hit variable
-		breakpoint_hit |= DBGBP0;
-		breakpoint_hit_counter[0]++;
-		printf("BP0 PC=%08x LR=%08x CNT=%d hit\n", trace->PC, trace->lr, breakpoint_hit_counter[0]);
-		printf("BP0 hit 0=%08x 1=%08x 1=%08x 3=%08x 4=%08x 5=%08x\n", trace->r0, trace->r1, trace->r2, trace->r3, trace->r4, trace->r5);
-		//try_to_access_d11();
-	} else if (dbg_is_breakpoint_enabled(1) && dbg_triggers_on_breakpoint_address(1, trace->pc)) {
-		dbg_set_breakpoint_type_to_instr_addr_mismatch(1);
-		breakpoint_hit |= DBGBP1;
-		breakpoint_hit_counter[1]++;
-		printf("BP1 PC=%08x LR=%08x R0=%08x R1=%08x R2=%08x R3=%08x R4=%08x CNT=%d hit\n", trace->PC, trace->lr, trace->r0, trace->r1, trace->r2, trace->r3, trace->r4, breakpoint_hit_counter[1]);
-	} else if (dbg_is_breakpoint_enabled(2) && dbg_triggers_on_breakpoint_address(2, trace->pc)) {
-		dbg_set_breakpoint_type_to_instr_addr_mismatch(2);
-		breakpoint_hit |= DBGBP2;
-		breakpoint_hit_counter[2]++;
-		//printf("BP2 PC=%08x LR=%08x R0=%08x R1=%08x R2=%08x R3=%08x R4=%08x CNT=%d hit\n", trace->PC, trace->lr, trace->r0, trace->r1, trace->r2, trace->r3, trace->r4, breakpoint_hit_counter[2]);
-	} else if (dbg_is_breakpoint_enabled(3) && dbg_triggers_on_breakpoint_address(3, trace->pc)) {
-		// We intend to use Breakpoint 3 to handle resetting watchpoints
-		dbg_set_breakpoint_type_to_instr_addr_mismatch(3);
-		breakpoint_hit |= DBGBP3;
-		printf("BP3 hit\n");
-	} else {
-		// if breakpoint 0 was hit before, the current exception is likely triggerd by an address mismatch of breakpoint 0
-		if(dbg_is_breakpoint_enabled(0) && (breakpoint_hit & DBGBP0)) {
+	if(dbg_is_breakpoint_enabled(0)) {
+		if (dbg_triggers_on_breakpoint_address(0, trace->pc)) {
+			// to continue executed on the instruction where breakpoint 0 triggered, we set the breakpoint type to address mismatch to trigger on any instruction except the breakpoint address
+			dbg_set_breakpoint_type_to_instr_addr_mismatch(0);
+			// to know which breakpoint mismatch was triggerd on a next breakpoint hit, we set a bit in the breakpoint_hit variable
+			breakpoint_hit |= DBGBP0;
+			breakpoint_hit_counter[0]++;
+			print_breakpoint_infos(0, trace, 0);
+		} else if (breakpoint_hit & DBGBP0) {
 			// we reset the the breakpoint for address matching
 			dbg_set_breakpoint_type_to_instr_addr_match(0);
-			//dbg_set_breakpoint_for_addr_mismatch(0, trace->PC);
 			if (breakpoint_hit_counter[0] == breakpoint_hit_limit[0]) {
 				dbg_disable_breakpoint(0);
-				//dbg_set_breakpoint_for_addr_match(1, 0x184878);
-				//breakpoint_hit_counter[1] = 0;
-				//breakpoint_hit_limit[1] = 1;
 			}
 			// we set the bit in the breakpoint_hit variable to 0
 			breakpoint_hit &= ~DBGBP0;
-			printf("BP0 PC=%08x LR=%08x reset\n", trace->PC, trace->lr);
+			print_breakpoint_infos(0, trace, 1);
 		}
-
-		if(dbg_is_breakpoint_enabled(1) && (breakpoint_hit & DBGBP1)) {
+	} else if (dbg_is_breakpoint_enabled(1)) {
+		if (dbg_triggers_on_breakpoint_address(1, trace->pc)) {
+			dbg_set_breakpoint_type_to_instr_addr_mismatch(1);
+			breakpoint_hit |= DBGBP1;
+			breakpoint_hit_counter[1]++;
+			print_breakpoint_infos(1, trace, 0);
+		} else if (breakpoint_hit & DBGBP1) {
 			dbg_set_breakpoint_type_to_instr_addr_match(1);
 			if (breakpoint_hit_counter[1] == breakpoint_hit_limit[1]) {
 				dbg_disable_breakpoint(1);
-				//dbg_set_breakpoint_for_addr_mismatch(2, trace->PC);
-				//breakpoint_hit_counter[2] = 0;
-				//breakpoint_hit_limit[2] = 55;
-				//breakpoint_hit |= DBGBP2;
 			}
 			breakpoint_hit &= ~DBGBP1;
-			printf("BP1 PC=%08x LR=%08x reset\n", trace->PC, trace->lr);
+			print_breakpoint_infos(1, trace, 1);
 		}
-
-		if(dbg_is_breakpoint_enabled(2) && (breakpoint_hit & DBGBP2)) {
-			dbg_set_breakpoint_type_to_instr_addr_match(2);
-			//dbg_set_breakpoint_for_addr_mismatch(2, trace->PC);
-			//dbg_disable_breakpoint(2);
+	} else if (dbg_is_breakpoint_enabled(2)) {
+		if (dbg_triggers_on_breakpoint_address(2, trace->pc)) {
+			dbg_set_breakpoint_type_to_instr_addr_mismatch(2);
+			breakpoint_hit |= DBGBP2;
 			breakpoint_hit_counter[2]++;
+			print_breakpoint_infos(2, trace, 0);
+		} else if (breakpoint_hit & DBGBP2) {
+			dbg_set_breakpoint_type_to_instr_addr_match(2);
 			if (breakpoint_hit_counter[2] == breakpoint_hit_limit[2]) {
 				dbg_disable_breakpoint(2);
-				//breakpoint_hit &= ~DBGBP2;
 			}
 			breakpoint_hit &= ~DBGBP2;
-			printf("BP2 PC=%08x LR=%x 0=%08x 1=%08x 2=%08x 3=%08x 4=%08x 5=%08x 6=%08x\n", trace->PC, trace->lr, trace->r0, trace->r1, trace->r2, trace->r3, trace->r4, trace->r5, trace->r6);
+			print_breakpoint_infos(2, trace, 1);
 		}
-
-		if(dbg_is_breakpoint_enabled(3) && (breakpoint_hit & DBGBP3)) {
-			dbg_set_breakpoint_type_to_instr_addr_match(3);
-			breakpoint_hit &= ~DBGBP3;
-			printf("BP3 reset\n");
-		}
-
+	} else if (dbg_is_breakpoint_enabled(3)) {
 		// Used to reset watchpoint
-		if(dbg_is_breakpoint_enabled(3) && (watchpoint_hit & DBGWP0)) {
+		if (watchpoint_hit & DBGWP0) {
 			dbg_disable_breakpoint(3);
 			watchpoint_hit &= ~DBGWP0;
 			if (++watchpoint_hit_counter < watchpoint_hit_limit) {
@@ -377,7 +377,7 @@ handle_data_abort_exception(struct trace *trace)
 
 	// TODO
 	// Currently I do not know how to find out, which watchpoint was triggered, so here I always handle watchpoint 0
-	watchpoint_hit |= DBGBP0;
+	watchpoint_hit |= DBGWP0;
 	// Disable the watchpoint so that the instruction that triggered the watchpoint can be executed without triggering the watchpoint again.
 	dbg_disable_watchpoint(0);
 	// Set breakpoint 3 to reset the watchpoint after executing the instruction that triggered the watchpoint.
@@ -402,10 +402,10 @@ set_debug_registers(void)
 {
 	set_abort_stack_pointer();
 	dbg_unlock_debug_registers();
-	//dbg_disable_breakpoint(0);
-	//dbg_disable_breakpoint(1);
-	//dbg_disable_breakpoint(2);
-	//dbg_disable_breakpoint(3);
+	dbg_disable_breakpoint(0);
+	dbg_disable_breakpoint(1);
+	dbg_disable_breakpoint(2);
+	dbg_disable_breakpoint(3);
 	dbg_enable_monitor_mode_debugging();
 	
 	// Programm Breakpoint to match the instruction we want to hit
@@ -423,7 +423,7 @@ set_debug_registers(void)
 	//dbg_set_breakpoint_for_addr_match(0, 0x1f59b8); // no d11 access
 	//dbg_set_breakpoint_for_addr_match(3, 0x1F31A2);
 	//dbg_set_breakpoint_for_addr_match(0, 0x1aad98); // breakpoint in wlc_bmac_recv works, but the debug handler cannot access the debug registers without crashing the chip
-	dbg_set_breakpoint_for_addr_match(0, 0x182750);
+	dbg_set_breakpoint_for_addr_match(2, 0x182750);
 	//dbg_set_breakpoint_for_addr_match(2, 0x18bb6c);
 	//dbg_set_watchpoint_for_addr_match(0, 0x23cafc);
 }
