@@ -18,7 +18,16 @@ void
 try_to_access_d11(void)
 {
 	printf("%08x: %08x\n", 0x1800101C, *(int *) 0x1800101C);
-	printf("%08x: %08x\n", 0x1810101C, *(int *) 0x1810101C);
+	//printf("%08x: %08x\n", 0x1810101C, *(int *) 0x1810101C);
+}
+
+/**
+ *	Just inserted to produce an error while linking, when we try to overwrite existing memory
+ */
+void 
+dummy_180800(void)
+{
+	;
 }
 
 /**
@@ -77,6 +86,7 @@ tr_data_abort_hook(void)
 		);
 }
 
+
 int ext_intr_counter = 0;
 
 void
@@ -87,7 +97,8 @@ dbgout(int * sp)
 		printf("dbg %d %08x %d\n", *sp, *(sp+1), ext_intr_counter++);
 //	printf("dbg %08x\n", *(volatile int *) 0x18007000);
 	asm("pop {r0-r3}");
-} 
+}
+
 
 __attribute__((naked)) void
 choose_exception_handler(void)
@@ -106,11 +117,14 @@ choose_exception_handler(void)
 		"label_other_exception:\n"
 			"mov r0, sp\n"
 			"push {lr}\n"
-			"bl dbgout\n"
+			//"bl dbgout\n"
 			"pop {lr}\n"
 			"b dump_stack_print_dbg_stuff_intr_handler\n"
 		"label_pref_abort:\n"
 			"mov r0, sp\n"
+			"push {lr}\n"
+			//"bl dbgout\n"
+			"pop {lr}\n"
 			"b handle_pref_abort_exception\n"
 		"label_data_abort:\n"
 			"mrc p15, 0, r0, c5, c0, 0\n"					// read DFSR
@@ -234,12 +248,12 @@ unsigned char breakpoint_hit = 0;
 /**
  *	Breakpoint hit counter, saves how often a breakpoint was hit
  */
-unsigned char breakpoint_hit_counter[DBG_NUMBER_OF_BREAKPOINTS] = { 0 };
+unsigned char breakpoint_hit_counter[DBG_NUMBER_OF_BREAKPOINTS] = { 0, 0, 0, 0 };
 
 /**
  *	Breakpoint hit limit, defines how often a breakpoint should trigger
  */
-unsigned char breakpoint_hit_limit[DBG_NUMBER_OF_BREAKPOINTS] = { 100 };
+unsigned char breakpoint_hit_limit[DBG_NUMBER_OF_BREAKPOINTS] = { 130, 100, 2, 1 };
 
 /**
  *	Saves one-hot encoded which watchpoint was hit
@@ -254,7 +268,7 @@ unsigned char watchpoint_hit_counter = 0;
 /**
  *	Watchpoint hit limit, defines how often a watchpoint should trigger
  */
-unsigned char watchpoint_hit_limit = 3;
+unsigned char watchpoint_hit_limit = 1;
 
 void
 print_breakpoint_infos(int breakpoint_number, struct trace *trace, int dump_size)
@@ -273,14 +287,18 @@ print_breakpoint_infos(int breakpoint_number, struct trace *trace, int dump_size
 				trace->r4, 
 				trace->r5, 
 				trace->r6);
+			break;
 		case 1:
 			printf("BP%d(%d) PC=%08x LR=%08x\n", 
 				breakpoint_number, 
 				breakpoint_hit_counter[breakpoint_number], 
 				trace->PC, 
 				trace->lr);
+			break;
 	}
 }
+
+unsigned int cnt[6] = {0};
 
 void
 handle_pref_abort_exception(struct trace *trace)
@@ -295,23 +313,59 @@ handle_pref_abort_exception(struct trace *trace)
 			// to know which breakpoint mismatch was triggerd on a next breakpoint hit, we set a bit in the breakpoint_hit variable
 			breakpoint_hit |= DBGBP0;
 			breakpoint_hit_counter[0]++;
-			print_breakpoint_infos(0, trace, 0);
+			//dbg_set_watchpoint_for_addr_match_with_mask(0, 0x18001000, DBGWCR_MASK_00000FFF);
+			//dbg_set_watchpoint_for_addr_match_with_mask(1, 0x18101000, DBGWCR_MASK_00000FFF);
+			//if (trace->r0 != 0x1eab98) {
+			//if (breakpoint_hit_counter[0] == 7) {
+			//	int i = 0;
+			//	printf("di:%08x\n", trace->r0);
+			//	for (i = 0; i < 52; i++)
+			//		printf("%08x\n", *((int *) trace->r0 + i));
+			//}
+			switch(trace->r0) {
+				case 0x1eab98:
+				cnt[0]++;
+				break;
+				case 0x1e4288:
+				cnt[1]++;
+				break;
+				case 0x1e3a04:
+				cnt[2]++;
+				break;
+				case 0x1e3414:
+				cnt[3]++;
+				break;
+				case 0x1e2e24:
+				cnt[4]++;
+				break;
+				case 0x1e2834:
+				cnt[5]++;
+				break;
+			}
+			if (cnt[0] % 10 == 1)
+				printf("0:%d 1:%d 2:%d 3:%d 4:%d 5:%d\n", cnt[0], cnt[1], cnt[2], cnt[3], cnt[4], cnt[5]);
+			//print_breakpoint_infos(0, trace, 0);
 		} else if (breakpoint_hit & DBGBP0) {
 			// we reset the the breakpoint for address matching
 			dbg_set_breakpoint_type_to_instr_addr_match(0);
-			if (breakpoint_hit_counter[0] == breakpoint_hit_limit[0]) {
+			if (0 && breakpoint_hit_counter[0] == breakpoint_hit_limit[0]) {
+			//if (trace->r0 != 0x1eab98) {
 				dbg_disable_breakpoint(0);
 			}
 			// we set the bit in the breakpoint_hit variable to 0
 			breakpoint_hit &= ~DBGBP0;
-			print_breakpoint_infos(0, trace, 1);
+			//print_breakpoint_infos(0, trace, 1);
 		}
 	} else if (dbg_is_breakpoint_enabled(1)) {
 		if (dbg_triggers_on_breakpoint_address(1, trace->pc)) {
 			dbg_set_breakpoint_type_to_instr_addr_mismatch(1);
 			breakpoint_hit |= DBGBP1;
 			breakpoint_hit_counter[1]++;
-			print_breakpoint_infos(1, trace, 0);
+			if(trace->r3 == 0x27551) {
+				print_breakpoint_infos(1, trace, 0);
+				//try_to_access_d11();
+			}
+			//try_to_access_d11();
 		} else if (breakpoint_hit & DBGBP1) {
 			dbg_set_breakpoint_type_to_instr_addr_match(1);
 			if (breakpoint_hit_counter[1] == breakpoint_hit_limit[1]) {
@@ -341,6 +395,9 @@ handle_pref_abort_exception(struct trace *trace)
 			watchpoint_hit &= ~DBGWP0;
 			if (++watchpoint_hit_counter < watchpoint_hit_limit) {
 				dbg_enable_watchpoint(0);
+				dbg_enable_watchpoint(1);
+				//dbg_enable_watchpoint(2);
+				//dbg_enable_watchpoint(3);
 				printf("WP0 reset (%d)\n", watchpoint_hit_counter);
 			} else {
 				printf("WP0 not reset (%d)\n", watchpoint_hit_counter);
@@ -380,6 +437,9 @@ handle_data_abort_exception(struct trace *trace)
 	watchpoint_hit |= DBGWP0;
 	// Disable the watchpoint so that the instruction that triggered the watchpoint can be executed without triggering the watchpoint again.
 	dbg_disable_watchpoint(0);
+	dbg_disable_watchpoint(1);
+	dbg_disable_watchpoint(2);
+	dbg_disable_watchpoint(3);
 	// Set breakpoint 3 to reset the watchpoint after executing the instruction that triggered the watchpoint.
 	dbg_set_breakpoint_for_addr_mismatch(3, trace->PC);
 }
@@ -422,10 +482,15 @@ set_debug_registers(void)
 	//dbg_set_breakpoint_for_addr_match(0, 0x1f59ae); // no d11 access after sub_5054C
 	//dbg_set_breakpoint_for_addr_match(0, 0x1f59b8); // no d11 access
 	//dbg_set_breakpoint_for_addr_match(3, 0x1F31A2);
-	//dbg_set_breakpoint_for_addr_match(0, 0x1aad98); // breakpoint in wlc_bmac_recv works, but the debug handler cannot access the debug registers without crashing the chip
-	dbg_set_breakpoint_for_addr_match(2, 0x182750);
-	//dbg_set_breakpoint_for_addr_match(2, 0x18bb6c);
-	//dbg_set_watchpoint_for_addr_match(0, 0x23cafc);
+	//dbg_set_breakpoint_for_addr_match(1, 0x181a88); // no d11 access in external_interrupt handler
+	//dbg_set_breakpoint_for_addr_match(1, 0x181aa8); // no d11 access after call of interrupt handlers
+//	dbg_set_breakpoint_for_addr_match(1, 0x181aa6); // no d11 access in external_interrupt handler
+	//dbg_set_breakpoint_for_addr_match(1, 0x27550); // d11 access in called_by_interrupt_handler_calls_wlc_dpc_caller
+	//dbg_set_breakpoint_for_addr_match(2, 0x182750);
+//	dbg_set_breakpoint_for_addr_match(2, 0x1926b8);
+	//dbg_set_breakpoint_for_addr_match(1, 0x193744);
+	//dbg_set_breakpoint_for_addr_match(1, 0x18452A);
+	//dbg_set_watchpoint_for_addr_match_with_mask(0, 0x18001000, DBGWCR_MASK_00000FFF);
 }
 
 __attribute__((naked)) void
@@ -460,6 +525,84 @@ before_before_initialize_memory_hook(void)
 		);
 }
 
+#define NEX_READ_D11_OBJMEM			15
+#define OBJMEM_READ_REQUEST_GET_LEN(buf) ((*(buf) & 0xFFF00000) >> 20)
+#define OBJMEM_READ_REQUEST_GET_ADDR(buf) ((*(buf) & 0x0007FFFF))
+#define OBJMEM_AUTOINC_ON_READ 0x02000000
+#define OBJMEM_AUTOINC_ON_WRITE 0x01000000
+
+
+int
+nex_ioctl_handler_in_c(struct wlc_info *wlc, int cmd, void *arg, unsigned int len)
+{
+	printf("%s: cmd=%d, arg=%08x, len=%d\n", __FUNCTION__, cmd, (int) arg, len);
+
+	volatile struct d11regs *regs = wlc->regs;
+	int i;
+	int *buf = arg;
+	int segment_len;
+
+	switch(cmd) {
+		case NEX_READ_D11_OBJMEM:
+			while (len > 4) {
+				segment_len = OBJMEM_READ_REQUEST_GET_LEN(buf);
+				if (segment_len == 0) break;
+				regs->objaddr = OBJMEM_AUTOINC_ON_READ | OBJMEM_AUTOINC_ON_WRITE | OBJMEM_READ_REQUEST_GET_ADDR(buf);
+				regs->objaddr; // you always need to read back the new objaddr
+				
+				buf++;
+
+				for (i = 0; i < segment_len; i++) {
+					*buf++ = regs->objdata;
+				}
+
+				len -= segment_len * 4 + 4;
+			}
+
+			break;
+	}
+
+	return 0;
+}
+
+__attribute__((naked)) void
+nex_ioctl_handler(void)
+{
+	asm(
+		"mov r0, r4\n"							// Store wlc in r0
+		"mov r1, r8\n"							// Store cmd in r1
+		"mov r2, r5\n"							// Store arg in r2
+		"mov r3, r7\n"							// Store len in r3
+		"bl nex_ioctl_handler_in_c\n"
+		"add sp, #364\n"
+		"pop {r4-r11, pc}\n"					// return from wlc_ioctl
+		);
+}
+
+
+unsigned char bdc_ethernet_ipv6_udp_header_array[] = {
+  0x20, 0x00, 0x00, 0x00,		/* BDC Header */
+  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,	/* ETHERNET: Destination MAC Address */
+  'N', 'E', 'X', 'M', 'O', 'N',		/* ETHERNET: Source MAC Address */
+  0x86, 0xDD,				/* ETHERNET: Type */
+  0x60, 0x00, 0x00, 0x00,		/* IPv6: Version / Traffic Class / Flow Label */
+  0x00, 0x08,				/* IPv6: Payload Length */
+  0x88,					/* IPv6: Next Header = UDPLite */
+  0x01,					/* IPv6: Hop Limit */
+  0xFF, 0x02, 0x00, 0x00,		/* IPv6: Source IP */
+  0x00, 0x00, 0x00, 0x00,		/* IPv6: Source IP */
+  0x00, 0x00, 0x00, 0x00,		/* IPv6: Source IP */
+  0x00, 0x00, 0x00, 0x01,		/* IPv6: Source IP */
+  0xFF, 0x02, 0x00, 0x00,		/* IPv6: Destination IP */
+  0x00, 0x00, 0x00, 0x00,		/* IPv6: Destination IP */
+  0x00, 0x00, 0x00, 0x00,		/* IPv6: Destination IP */
+  0x00, 0x00, 0x00, 0x01,		/* IPv6: Destination IP */
+  0xD6, 0xD8,				/* UDPLITE: Source Port = 55000 */
+  0xD6, 0xD8,				/* UDPLITE: Destination Port = 55000 */
+  0x00, 0x08,				/* UDPLITE: Checksum Coverage */
+  0x52, 0x46,				/* UDPLITE: Checksum only over UDPLITE header*/
+};
+
 /*
 struct sk_buff *
 create_frame(unsigned int hooked_fct, unsigned int arg0, unsigned int arg1, unsigned int arg2, void *start_address, unsigned int length) {
@@ -471,7 +614,7 @@ create_frame(unsigned int hooked_fct, unsigned int arg0, unsigned int arg1, unsi
 	p = pkt_buf_get_skb(osh, sizeof(struct bdc_ethernet_ipv6_udp_header) - 1 + sizeof(struct nexmon_header) - 1 + length);
 
 	// copy headers to target buffer
-	memcpy(p->data, bdc_ethernet_ipv6_udp_header_array, bdc_ethernet_ipv6_udp_header_length);
+	memcpy(p->data, bdc_ethernet_ipv6_udp_header_array, sizeof(bdc_ethernet_ipv6_udp_header_array));
 
 	hdr = p->data;
 	hdr->ipv6.payload_length = htons(sizeof(struct udp_header) + sizeof(struct nexmon_header) - 1 + length);

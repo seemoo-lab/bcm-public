@@ -332,6 +332,9 @@ dhd_print_ioctl_cmd(wl_ioctl_t *ioc, bool dump) {
 		case WLC_UP:
 			CMD_TRACE("WLC_UP");
 			break;
+		case NEX_READ_D11_OBJMEM:
+			CMD_TRACE("NEX_READ_D11_OBJMEM");
+			break;
 		case WLC_GET_VAR:
 			CMD_TRACE("WLC_GET_VAR");
 			DHD_TRACE(("%s: varname=%s (%08x)\n", __FUNCTION__, (char *) ioc->buf, *(int *) ioc->buf));

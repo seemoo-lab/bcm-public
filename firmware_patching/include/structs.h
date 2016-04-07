@@ -41,9 +41,47 @@ struct wlc_hw_info {
     sk_buff *some_skbuff_ptr; // @ 0x134
 };
 
+/**
+ *  Name might be inaccurate
+ */
+struct device {
+    char name[16];
+    void *init_function;
+    int PAD;
+    void *some_device_info;
+    int PAD;
+    int PAD;
+    struct device *bound_device;
+};
+
+/**
+ *  Name might be inaccurate
+ */
+struct wl_info {
+    int unit;
+    void *pub;
+    struct wlc_info *wlc;
+    struct wlc_hw_info *wlc_hw;
+    struct device *dev;
+};
+
+/**
+ *  Name might be inaccurate
+ */
+struct sdiox_info {
+    int unit;
+    void *something;
+    void *sdio; // sdio_info struct
+    void *osh;
+    void *device_address;
+};
+
 struct wlc_info {
     struct wlc_pub *pub;
     struct osl_info *osh;
+    void *wl;
+    struct d11regs *regs;
+    struct wlc_hw_info *hw;
 };
 
 struct wlc_pub {
@@ -53,9 +91,454 @@ struct wlc_pub {
     char is_amsdu; // @ 0xe7
 } __attribute__((packed));
 
+struct hnddma_pub {
+    void *di_fn;                    /* DMA function pointers */
+    unsigned int txavail;           /* # free tx descriptors */
+    unsigned int dmactrlflags;      /* dma control flags */
+    /* rx error counters */
+    unsigned int rxgiants;          /* rx giant frames */
+    unsigned int rxnobuf;           /* rx out of dma descriptors */
+    /* tx error counters */
+    unsigned int txnobuf;           /* tx out of dma descriptors */
+} __attribute__((packed));
+
+struct dma_info {
+    struct hnddma_pub hnddma;   /* exported structure */
+    int msg_level;              /* message level pointer */
+    int something;
+    char name[8];               /* callers name for diag msgs */
+    void *osh;                  
+    void *sih;                  
+    bool dma64;                 /* this dma engine is operating in 64-bit mode */
+    bool addrext;               /* this dma engine supports DmaExtendedAddrChanges */
+    char gap2[2];
+    void *txregs;               /* 64-bit dma tx engine registers */
+    void *rxregs;               /* 64-bit dma rx engine registers */
+    void *txd;                  /* pointer to dma64 tx descriptor ring */
+    void *rxd;                  /* pointer to dma64 rx descriptor ring */
+    short dmadesc_align;        /* alignment requirement for dma descriptors */
+    short ntxd;                 /* # tx descriptors tunable */
+    short txin;                 /* index of next descriptor to reclaim */
+    short txout;                /* index of next descriptor to post */
+    void **txp;                 /* pointer to parallel array of pointers to packets */
+    void *tx_dmah;              /* DMA MAP meta-data handle */
+    int txp_dmah;               
+    int txdpa;                  /* Aligned physical address of descriptor ring */
+    int txdpaorig;              /* Original physical address of descriptor ring */
+    short txdalign;             /* #bytes added to alloc'd mem to align txd */
+    int txdalloc;               /* #bytes allocated for the ring */
+    int xmtptrbase;             /* When using unaligned descriptors, the ptr register
+                                 * is not just an index, it needs all 13 bits to be
+                                 * an offset from the addr register.
+                                 */
+
+
+} __attribute__((packed));
+
+struct intctrlregs {
+    unsigned int intstatus;
+    unsigned int intmask;
+};
+
+/* read: 32-bit register that can be read as 32-bit or as 2 16-bit
+ * write: only low 16b-it half can be written
+ */
+union pmqreg {
+    unsigned int pmqhostdata;    /* read only! */
+    struct {
+        unsigned short pmqctrlstatus;  /* read/write */
+        unsigned short PAD;
+    } w;
+};
+
+/* dma registers per channel(xmt or rcv) */
+struct dma64regs {
+    unsigned int control;    /* enable, et al */
+    unsigned int ptr;    /* last descriptor posted to chip */
+    unsigned int addrlow;    /* desc ring base address low 32-bits (8K aligned) */
+    unsigned int addrhigh;   /* desc ring base address bits 63:32 (8K aligned) */
+    unsigned int status0;    /* current descriptor, xmt state */
+    unsigned int status1;    /* active descriptor, xmt error */
+};
+
+/* 4byte-wide pio register set per channel(xmt or rcv) */
+struct pio4regs {
+    unsigned int fifocontrol;
+    unsigned int fifodata;
+};
+
+struct fifo64 {
+    struct dma64regs dmaxmt;    /* dma tx */
+    struct pio4regs piotx;  /* pio tx */
+    struct dma64regs dmarcv;    /* dma rx */
+    struct pio4regs piorx;  /* pio rx */
+};
+
+struct dma32diag {  /* diag access */
+    unsigned int fifoaddr;   /* diag address */
+    unsigned int fifodatalow;    /* low 32bits of data */
+    unsigned int fifodatahigh;   /* high 32bits of data */
+    unsigned int pad;        /* reserved */
+};
+
+/*
+ * Host Interface Registers
+ */
+struct d11regs {
+    /* Device Control ("semi-standard host registers") */
+    unsigned int PAD[3];     /* 0x0 - 0x8 */
+    unsigned int biststatus; /* 0xC */
+    unsigned int biststatus2;    /* 0x10 */
+    unsigned int PAD;        /* 0x14 */
+    unsigned int gptimer;        /* 0x18 */
+    unsigned int usectimer;  /* 0x1c *//* for corerev >= 26 */
+
+    /* Interrupt Control *//* 0x20 */
+    struct intctrlregs intctrlregs[8];
+
+    unsigned int PAD[40];        /* 0x60 - 0xFC */
+
+    unsigned int intrcvlazy[4];  /* 0x100 - 0x10C */
+
+    unsigned int PAD[4];     /* 0x110 - 0x11c */
+
+    unsigned int maccontrol; /* 0x120 */
+    unsigned int maccommand; /* 0x124 */
+    unsigned int macintstatus;   /* 0x128 */
+    unsigned int macintmask; /* 0x12C */
+
+    /* Transmit Template Access */
+    unsigned int tplatewrptr;    /* 0x130 */
+    unsigned int tplatewrdata;   /* 0x134 */
+    unsigned int PAD[2];     /* 0x138 - 0x13C */
+
+    /* PMQ registers */
+    union pmqreg pmqreg;    /* 0x140 */
+    unsigned int pmqpatl;        /* 0x144 */
+    unsigned int pmqpath;        /* 0x148 */
+    unsigned int PAD;        /* 0x14C */
+
+    unsigned int chnstatus;  /* 0x150 */
+    unsigned int psmdebug;   /* 0x154 */
+    unsigned int phydebug;   /* 0x158 */
+    unsigned int machwcap;   /* 0x15C */
+
+    /* Extended Internal Objects */
+    unsigned int objaddr;        /* 0x160 */
+    unsigned int objdata;        /* 0x164 */
+    unsigned int PAD[2];     /* 0x168 - 0x16c */
+
+    unsigned int frmtxstatus;    /* 0x170 */
+    unsigned int frmtxstatus2;   /* 0x174 */
+    unsigned int PAD[2];     /* 0x178 - 0x17c */
+
+    /* TSF host access */
+    unsigned int tsf_timerlow;   /* 0x180 */
+    unsigned int tsf_timerhigh;  /* 0x184 */
+    unsigned int tsf_cfprep; /* 0x188 */
+    unsigned int tsf_cfpstart;   /* 0x18c */
+    unsigned int tsf_cfpmaxdur32;    /* 0x190 */
+    unsigned int PAD[3];     /* 0x194 - 0x19c */
+
+    unsigned int maccontrol1;    /* 0x1a0 */
+    unsigned int machwcap1;  /* 0x1a4 */
+    unsigned int PAD[14];        /* 0x1a8 - 0x1dc */
+
+    /* Clock control and hardware workarounds*/
+    unsigned int clk_ctl_st; /* 0x1e0 */
+    unsigned int hw_war;
+    unsigned int d11_phypllctl;  /* the phypll request/avail bits are
+                 * moved to clk_ctl_st
+                 */
+    unsigned int PAD[5];     /* 0x1ec - 0x1fc */
+
+    /* 0x200-0x37F dma/pio registers */
+    struct fifo64 fifo64regs[6];
+
+    /* FIFO diagnostic port access */
+    struct dma32diag dmafifo;   /* 0x380 - 0x38C */
+
+    unsigned int aggfifocnt; /* 0x390 */
+    unsigned int aggfifodata;    /* 0x394 */
+    unsigned int PAD[16];        /* 0x398 - 0x3d4 */
+    unsigned short radioregaddr;   /* 0x3d8 */
+    unsigned short radioregdata;   /* 0x3da */
+
+    /*
+     * time delay between the change on rf disable input and
+     * radio shutdown
+     */
+    unsigned int rfdisabledly;   /* 0x3DC */
+
+    /* PHY register access */
+    unsigned short phyversion; /* 0x3e0 - 0x0 */
+    unsigned short phybbconfig;    /* 0x3e2 - 0x1 */
+    unsigned short phyadcbias; /* 0x3e4 - 0x2  Bphy only */
+    unsigned short phyanacore; /* 0x3e6 - 0x3  pwwrdwn on aphy */
+    unsigned short phyrxstatus0;   /* 0x3e8 - 0x4 */
+    unsigned short phyrxstatus1;   /* 0x3ea - 0x5 */
+    unsigned short phycrsth;   /* 0x3ec - 0x6 */
+    unsigned short phytxerror; /* 0x3ee - 0x7 */
+    unsigned short phychannel; /* 0x3f0 - 0x8 */
+    unsigned short PAD[1];     /* 0x3f2 - 0x9 */
+    unsigned short phytest;        /* 0x3f4 - 0xa */
+    unsigned short phy4waddr;  /* 0x3f6 - 0xb */
+    unsigned short phy4wdatahi;    /* 0x3f8 - 0xc */
+    unsigned short phy4wdatalo;    /* 0x3fa - 0xd */
+    unsigned short phyregaddr; /* 0x3fc - 0xe */
+    unsigned short phyregdata; /* 0x3fe - 0xf */
+
+    /* IHR *//* 0x400 - 0x7FE */
+
+    /* RXE Block */
+    unsigned short PAD;                 /* SPR_RXE_0x00                     0x400 */
+    unsigned short PAD;                 /* SPR_RXE_Copy_Offset              0x402 */
+    unsigned short PAD;                 /* SPR_RXE_Copy_Length              0x404 */
+    unsigned short rcv_fifo_ctl;        /* SPR_RXE_FIFOCTL0                 0x406 */
+    unsigned short PAD;                 /* SPR_RXE_FIFOCTL1                 0x408 */
+    unsigned short rcv_frm_cnt;         /* SPR_Received_Frame_Count         0x40a */
+    unsigned short PAD;                 /* SPR_RXE_0x0c                     0x40c */
+    unsigned short PAD;                 /* SPR_RXE_RXHDR_OFFSET             0x40e */
+    unsigned short PAD;                 /* SPR_RXE_RXHDR_LEN                0x410 */
+    unsigned short PAD;                 /* SPR_RXE_PHYRXSTAT0               0x412 */
+    unsigned short rssi;                /* SPR_RXE_PHYRXSTAT1               0x414 */
+    unsigned short PAD;                 /* SPR_RXE_0x16                     0x416 */
+    unsigned short PAD;                 /* SPR_RXE_FRAMELEN                 0x418 */
+    unsigned short PAD;                 /* SPR_RXE_0x1a                     0x41a */
+    unsigned short PAD;                 /* SPR_RXE_ENCODING                 0x41c */
+    unsigned short PAD;                 /* SPR_RXE_0x1e                     0x41e */
+    unsigned short rcm_ctl;             /* SPR_RCM_Control                  0x420 */
+    unsigned short rcm_mat_data;        /* SPR_RCM_Match_Data               0x422 */
+    unsigned short rcm_mat_mask;        /* SPR_RCM_Match_Mask               0x424 */
+    unsigned short rcm_mat_dly;         /* SPR_RCM_Match_Delay              0x426 */
+    unsigned short rcm_cond_mask_l;     /* SPR_RCM_Condition_Mask_Low       0x428 */
+    unsigned short rcm_cond_mask_h;     /* SPR_RCM_Condition_Mask_High      0x42A */
+    unsigned short rcm_cond_dly;        /* SPR_RCM_Condition_Delay          0x42C */
+    unsigned short PAD;                 /* SPR_RXE_0x2e                     0x42E */
+    unsigned short ext_ihr_addr;        /* SPR_Ext_IHR_Address              0x430 */
+    unsigned short ext_ihr_data;        /* SPR_Ext_IHR_Data                 0x432 */
+    unsigned short rxe_phyrs_2;         /* SPR_RXE_PHYRXSTAT2               0x434 */
+    unsigned short rxe_phyrs_3;         /* SPR_RXE_PHYRXSTAT3               0x436 */
+    unsigned short phy_mode;            /* SPR_PHY_Mode                     0x438 */
+    unsigned short rcmta_ctl;           /* SPR_RCM_TA_Control               0x43a */
+    unsigned short rcmta_size;          /* SPR_RCM_TA_Size                  0x43c */
+    unsigned short rcmta_addr0;         /* SPR_RCM_TA_Address_0             0x43e */
+    unsigned short rcmta_addr1;         /* SPR_RCM_TA_Address_1             0x440 */
+    unsigned short rcmta_addr2;         /* SPR_RCM_TA_Address_2             0x442 */
+    unsigned short PAD[30];             /* SPR_RXE_0x44 ... 0x7e            0x444 */
+
+
+    /* PSM Block *//* 0x480 - 0x500 */
 
 
 
+    unsigned short PAD;                 /* SPR_MAC_MAX_NAP                  0x480 */
+    unsigned short psm_maccontrol_h;    /* SPR_MAC_CTLHI                    0x482 */
+    unsigned short psm_macintstatus_l;  /* SPR_MAC_IRQLO                    0x484 */
+    unsigned short psm_macintstatus_h;  /* SPR_MAC_IRQHI                    0x486 */
+    unsigned short psm_macintmask_l;    /* SPR_MAC_IRQMASKLO                0x488 */
+    unsigned short psm_macintmask_h;    /* SPR_MAC_IRQMASKHI                0x48A */
+    unsigned short PAD;                 /* SPR_PSM_0x0c                     0x48C */
+    unsigned short psm_maccommand;      /* SPR_MAC_CMD                      0x48E */
+    unsigned short psm_brc;             /* SPR_BRC                          0x490 */
+    unsigned short psm_phy_hdr_param;   /* SPR_PHY_HDR_Parameter            0x492 */
+    unsigned short psm_postcard;        /* SPR_Postcard                     0x494 */
+    unsigned short psm_pcard_loc_l;     /* SPR_Postcard_Location_Low        0x496 */
+    unsigned short psm_pcard_loc_h;     /* SPR_Postcard_Location_High       0x498 */
+    unsigned short psm_gpio_in;         /* SPR_GPIO_IN                      0x49A */
+    unsigned short psm_gpio_out;        /* SPR_GPIO_OUT                     0x49C */
+    unsigned short psm_gpio_oe;         /* SPR_GPIO_OUTEN                   0x49E */
+
+    unsigned short psm_bred_0;          /* SPR_BRED0                        0x4A0 */
+    unsigned short psm_bred_1;          /* SPR_BRED1                        0x4A2 */
+    unsigned short psm_bred_2;          /* SPR_BRED2                        0x4A4 */
+    unsigned short psm_bred_3;          /* SPR_BRED3                        0x4A6 */
+    unsigned short psm_brcl_0;          /* SPR_BRCL0                        0x4A8 */
+    unsigned short psm_brcl_1;          /* SPR_BRCL1                        0x4AA */
+    unsigned short psm_brcl_2;          /* SPR_BRCL2                        0x4AC */
+    unsigned short psm_brcl_3;          /* SPR_BRCL3                        0x4AE */
+    unsigned short psm_brpo_0;          /* SPR_BRPO0                        0x4B0 */
+    unsigned short psm_brpo_1;          /* SPR_BRPO1                        0x4B2 */
+    unsigned short psm_brpo_2;          /* SPR_BRPO2                        0x4B4 */
+    unsigned short psm_brpo_3;          /* SPR_BRPO3                        0x4B6 */
+    unsigned short psm_brwk_0;          /* SPR_BRWK0                        0x4B8 */
+    unsigned short psm_brwk_1;          /* SPR_BRWK1                        0x4BA */
+    unsigned short psm_brwk_2;          /* SPR_BRWK2                        0x4BC */
+    unsigned short psm_brwk_3;          /* SPR_BRWK3                        0x4BE */
+
+    unsigned short psm_base_0;          /* SPR_BASE0 - Offset Register 0    0x4C0 */
+    unsigned short psm_base_1;          /* SPR_BASE1 - Offset Register 1    0x4C2 */
+    unsigned short psm_base_2;          /* SPR_BASE2 - Offset Register 2    0x4C4 */
+    unsigned short psm_base_3;          /* SPR_BASE3 - Offset Register 3    0x4C6 */
+    unsigned short psm_base_4;          /* SPR_BASE4 - Offset Register 4    0x4C8 */
+    unsigned short psm_base_5;          /* SPR_BASE5 - Offset Register 5    0x4CA */
+    unsigned short psm_base_6;          /* SPR_BASE6 - Do not use (broken)  0x4CC */
+    unsigned short psm_pc_reg_0;        /* SPR_PSM_0x4e                     0x4CE */
+    unsigned short psm_pc_reg_1;        /* SPR_PC0 - Link Register 0        0x4D0 */
+    unsigned short psm_pc_reg_2;        /* SPR_PC1 - Link Register 1        0x4D2 */
+    unsigned short psm_pc_reg_3;        /* SPR_PC2 - Link Register 2        0x4D4 */
+    unsigned short PAD;                 /* SPR_PC2 - Link Register 6        0x4D6 */
+    unsigned short PAD;                 /* SPR_PSM_COND - PSM external condition bits 0x4D8 */
+    unsigned short PAD;                 /* SPR_PSM_0x5a ... 0x7e            0x4DA */
+    unsigned short PAD;                 /* SPR_PSM_0x5c                     0x4DC */
+    unsigned short PAD;                 /* SPR_PSM_0x5e                     0x4DE */
+    unsigned short PAD;                 /* SPR_PSM_0x60                     0x4E0 */
+    unsigned short PAD;                 /* SPR_PSM_0x62                     0x4E2 */
+    unsigned short PAD;                 /* SPR_PSM_0x64                     0x4E4 */
+    unsigned short PAD;                 /* SPR_PSM_0x66                     0x4E6 */
+    unsigned short PAD;                 /* SPR_PSM_0x68                     0x4E8 */
+    unsigned short PAD;                 /* SPR_PSM_0x6a                     0x4EA */
+    unsigned short PAD;                 /* SPR_PSM_0x6c                     0x4EC */
+    unsigned short PAD;                 /* SPR_PSM_0x6e                     0x4EE */
+    unsigned short psm_corectlsts;      /* SPR_PSM_0x70                     0x4F0 *//* Corerev >= 13 */  
+    unsigned short PAD;                 /* SPR_PSM_0x72                     0x4F2 */
+    unsigned short PAD;                 /* SPR_PSM_0x74                     0x4F4 */
+    unsigned short PAD;                 /* SPR_PSM_0x76                     0x4F6 */
+    unsigned short PAD;                 /* SPR_PSM_0x78                     0x4F8 */
+    unsigned short PAD;                 /* SPR_PSM_0x7a                     0x4FA */
+    unsigned short PAD;                 /* SPR_PSM_0x7c                     0x4FC */
+    unsigned short PAD;                 /* SPR_PSM_0x7e                     0x4FE */
+
+    /* TXE0 Block *//* 0x500 - 0x580 */
+    unsigned short txe_ctl;        /* 0x500 */
+    unsigned short txe_aux;        /* 0x502 */
+    unsigned short txe_ts_loc; /* 0x504 */
+    unsigned short txe_time_out;   /* 0x506 */
+    unsigned short txe_wm_0;   /* 0x508 */
+    unsigned short txe_wm_1;   /* 0x50A */
+    unsigned short txe_phyctl; /* 0x50C */
+    unsigned short txe_status; /* 0x50E */
+    unsigned short txe_mmplcp0;    /* 0x510 */
+    unsigned short txe_mmplcp1;    /* 0x512 */
+    unsigned short txe_phyctl1;    /* 0x514 */
+
+    unsigned short PAD[0x05];  /* 0x510 - 0x51E */
+
+    /* Transmit control */
+    unsigned short xmtfifodef; /* 0x520 */
+    unsigned short xmtfifo_frame_cnt;  /* 0x522 *//* Corerev >= 16 */
+    unsigned short xmtfifo_byte_cnt;   /* 0x524 *//* Corerev >= 16 */
+    unsigned short xmtfifo_head;   /* 0x526 *//* Corerev >= 16 */
+    unsigned short xmtfifo_rd_ptr; /* 0x528 *//* Corerev >= 16 */
+    unsigned short xmtfifo_wr_ptr; /* 0x52A *//* Corerev >= 16 */
+    unsigned short xmtfifodef1;    /* 0x52C *//* Corerev >= 16 */
+
+    unsigned short PAD[0x09];  /* 0x52E - 0x53E */
+
+    unsigned short xmtfifocmd; /* 0x540 */
+    unsigned short xmtfifoflush;   /* 0x542 */
+    unsigned short xmtfifothresh;  /* 0x544 */
+    unsigned short xmtfifordy; /* 0x546 */
+    unsigned short xmtfifoprirdy;  /* 0x548 */
+    unsigned short xmtfiforqpri;   /* 0x54A */
+    unsigned short xmttplatetxptr; /* 0x54C */
+    unsigned short PAD;        /* 0x54E */
+    unsigned short xmttplateptr;   /* 0x550 */
+    unsigned short smpl_clct_strptr;   /* 0x552 *//* Corerev >= 22 */
+    unsigned short smpl_clct_stpptr;   /* 0x554 *//* Corerev >= 22 */
+    unsigned short smpl_clct_curptr;   /* 0x556 *//* Corerev >= 22 */
+    unsigned short PAD[0x04];  /* 0x558 - 0x55E */
+    unsigned short xmttplatedatalo;    /* 0x560 */
+    unsigned short xmttplatedatahi;    /* 0x562 */
+
+    unsigned short PAD[2];     /* 0x564 - 0x566 */
+
+    unsigned short xmtsel;     /* 0x568 */
+    unsigned short xmttxcnt;   /* 0x56A */
+    unsigned short xmttxshmaddr;   /* 0x56C */
+
+    unsigned short PAD[0x09];  /* 0x56E - 0x57E */
+
+    /* TXE1 Block */
+    unsigned short PAD[0x40];  /* 0x580 - 0x5FE */
+
+    /* TSF Block */
+    unsigned short PAD[0X02];  /* 0x600 - 0x602 */
+    unsigned short tsf_cfpstrt_l;  /* 0x604 */
+    unsigned short tsf_cfpstrt_h;  /* 0x606 */
+    unsigned short PAD[0X05];  /* 0x608 - 0x610 */
+    unsigned short tsf_cfppretbtt; /* 0x612 */
+    unsigned short PAD[0XD];   /* 0x614 - 0x62C */
+    unsigned short tsf_clk_frac_l; /* 0x62E */
+    unsigned short tsf_clk_frac_h; /* 0x630 */
+    unsigned short PAD[0X14];  /* 0x632 - 0x658 */
+    unsigned short tsf_random; /* 0x65A */
+    unsigned short PAD[0x05];  /* 0x65C - 0x664 */
+    /* GPTimer 2 registers */
+    unsigned short tsf_gpt2_stat;  /* 0x666 */
+    unsigned short tsf_gpt2_ctr_l; /* 0x668 */
+    unsigned short tsf_gpt2_ctr_h; /* 0x66A */
+    unsigned short tsf_gpt2_val_l; /* 0x66C */
+    unsigned short tsf_gpt2_val_h; /* 0x66E */
+    unsigned short tsf_gptall_stat;    /* 0x670 */
+    unsigned short PAD[0x07];  /* 0x672 - 0x67E */
+
+    /* IFS Block */
+    unsigned short ifs_sifs_rx_tx_tx;  /* 0x680 */
+    unsigned short ifs_sifs_nav_tx;    /* 0x682 */
+    unsigned short ifs_slot;   /* 0x684 */
+    unsigned short PAD;        /* 0x686 */
+    unsigned short ifs_ctl;        /* 0x688 */
+    unsigned short PAD[0x3];   /* 0x68a - 0x68F */
+    unsigned short ifsstat;        /* 0x690 */
+    unsigned short ifsmedbusyctl;  /* 0x692 */
+    unsigned short iftxdur;        /* 0x694 */
+    unsigned short PAD[0x3];   /* 0x696 - 0x69b */
+    /* EDCF support in dot11macs */
+    unsigned short ifs_aifsn;  /* 0x69c */
+    unsigned short ifs_ctl1;   /* 0x69e */
+
+    /* slow clock registers */
+    unsigned short scc_ctl;        /* 0x6a0 */
+    unsigned short scc_timer_l;    /* 0x6a2 */
+    unsigned short scc_timer_h;    /* 0x6a4 */
+    unsigned short scc_frac;   /* 0x6a6 */
+    unsigned short scc_fastpwrup_dly;  /* 0x6a8 */
+    unsigned short scc_per;        /* 0x6aa */
+    unsigned short scc_per_frac;   /* 0x6ac */
+    unsigned short scc_cal_timer_l;    /* 0x6ae */
+    unsigned short scc_cal_timer_h;    /* 0x6b0 */
+    unsigned short PAD;        /* 0x6b2 */
+
+    unsigned short PAD[0x26];
+
+    /* NAV Block */
+    unsigned short nav_ctl;        /* 0x700 */
+    unsigned short navstat;        /* 0x702 */
+    unsigned short PAD[0x3e];  /* 0x702 - 0x77E */
+
+    /* WEP/PMQ Block *//* 0x780 - 0x7FE */
+    unsigned short PAD[0x20];  /* 0x780 - 0x7BE */
+
+    unsigned short wepctl;     /* 0x7C0 */
+    unsigned short wepivloc;   /* 0x7C2 */
+    unsigned short wepivkey;   /* 0x7C4 */
+    unsigned short wepwkey;        /* 0x7C6 */
+
+    unsigned short PAD[4];     /* 0x7C8 - 0x7CE */
+    unsigned short pcmctl;     /* 0X7D0 */
+    unsigned short pcmstat;        /* 0X7D2 */
+    unsigned short PAD[6];     /* 0x7D4 - 0x7DE */
+
+    unsigned short pmqctl;     /* 0x7E0 */
+    unsigned short pmqstatus;  /* 0x7E2 */
+    unsigned short pmqpat0;        /* 0x7E4 */
+    unsigned short pmqpat1;        /* 0x7E6 */
+    unsigned short pmqpat2;        /* 0x7E8 */
+
+    unsigned short pmqdat;     /* 0x7EA */
+    unsigned short pmqdator;   /* 0x7EC */
+    unsigned short pmqhst;     /* 0x7EE */
+    unsigned short pmqpath0;   /* 0x7F0 */
+    unsigned short pmqpath1;   /* 0x7F2 */
+    unsigned short pmqpath2;   /* 0x7F4 */
+    unsigned short pmqdath;        /* 0x7F6 */
+
+    unsigned short PAD[0x04];  /* 0x7F8 - 0x7FE */
+
+    /* SHM *//* 0x800 - 0xEFE */
+    unsigned short PAD[0x380]; /* 0x800 - 0xEFE */
+} __attribute__((packed));
 
 
 struct ethernet_header {

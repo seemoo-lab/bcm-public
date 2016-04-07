@@ -514,4 +514,17 @@ struct trace  {
 			SET_DBG_VALUE(DBGWCR_BAS_4BIT, 0xF); \
 	} while (0)
 
+#define dbg_set_watchpoint_for_addr_match_with_mask(number, address, mask) do { \
+		DBGWCR ## number = 0x0; \
+		DBGWVR ## number = (address) & DBGWVR_ADDRMASK; \
+		DBGWCR ## number = \
+			SET_DBG_VALUE(DBGWCR_WT, DBGWCR_WT_UNLINKED_DATA_ADDR_MATCH) | \
+			SET_DBG_VALUE(DBGWCR_MASK, mask) | \
+			SET_DBG_VALUE(DBGWCR_E, DBGWCR_E_ENABLED) | \
+			SET_DBG_VALUE(DBGWCR_SSC_HMC_PAC, DBGWCR_SSC_HMC_PAC__ALL) | \
+			SET_DBG_VALUE(DBGWCR_LSC, DBGWCR_LSC_MATCH_ALL) | \
+			SET_DBG_VALUE(DBGWCR_BAS_4BIT, 0xF); \
+	} while (0)
+
+
 #endif /* DEBUG_H */

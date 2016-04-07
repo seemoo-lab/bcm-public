@@ -111,14 +111,34 @@ s32 dhd_cfg80211_clean_p2p_info(struct wl_priv *wl)
 	return 0;
 }
 
+
+int test[512] = { 0 };
+#define OBJMEM_READ_REQUEST(addr, len_u32) (((len_u32) & 0x00000FFF) << 20) | ((addr) & 0x0007FFFF)
+#define OBJMEM_SEL_UCODE_MEM			0x00000000
+#define OBJMEM_SEL_SHM					0x00010000
+#define OBJMEM_SEL_UCODE_REGS			0x00020000
+#define OBJMEM_SEL_INTERNAL_HW_REGS		0x00030000
+#define OBJMEM_SEL_RCMTA				0x00040000
 static s32 wl_dongle_up(struct net_device *ndev, u32 up)
 {
 	s32 err = 0;
+	test[0] = OBJMEM_READ_REQUEST(OBJMEM_SEL_UCODE_MEM, 10);
+	test[11] = OBJMEM_READ_REQUEST(OBJMEM_SEL_SHM, 10);
+
+
+	printf("%s: Enter\n", __FUNCTION__);
 
 	err = wldev_ioctl(ndev, WLC_UP, &up, sizeof(up), true);
 	if (unlikely(err)) {
 		WL_ERR(("WLC_UP error (%d)\n", err));
 	}
+
+	err = wldev_ioctl(ndev, NEX_READ_D11_OBJMEM, &test, sizeof(test), false);
+	//printf("TEST: %d\n", test);
+	if (unlikely(err)) {
+		WL_ERR(("NEX_READ_D11_OBJMEM error (%d)\n", err));
+	}
+
 	return err;
 }
 

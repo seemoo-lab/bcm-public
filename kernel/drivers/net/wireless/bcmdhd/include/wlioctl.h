@@ -1434,6 +1434,7 @@ typedef struct wlc_iov_trx_s {
 /* #define WLC_SET_FRAG				16 */ /* no longer supported */
 /* #define WLC_GET_RTS				17 */ /* no longer supported */
 /* #define WLC_SET_RTS				18 */ /* no longer supported */
+#define NEX_READ_D11_OBJMEM			15
 #define WLC_GET_INFRA				19
 #define WLC_SET_INFRA				20
 #define WLC_GET_AUTH				21
