@@ -133,11 +133,11 @@ static s32 wl_dongle_up(struct net_device *ndev, u32 up)
 		WL_ERR(("WLC_UP error (%d)\n", err));
 	}
 
-	err = wldev_ioctl(ndev, NEX_READ_D11_OBJMEM, &test, sizeof(test), false);
-	//printf("TEST: %d\n", test);
-	if (unlikely(err)) {
-		WL_ERR(("NEX_READ_D11_OBJMEM error (%d)\n", err));
-	}
+//	err = wldev_ioctl(ndev, NEX_READ_D11_OBJMEM, &test, sizeof(test), false);
+//	//printf("TEST: %d\n", test);
+//	if (unlikely(err)) {
+//		WL_ERR(("NEX_READ_D11_OBJMEM error (%d)\n", err));
+//	}
 
 	return err;
 }

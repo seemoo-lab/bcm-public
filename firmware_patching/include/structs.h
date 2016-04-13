@@ -330,8 +330,6 @@ struct d11regs {
 
     /* PSM Block *//* 0x480 - 0x500 */
 
-
-
     unsigned short PAD;                 /* SPR_MAC_MAX_NAP                  0x480 */
     unsigned short psm_maccontrol_h;    /* SPR_MAC_CTLHI                    0x482 */
     unsigned short psm_macintstatus_l;  /* SPR_MAC_IRQLO                    0x484 */
@@ -400,52 +398,68 @@ struct d11regs {
     unsigned short PAD;                 /* SPR_PSM_0x7e                     0x4FE */
 
     /* TXE0 Block *//* 0x500 - 0x580 */
-    unsigned short txe_ctl;        /* 0x500 */
-    unsigned short txe_aux;        /* 0x502 */
-    unsigned short txe_ts_loc; /* 0x504 */
-    unsigned short txe_time_out;   /* 0x506 */
-    unsigned short txe_wm_0;   /* 0x508 */
-    unsigned short txe_wm_1;   /* 0x50A */
-    unsigned short txe_phyctl; /* 0x50C */
-    unsigned short txe_status; /* 0x50E */
-    unsigned short txe_mmplcp0;    /* 0x510 */
-    unsigned short txe_mmplcp1;    /* 0x512 */
-    unsigned short txe_phyctl1;    /* 0x514 */
+    unsigned short txe_ctl;             /* SPR_TXE0_CTL                     0x500 */
+    unsigned short txe_aux;             /* SPR_TXE0_AUX                     0x502 */
+    unsigned short txe_ts_loc;          /* SPR_TXE0_TS_LOC                  0x504 */
+    unsigned short txe_time_out;        /* SPR_TXE0_TIMEOUT                 0x506 */
+    unsigned short txe_wm_0;            /* SPR_TXE0_WM0                     0x508 */
+    unsigned short txe_wm_1;            /* SPR_TXE0_WM1                     0x50A */
+    unsigned short txe_phyctl;          /* SPR_TXE0_PHY_CTL                 0x50C */
+    unsigned short txe_status;          /* SPR_TXE0_STATUS                  0x50E */
+    unsigned short txe_mmplcp0;         /* SPR_TXE0_0x10                    0x510 */
+    unsigned short txe_mmplcp1;         /* SPR_TXE0_0x12                    0x512 */
+    unsigned short txe_phyctl1;         /* SPR_TXE0_0x14                    0x514 */
 
-    unsigned short PAD[0x05];  /* 0x510 - 0x51E */
+    unsigned short PAD;                 /* SPR_TXE0_0x16                    0x516 */
+    unsigned short PAD;                 /* SPR_TX_STATUS0                   0x518 */
+    unsigned short PAD;                 /* SPR_TX_STATUS1                   0x51a */
+    unsigned short PAD;                 /* SPR_TX_STATUS2                   0x51c */
+    unsigned short PAD;                 /* SPR_TX_STATUS3                   0x51e */
 
     /* Transmit control */
-    unsigned short xmtfifodef; /* 0x520 */
-    unsigned short xmtfifo_frame_cnt;  /* 0x522 *//* Corerev >= 16 */
-    unsigned short xmtfifo_byte_cnt;   /* 0x524 *//* Corerev >= 16 */
-    unsigned short xmtfifo_head;   /* 0x526 *//* Corerev >= 16 */
-    unsigned short xmtfifo_rd_ptr; /* 0x528 *//* Corerev >= 16 */
-    unsigned short xmtfifo_wr_ptr; /* 0x52A *//* Corerev >= 16 */
-    unsigned short xmtfifodef1;    /* 0x52C *//* Corerev >= 16 */
+    unsigned short xmtfifodef;          /* SPR_TXE0_FIFO_Def                0x520 */
+    unsigned short xmtfifo_frame_cnt;   /* SPR_TXE0_0x22                    0x522 *//* Corerev >= 16 */
+    unsigned short xmtfifo_byte_cnt;    /* SPR_TXE0_0x24                    0x524 *//* Corerev >= 16 */
+    unsigned short xmtfifo_head;        /* SPR_TXE0_0x26                    0x526 *//* Corerev >= 16 */
+    unsigned short xmtfifo_rd_ptr;      /* SPR_TXE0_0x28                    0x528 *//* Corerev >= 16 */
+    unsigned short xmtfifo_wr_ptr;      /* SPR_TXE0_0x2a                    0x52A *//* Corerev >= 16 */
+    unsigned short xmtfifodef1;         /* SPR_TXE0_0x2c                    0x52C *//* Corerev >= 16 */
 
-    unsigned short PAD[0x09];  /* 0x52E - 0x53E */
+    unsigned short PAD;                 /* SPR_TXE0_0x2e                    0x52E */
+    unsigned short PAD;                 /* SPR_TXE0_0x30                    0x530 */
+    unsigned short PAD;                 /* SPR_TXE0_0x32                    0x532 */
+    unsigned short PAD;                 /* SPR_TXE0_0x34                    0x534 */
+    unsigned short PAD;                 /* SPR_TXE0_0x36                    0x536 */
+    unsigned short PAD;                 /* SPR_TXE0_0x38                    0x538 */
+    unsigned short PAD;                 /* SPR_TXE0_0x3a                    0x53A */
+    unsigned short PAD;                 /* SPR_TXE0_0x3c                    0x53C */
+    unsigned short PAD;                 /* SPR_TXE0_0x3e                    0x53E */
 
-    unsigned short xmtfifocmd; /* 0x540 */
-    unsigned short xmtfifoflush;   /* 0x542 */
-    unsigned short xmtfifothresh;  /* 0x544 */
-    unsigned short xmtfifordy; /* 0x546 */
-    unsigned short xmtfifoprirdy;  /* 0x548 */
-    unsigned short xmtfiforqpri;   /* 0x54A */
-    unsigned short xmttplatetxptr; /* 0x54C */
-    unsigned short PAD;        /* 0x54E */
-    unsigned short xmttplateptr;   /* 0x550 */
-    unsigned short smpl_clct_strptr;   /* 0x552 *//* Corerev >= 22 */
-    unsigned short smpl_clct_stpptr;   /* 0x554 *//* Corerev >= 22 */
-    unsigned short smpl_clct_curptr;   /* 0x556 *//* Corerev >= 22 */
-    unsigned short PAD[0x04];  /* 0x558 - 0x55E */
-    unsigned short xmttplatedatalo;    /* 0x560 */
-    unsigned short xmttplatedatahi;    /* 0x562 */
+    unsigned short xmtfifocmd;          /* SPR_TXE0_FIFO_CMD                0x540 */
+    unsigned short xmtfifoflush;        /* SPR_TXE0_FIFO_FLUSH              0x542 */
+    unsigned short xmtfifothresh;       /* SPR_TXE0_FIFO_THRES              0x544 */
+    unsigned short xmtfifordy;          /* SPR_TXE0_FIFO_RDY                0x546 */
+    unsigned short xmtfifoprirdy;       /* SPR_TXE0_FIFO_PRI_RDY            0x548 */
+    unsigned short xmtfiforqpri;        /* SPR_TXE0_FIFO_RQ_PRI             0x54A */
+    unsigned short xmttplatetxptr;      /* SPR_TXE0_Template_TX_Pointer     0x54C */
+    unsigned short PAD;                 /* SPR_TXE0_0x4e                    0x54E */
+    unsigned short xmttplateptr;        /* SPR_TXE0_Template_Pointer        0x550 */
+    unsigned short smpl_clct_strptr;    /* SPR_TXE0_0x52                    0x552 *//* Corerev >= 22 */
+    unsigned short smpl_clct_stpptr;    /* SPR_TXE0_0x54                    0x554 *//* Corerev >= 22 */
+    unsigned short smpl_clct_curptr;    /* SPR_TXE0_0x56                    0x556 *//* Corerev >= 22 */
+    unsigned short PAD;                 /* SPR_TXE0_0x58                    0x558 */
+    unsigned short PAD;                 /* SPR_TXE0_0x5a                    0x55A */
+    unsigned short PAD;                 /* SPR_TXE0_0x5c                    0x55C */
+    unsigned short PAD;                 /* SPR_TXE0_0x5e                    0x55E */
+    unsigned short xmttplatedatalo;     /* SPR_TXE0_Template_Data_Low       0x560 */
+    unsigned short xmttplatedatahi;     /* SPR_TXE0_Template_Data_High      0x562 */
 
-    unsigned short PAD[2];     /* 0x564 - 0x566 */
+    unsigned short PAD;                 /* SPR_TXE0_0x64                    0x564 */
+    unsigned short PAD;                 /* SPR_TXE0_0x66                    0x566 */
 
-    unsigned short xmtsel;     /* 0x568 */
-    unsigned short xmttxcnt;   /* 0x56A */
-    unsigned short xmttxshmaddr;   /* 0x56C */
+    unsigned short xmtsel;              /* SPR_TXE0_SELECT                  0x568 */
+    unsigned short xmttxcnt;            /* 0x56A */
+    unsigned short xmttxshmaddr;        /* 0x56C */
 
     unsigned short PAD[0x09];  /* 0x56E - 0x57E */
 

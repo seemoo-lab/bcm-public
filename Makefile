@@ -142,6 +142,15 @@ reloadbcmdhdfirmware:
 #	adb shell "su -c 'ifconfig wlan0 down; rmmod nexdhd; rmmod bcmdhd; rmmod nexmon; insmod /sdcard/bcmdhd.ko firmware_path=/sdcard/fw_bcmdhd.bin dhd_msg_level=0x48f'"
 	adb shell "su -c 'ifconfig wlan0 down; rmmod nexdhd; rmmod bcmdhd; rmmod nexmon; insmod /sdcard/bcmdhd.ko firmware_path=/sdcard/fw_bcmdhd.bin dhd_msg_level=0x3'"
 
+reloadbcmdhdorigfirmware:
+	adb push bootimg_src/firmware/fw_bcmdhd.orig.bin /sdcard/
+	adb push kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko /sdcard/
+	adb shell "su -c 'ifconfig wlan0 down; rmmod nexdhd; rmmod bcmdhd; rmmod nexmon; insmod /sdcard/bcmdhd.ko firmware_path=/sdcard/fw_bcmdhd.bin dhd_msg_level=0x3'"
+
+setupnetwork:
+	adb shell "su -c 'ifconfig wlan0 down && ifconfig wlan0 up && wpa_supplicant -Dnl80211 -iwlan0 -c/data/misc/wifi/wpa_supplicant.conf -I/system/etc/wifi/wpa_supplicant_overlay.conf &'"
+	adb shell "su -c 'sleep 1 && iwconfig wlan0 essid edimax1 && sleep 2 && ifconfig wlan0 192.168.23.101'"
+
 tools: buildtools/mkboot/mkbootimg buildtools/mkboot/unmkbootimg buildtools/mkboot/mkbootfs
 
 buildtools/mkboot/mkbootimg: src/mkbootimg/mkbootimg.c
