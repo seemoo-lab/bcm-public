@@ -44,6 +44,19 @@ skb_header_pointer(const struct sk_buff *skb, int offset, int len, void *buffer)
     return skb->data + offset;
 }
 
+inline uint32_t
+get_unaligned_be32(uint32_t num) {
+    return ((num>>24)&0xff) | // move byte 3 to byte 0
+            ((num<<8)&0xff0000) | // move byte 1 to byte 2
+            ((num>>8)&0xff00) | // move byte 2 to byte 1
+            ((num<<24)&0xff000000); // byte 0 to byte 3
+}
+
+inline uint16_t
+get_unaligned_be16(uint16_t num) {
+    return (num>>8) | (num<<8);
+}
+
 inline void *
 load_pointer(const struct sk_buff *skb, int k, unsigned int size, void *buffer) {
     if (k >= 0) {
@@ -145,7 +158,7 @@ sk_run_filter(const struct sk_buff *skb, const struct sock_filter *fentry) {
     // Process array of filter instructions.
     for (;; fentry++) {
         const uint32_t K = fentry->k;
-        printf("current code: %u, A: 0x%x, X: 0x%x, k: 0x%x\n", fentry->code, A, X, K);
+        //printf("current code: %u, A: 0x%x, X: 0x%x, k: 0x%x\n", fentry->code, A, X, K);
 
         switch (fentry->code) {
         case BPF_S_ALU_ADD_X:
@@ -235,8 +248,7 @@ sk_run_filter(const struct sk_buff *skb, const struct sock_filter *fentry) {
 load_w:
             ptr = load_pointer(skb, k, 4, &tmp);
             if (ptr != 0) {
-                //A = get_unaligned32(ptr);
-                A = *((uint32_t *) ptr);
+                A = get_unaligned_be32(*((uint32_t *) ptr));
                 continue;
             }
             return 0;
@@ -245,8 +257,7 @@ load_w:
 load_h:
             ptr = load_pointer(skb, k, 2, &tmp);
             if (ptr != 0) {
-                //A = get_unaligned16(ptr);
-                A = *((uint16_t *) ptr);
+                A = get_unaligned_be16(*((uint16_t *) ptr));
                 continue;
             }
             return 0;
@@ -403,7 +414,7 @@ nexmon_filter(struct sk_buff *skb, struct sock_filter *filter) {
         { 0x2, 0, 0, 0x00000000 },  
         { 0x7, 0, 0, 0x00000000 },  
         { 0x40, 0, 0, 0x00000006 }, 
-//      MAC ADDRESS[3-6] HERE 
+//      MAC ADDRESS[3-6] HERE
         { 0x15, 0, 3, 0xffffffff },
         { 0x48, 0, 0, 0x00000004 }, 
 //      MAC ADDRESS[1-2] HERE 
@@ -477,12 +488,12 @@ int wlc_bmac_recv(struct wlc_hw_info *wlc_hw, unsigned int fifo, int bound, int 
         // 2nd parameter is zero => the filter is currently static
 #ifdef NEXMON_FILTER
         if( nexmon_filter(p, 0) == 0 ) {
-            printf("FILTER: tossed!\n");
+            //printf("FILTER: tossed!\n");
             ++n;
             pkt_buf_free_skb(wlc_hw->wlc->osh, p, 0);
             goto LEAVE;
         } else {
-            printf("FILTER: keep!\n");
+            //printf("FILTER: keep!\n");
         }
 #endif // NEXMON_FILTER
 
