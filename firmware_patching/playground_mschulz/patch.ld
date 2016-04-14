@@ -7,8 +7,10 @@ SECTIONS
 	.text.handle_exceptions 0x181032: { KEEP(patch.o (.text.handle_exceptions)) }
 	.text.enable_irq_interrupt 0x181098: { KEEP(patch.o (.text.enable_irq_interrupt)) }
 
-	.text.before_before_initialize_memory_hook 0x180020: { KEEP(patch.o (.text.before_before_initialize_memory_hook)) }
+	.text.ucodeloader 0x180020: { KEEP(patch.o (.bss.ucodeloader)) }
+	.text.before_before_initialize_memory_hook : { KEEP(patch.o (.text.before_before_initialize_memory_hook)) }
 	.text.nex_ioctl_handler : { KEEP(patch.o (.text.nex_ioctl_handler)) }
+	.text.wlc_ucode_download_hook : { KEEP(patch.o (.text.wlc_ucode_download_hook)) }
 
 	.text : { patch.o (.text .text.* .data .data.* .bss .bss.* .rodata .rodata.*) }
 /*	.text : { bdc_ethernet_ipv6_udp_header_array.o (.data.*) } */

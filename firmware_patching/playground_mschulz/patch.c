@@ -531,11 +531,11 @@ before_before_initialize_memory_hook(void)
 #define OBJMEM_AUTOINC_ON_READ 0x02000000
 #define OBJMEM_AUTOINC_ON_WRITE 0x01000000
 
-
+/*
 int
 nex_ioctl_handler_in_c(struct wlc_info *wlc, int cmd, void *arg, unsigned int len)
 {
-	printf("%s: cmd=%d, arg=%08x, len=%d\n", __FUNCTION__, cmd, (int) arg, len);
+//	printf("%s: cmd=%d, arg=%08x, len=%d\n", __FUNCTION__, cmd, (int) arg, len);
 
 	volatile struct d11regs *regs = wlc->regs;
 	int i;
@@ -577,6 +577,37 @@ nex_ioctl_handler(void)
 		"add sp, #364\n"
 		"pop {r4-r11, pc}\n"					// return from wlc_ioctl
 		);
+}
+*/
+
+volatile char ucodeloader[4] = { 0 };
+
+void
+wlc_ucode_download_hook(struct wlc_hw_info *wlc_hw)
+{
+	volatile int *objaddr = (int *) 0x18001160;
+	volatile int *objdata = (int *) 0x18001164;
+	int i;
+
+	ucodeloader[1] = 1; // tell the driver that the firmware is ready
+
+	if(wlc_hw->ucode_loaded != 1) {
+		while(1) {
+			while(ucodeloader[0] != 1); // Wait for driver to be ready
+			if (ucodeloader[2] != 1) break;
+			wlc_ucode_write(wlc_hw, (int *) 0x1fd824, *(int *) 0x1fd820);
+			*(int *) 0x180F30 = 1; // do not reset objaddr on next wlc_ucode_write call
+			ucodeloader[0] = 0;
+		}
+		*(int *) 0x180F30 = 0; // enable resetting the objaddr on next wlc_ucode_write call
+		wlc_hw->ucode_loaded = 1;
+	}
+
+	*objaddr = OBJMEM_AUTOINC_ON_READ;
+
+	for (i = 0; i < 10; i++) {
+		printf("C%08x %08x\n", *objaddr, *objdata);
+	}
 }
 
 

@@ -130,7 +130,7 @@ extern bool  bcmsdh_fatal_error(void *sdh);
 #define MAX_RX_DATASZ	2048
 
 /* Maximum milliseconds to wait for F2 to come up */
-#define DHD_WAIT_F2RDY	1000
+#define DHD_WAIT_F2RDY	3000
 
 /* Bump up limit on waiting for HT to account for first startup;
  * if the image is doing a CRC calculation before programming the PMU
@@ -4781,6 +4781,54 @@ dhd_set_dbg_regs(dhd_bus_t *bus)
 	dhdsdio_membytes(bus, TRUE, DBGBASE + DBGBVR_OFF, (void *) &DBGBVR, sizeof(DBGBVR));
 }
 
+char ucode_buffer[1024] = { 0 };
+
+void
+dhd_load_ucode(dhd_bus_t *bus)
+{
+	char ucodeloader[4] = { 0 };
+	void * image = NULL;
+	int len = 0;
+//	int objaddr = 0;
+//	int objdata = 0;
+
+	// wait until firmware is ready
+	while(ucodeloader[1] != 1) {
+		dhdsdio_membytes(bus, false, 0x180020, ucodeloader, sizeof(ucodeloader));
+	};
+
+	// tell firmware that driver is ready
+	
+	image = dhd_os_open_image("/sdcard/ucode.bin");
+	while((len = dhd_os_get_image_block(ucode_buffer, sizeof(ucode_buffer), image))) {
+		dhdsdio_membytes(bus, true, 0x1fd820, (char *) &len, 4);
+		dhdsdio_membytes(bus, true, 0x1fd824, ucode_buffer, len);
+
+		dhdsdio_membytes(bus, false, 0x180020, ucodeloader, sizeof(ucodeloader));
+		ucodeloader[0] = 1; // tell the firmware that we uploaded a blob of ucode
+		ucodeloader[2] = 1; // tell the firmware it should process the blob
+		dhdsdio_membytes(bus, true, 0x180020, ucodeloader, sizeof(ucodeloader));
+
+		// wait until firmware is finished copying the ucode into the D11 core
+		while(ucodeloader[0] != 0) {
+			dhdsdio_membytes(bus, false, 0x180020, ucodeloader, sizeof(ucodeloader));
+		};
+
+		DHD_ERROR(("%s: len = %d\n", __FUNCTION__, len));
+	}
+
+	dhdsdio_membytes(bus, false, 0x180020, ucodeloader, sizeof(ucodeloader));
+	ucodeloader[0] = 1; // tell the firmware to finish waiting for new uploaded blobs
+	ucodeloader[2] = 0; // tell the firmware that there are no more blobs to process
+	dhdsdio_membytes(bus, true, 0x180020, ucodeloader, sizeof(ucodeloader));
+
+		//prhex("UCODE", ucode_buffer, len);
+	
+	dhdsdio_membytes(bus, false, 0x180020, ucodeloader, sizeof(ucodeloader));
+	
+	DHD_ERROR(("%s: ucodeloader = %02x %02x %02x %02x\n", __FUNCTION__, ucodeloader[0], ucodeloader[1], ucodeloader[2], ucodeloader[3]));
+}
+
 int
 dhd_bus_init(dhd_pub_t *dhdp, bool enforce_mutex)
 {
@@ -4826,6 +4874,8 @@ dhd_bus_init(dhd_pub_t *dhdp, bool enforce_mutex)
 
 	// here the debug system can be accessed
 	//dhd_check_debug_system(bus);
+
+	dhd_load_ucode(bus);
 
 	/* Enable function 2 (frame transfers) */
 	W_SDREG((SDPCM_PROT_VERSION << SMB_DATA_VERSION_SHIFT),

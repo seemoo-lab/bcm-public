@@ -33,11 +33,20 @@ struct tunables {
 
 struct wlc_hw_info {
     struct wlc_info *wlc;
-    int gap[4];
+    int PAD[4];
     void *di[6]; // only 4 byte
-    int gap2[52];
+    int PAD[17];
+    char PAD[2];
+    char ucode_loaded;
+    char PAD;
+    int PAD;
+    int sih;
+    int vars;
+    int vars_size;
+    struct d11regs* regs;
+    int PAD[29];
     int maccontrol; // @ 0xe7
-    int gap3[18];
+    int PAD[18];
     sk_buff *some_skbuff_ptr; // @ 0x134
 };
 
@@ -80,7 +89,7 @@ struct wlc_info {
     struct wlc_pub *pub;
     struct osl_info *osh;
     void *wl;
-    struct d11regs *regs;
+    volatile struct d11regs *regs;
     struct wlc_hw_info *hw;
 };
 

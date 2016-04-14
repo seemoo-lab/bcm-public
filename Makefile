@@ -103,7 +103,7 @@ boot.img: Makefile kernel/arch/arm/boot/zImage-dtb kernel/drivers/net/wireless/b
 	cp kernel/drivers/net/wireless/nexdhd/nexdhd.ko bootimg_tmp/ramdisk/nexmon/
 	mkdir bootimg_tmp/ramdisk/nexmon/firmware
 	cp bootimg_src/firmware/fw_bcmdhd.orig.bin bootimg_tmp/ramdisk/nexmon/firmware/fw_bcmdhd.bin
-#	cp firmware_patching/dma_txfast_path/fw_bcmdhd.bin bootimg_tmp/ramdisk/nexmon/firmware/fw_bcmdhd.bin
+#	cp firmware_patching/playground_mschulz/fw_bcmdhd.bin bootimg_tmp/ramdisk/nexmon/firmware/fw_bcmdhd.bin
 	cp firmware_patching/wlc_bmac_recv/fw_bcmdhd.bin bootimg_tmp/ramdisk/nexmon/firmware/fw_nexmon.bin
 	cp bootimg_src/firmware/fw_nexdhd.bin bootimg_tmp/ramdisk/nexmon/firmware/fw_nexdhd.bin
 	cp bootimg_src/firmware/bcmdhd.cal bootimg_tmp/ramdisk/nexmon/firmware/bcmdhd.cal
@@ -137,7 +137,7 @@ reloadnexfirmware:
 	adb shell "su -c 'ifconfig wlan0 down; ifconfig wlan0 up; /nexmon/bin/dhdutil -i wlan0 download /sdcard/firmware.bin'"
 
 reloadbcmdhdfirmware:
-	adb push firmware_patching/dma_txfast_path/fw_bcmdhd.bin /sdcard/
+	adb push firmware_patching/playground_mschulz/fw_bcmdhd.bin /sdcard/
 	adb push kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko /sdcard/
 #	adb shell "su -c 'ifconfig wlan0 down; rmmod nexdhd; rmmod bcmdhd; rmmod nexmon; insmod /sdcard/bcmdhd.ko firmware_path=/sdcard/fw_bcmdhd.bin dhd_msg_level=0x48f'"
 	adb shell "su -c 'ifconfig wlan0 down; rmmod nexdhd; rmmod bcmdhd; rmmod nexmon; insmod /sdcard/bcmdhd.ko firmware_path=/sdcard/fw_bcmdhd.bin dhd_msg_level=0x3'"
@@ -149,7 +149,7 @@ reloadbcmdhdorigfirmware:
 
 setupnetwork:
 	adb shell "su -c 'ifconfig wlan0 down && ifconfig wlan0 up && wpa_supplicant -Dnl80211 -iwlan0 -c/data/misc/wifi/wpa_supplicant.conf -I/system/etc/wifi/wpa_supplicant_overlay.conf &'"
-	adb shell "su -c 'sleep 1 && iwconfig wlan0 essid edimax1 && sleep 2 && ifconfig wlan0 192.168.23.101'"
+	adb shell "su -c 'sleep 1 && iwconfig wlan0 essid seemoo-jamming && sleep 2 && ifconfig wlan0 192.168.200.101'"
 
 tools: buildtools/mkboot/mkbootimg buildtools/mkboot/unmkbootimg buildtools/mkboot/mkbootfs
 
