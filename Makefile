@@ -52,6 +52,7 @@ CROSS_COMPILE=$(shell pwd)/buildtools/arm-eabi-4.7/bin/arm-eabi-
 ARCH=arm
 SUBARCH=arm
 MKBOOT=$(shell pwd)/buildtools/mkboot/
+FWPATCH=playground_mschulz
 
 all: tools boot.img
 
@@ -103,7 +104,6 @@ boot.img: Makefile kernel/arch/arm/boot/zImage-dtb kernel/drivers/net/wireless/b
 	cp kernel/drivers/net/wireless/nexdhd/nexdhd.ko bootimg_tmp/ramdisk/nexmon/
 	mkdir bootimg_tmp/ramdisk/nexmon/firmware
 	cp bootimg_src/firmware/fw_bcmdhd.orig.bin bootimg_tmp/ramdisk/nexmon/firmware/fw_bcmdhd.bin
-#	cp firmware_patching/playground_mschulz/fw_bcmdhd.bin bootimg_tmp/ramdisk/nexmon/firmware/fw_bcmdhd.bin
 	cp firmware_patching/wlc_bmac_recv/fw_bcmdhd.bin bootimg_tmp/ramdisk/nexmon/firmware/fw_nexmon.bin
 	cp bootimg_src/firmware/fw_nexdhd.bin bootimg_tmp/ramdisk/nexmon/firmware/fw_nexdhd.bin
 	cp bootimg_src/firmware/bcmdhd.cal bootimg_tmp/ramdisk/nexmon/firmware/bcmdhd.cal
@@ -137,10 +137,10 @@ reloadnexfirmware:
 	adb shell "su -c 'ifconfig wlan0 down; ifconfig wlan0 up; /nexmon/bin/dhdutil -i wlan0 download /sdcard/firmware.bin'"
 
 reloadbcmdhdfirmware:
-	adb push firmware_patching/playground_mschulz/fw_bcmdhd.bin /sdcard/
+	adb push firmware_patching/$(FWPATCH)/fw_bcmdhd.bin /sdcard/
 	adb push kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko /sdcard/
-#	adb shell "su -c 'ifconfig wlan0 down; rmmod nexdhd; rmmod bcmdhd; rmmod nexmon; insmod /sdcard/bcmdhd.ko firmware_path=/sdcard/fw_bcmdhd.bin dhd_msg_level=0x48f'"
-	adb shell "su -c 'ifconfig wlan0 down; rmmod nexdhd; rmmod bcmdhd; rmmod nexmon; insmod /sdcard/bcmdhd.ko firmware_path=/sdcard/fw_bcmdhd.bin dhd_msg_level=0x3'"
+	adb shell "su -c 'ifconfig wlan0 down; rmmod nexdhd; rmmod bcmdhd; rmmod nexmon; insmod /sdcard/bcmdhd.ko firmware_path=/sdcard/fw_bcmdhd.bin dhd_msg_level=0x48f'"
+#	adb shell "su -c 'ifconfig wlan0 down; rmmod nexdhd; rmmod bcmdhd; rmmod nexmon; insmod /sdcard/bcmdhd.ko firmware_path=/sdcard/fw_bcmdhd.bin dhd_msg_level=0x3'"
 
 reloadbcmdhdorigfirmware:
 	adb push bootimg_src/firmware/fw_bcmdhd.orig.bin /sdcard/

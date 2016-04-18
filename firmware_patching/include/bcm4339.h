@@ -8,5 +8,6 @@
 #define DMA_INFO_D11FIFO1_ADDR	((void *) 0x1e2e24)
 #define OSL_INFO_ADDR		((void *) 0x1eb284)
 #define BOTTOM_OF_STACK     (0x23f750)
+#define SI_INFO_ADDR		((void *) 0x1e94d8)
 
 #endif /*BCM4339_H*/

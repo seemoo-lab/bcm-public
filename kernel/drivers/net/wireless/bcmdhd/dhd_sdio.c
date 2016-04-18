@@ -4875,7 +4875,7 @@ dhd_bus_init(dhd_pub_t *dhdp, bool enforce_mutex)
 	// here the debug system can be accessed
 	//dhd_check_debug_system(bus);
 
-	dhd_load_ucode(bus);
+//	dhd_load_ucode(bus);
 
 	/* Enable function 2 (frame transfers) */
 	W_SDREG((SDPCM_PROT_VERSION << SMB_DATA_VERSION_SHIFT),
@@ -8383,6 +8383,7 @@ dhd_bus_devreset(dhd_pub_t *dhdp, uint8 flag)
 
 					/* Re-init bus, enable F2 transfer */
 					bcmerror = dhd_bus_init((dhd_pub_t *) bus->dhd, FALSE);
+					dhdsdio_print_console(bus);
 					if (bcmerror == BCME_OK) {
 #if defined(OOB_INTR_ONLY)
 						/* make sure oob intr get registered */

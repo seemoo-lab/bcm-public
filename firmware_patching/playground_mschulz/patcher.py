@@ -39,7 +39,7 @@ patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin",
 
 	ExternalArmPatch(getSectionAddr(".text.wlc_ucode_download_hook"), "wlc_ucode_download_hook.bin"),
 	BLPatch(0x1fd7f2, getSectionAddr(".text.wlc_ucode_download_hook")),
-	ExternalArmPatch(0x1fd820, "../d11/ucode-patched.bin"),
+#	ExternalArmPatch(0x1fd820, "../d11/ucode-patched.bin"),
 
 	StringPatch(0x1FD31B, "build: " + time.strftime("%d.%m.%Y %H:%M:%S") + "\n"), # 53 character string
 	])

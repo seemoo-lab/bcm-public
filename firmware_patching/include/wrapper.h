@@ -62,6 +62,8 @@
 #ifndef WRAPPER_H
 #define WRAPPER_H
 
+extern int ai_setcoreidx(void *sii, unsigned int coreidx);
+
 extern int bus_binddev(void *sdio_hw, void *sdiodev, void *d11dev); // 0x1837F8
 extern int bus_binddev_rom(void *sdiodev, void *d11dev); // 0x1B8C4
 
@@ -89,6 +91,9 @@ extern int printf(const char *format, ...); // 0x126f0
 extern void *sdio_header_parsing_from_sk_buff(void *sdio, void *p); // 0x182A64
 extern void setup(void); // 0x181128
 extern void *setup_some_stuff(void *wl, int vendor, int a3, int a4, char a5, void *osh, int a7, int a8, int a9, int a10); // 0x1F319C
+extern unsigned int si_getcuridx(void *sii); // 0x1d474
+extern void si_setcore(void *sii, int coreid, int coreunit); // 0x1DCBC
+extern void si_update_chipcontrol_shm(void *sii, int addr, int mask, int data); // 0x184878
 extern void sub_166b4(void); // 0x166b4
 extern void sub_16D8C(int a1, int a2, void *a3); // 0x16D8C
 extern void *sub_1831A0(void *osh, void *a2, int a3, void *sdiodev); // 0x1831A0
