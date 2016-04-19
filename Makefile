@@ -56,6 +56,9 @@ FWPATCH=playground_mschulz
 
 all: tools boot.img
 
+setupenv:
+	source setup_env.sh
+
 .PHONY: cleanall cleanbuildtools cleanboot kernel bcmdhd reloadnex su
 
 

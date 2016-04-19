@@ -1,6 +1,11 @@
 CC=../../buildtools/arm-eabi-4.7/bin/arm-eabi-
 
-fw_bcmdhd.bin : patcher.py patch.elf text.bin handle_exceptions.bin tr_pref_abort_hook.bin tr_data_abort_hook.bin before_before_initialize_memory_hook.bin si_update_chipcontrol_shm_hook.bin
+all: bcmdhd/bcmdhd.ko fw_bcmdhd.bin
+
+bcmdhd/bcmdhd.ko: FORCE
+	if [ "$$ARCH" = "arm" ]; then make -C ../../kernel/ M=$$PWD/bcmdhd -j2; else echo "ERR: run 'source setup_env.sh' first"; fi
+
+fw_bcmdhd.bin: patcher.py patch.elf text.bin handle_exceptions.bin tr_pref_abort_hook.bin tr_data_abort_hook.bin before_before_initialize_memory_hook.bin si_update_chipcontrol_shm_hook.bin
 	./patcher.py
 
 patch.o: patch.c ../include/*.h
@@ -40,3 +45,6 @@ fw_bcmdhd.complete.elf : fw_bcmdhd.complete.bin
 
 clean:
 	rm -f fw_bcmdhd.bin fw_bcmdhd.complete.bin fw_bcmdhd.complete.elf patch.o patch.elf text.bin handle_exceptions.bin tr_pref_abort_hook.bin tr_data_abort_hook.bin before_before_initialize_memory_hook.bin si_update_chipcontrol_shm_hook.bin
+	make -C ../../kernel/ M=$$PWD/bcmdhd clean
+
+FORCE:
