@@ -52,7 +52,8 @@ CROSS_COMPILE=$(shell pwd)/buildtools/arm-eabi-4.7/bin/arm-eabi-
 ARCH=arm
 SUBARCH=arm
 MKBOOT=$(shell pwd)/buildtools/mkboot/
-FWPATCH=playground_mschulz
+FWPATCH=original_firmware
+MSGLEVEL=0x48f
 
 all: tools boot.img
 
@@ -75,13 +76,10 @@ kernel/arch/arm/boot/zImage-dtb: kernel/.config
 
 bcmdhd: kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko
 
-kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko : kernel/drivers/net/wireless/bcmdhd/*.h kernel/drivers/net/wireless/bcmdhd/*.c kernel/drivers/net/wireless/bcmdhd/Makefile
-	cd kernel && if [ "$$ARCH" = "arm" ]; then make modules -j2; else echo "ERR: run 'source setup_env.sh' first"; fi
+$(FWPATCH): FORCE
+	cd firmware_patching/$(FWPATCH) && make
 
-kernel/drivers/net/wireless/nexmon/nexmon.ko : kernel/drivers/net/wireless/nexmon/*.h kernel/drivers/net/wireless/nexmon/*.c kernel/drivers/net/wireless/nexmon/Makefile
-	cd kernel && if [ "$$ARCH" = "arm" ]; then make modules -j2; else echo "ERR: run 'source setup_env.sh' first"; fi
-
-kernel/drivers/net/wireless/nexdhd/nexdhd.ko : kernel/drivers/net/wireless/nexdhd/*.h kernel/drivers/net/wireless/nexdhd/*.c kernel/drivers/net/wireless/nexdhd/Makefile
+kernel/drivers/net/wireless/nexmon/nexmon.ko : FORCE
 	cd kernel && if [ "$$ARCH" = "arm" ]; then make modules -j2; else echo "ERR: run 'source setup_env.sh' first"; fi
 
 su: su.img
@@ -90,7 +88,7 @@ su: su.img
 	adb push SuperSU.apk /sdcard/
 	adb shell "su -c 'mv /sdcard/SuperSU.apk /data/SuperSU.apk'"
 
-boot.img: Makefile kernel/arch/arm/boot/zImage-dtb kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko kernel/drivers/net/wireless/nexmon/nexmon.ko  kernel/drivers/net/wireless/nexdhd/nexdhd.ko 
+boot.img: Makefile kernel/arch/arm/boot/zImage-dtb $(FWPATCH) kernel/drivers/net/wireless/nexmon/nexmon.ko
 	rm -Rf bootimg_tmp
 	mkdir bootimg_tmp
 	cd bootimg_tmp && \
@@ -106,16 +104,13 @@ boot.img: Makefile kernel/arch/arm/boot/zImage-dtb kernel/drivers/net/wireless/b
 	   && sed -i '/^ro.adb.secure=/s/=.*/=0/' default.prop \
 	   && sed -i '/^on property:ro.kernel.qemu=/s/=.*/=0/' init.rc
 	mkdir bootimg_tmp/ramdisk/nexmon
-	cp kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko bootimg_tmp/ramdisk/nexmon/
+	cp firmware_patching/$(FWPATCH)/bcmdhd/bcmdhd.ko bootimg_tmp/ramdisk/nexmon/
 	cp kernel/drivers/net/wireless/nexmon/nexmon.ko bootimg_tmp/ramdisk/nexmon/
-	cp kernel/drivers/net/wireless/nexdhd/nexdhd.ko bootimg_tmp/ramdisk/nexmon/
 	mkdir bootimg_tmp/ramdisk/nexmon/firmware
-	cp bootimg_src/firmware/fw_bcmdhd.orig.bin bootimg_tmp/ramdisk/nexmon/firmware/fw_bcmdhd.bin
+	cp firmware_patching/$(FWPATCH)/fw_bcmdhd.bin bootimg_tmp/ramdisk/nexmon/firmware/fw_bcmdhd.bin
 	cp firmware_patching/wlc_bmac_recv/fw_bcmdhd.bin bootimg_tmp/ramdisk/nexmon/firmware/fw_nexmon.bin
-	cp bootimg_src/firmware/fw_nexdhd.bin bootimg_tmp/ramdisk/nexmon/firmware/fw_nexdhd.bin
 	cp bootimg_src/firmware/bcmdhd.cal bootimg_tmp/ramdisk/nexmon/firmware/bcmdhd.cal
 	cp bootimg_src/firmware/bcmdhd.cal bootimg_tmp/ramdisk/nexmon/firmware/nexmon.cal
-	cp bootimg_src/firmware/bcmdhd.cal bootimg_tmp/ramdisk/nexmon/firmware/nexdhd.cal
 	cp bootimg_src/firmware/rom.bin bootimg_tmp/ramdisk/nexmon/firmware/rom.bin
 	cp bootimg_src/firmware/firmware.map bootimg_tmp/ramdisk/nexmon/firmware/firmware.map
 	mkdir bootimg_tmp/ramdisk/nexmon/bin
@@ -135,24 +130,10 @@ boot: boot.img
 	adb reboot bootloader
 	fastboot boot boot.img
 
-reloadnex: kernel/drivers/net/wireless/nexdhd/nexdhd.ko
-	adb push kernel/drivers/net/wireless/nexdhd/nexdhd.ko /sdcard/
-	adb shell "su -c 'rmmod nexdhd; rmmod bcmdhd; rmmod nexmon; insmod /sdcard/nexdhd.ko; lsmod'"
-
-reloadnexfirmware: 
-	adb push nexdhd_firmware/firmware.bin /sdcard/
-	adb shell "su -c 'ifconfig wlan0 down; ifconfig wlan0 up; /nexmon/bin/dhdutil -i wlan0 download /sdcard/firmware.bin'"
-
-reloadbcmdhdfirmware:
+reloadfirmware: $(FWPATCH)
 	adb push firmware_patching/$(FWPATCH)/fw_bcmdhd.bin /sdcard/
-	adb push kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko /sdcard/
-	adb shell "su -c 'ifconfig wlan0 down; rmmod nexdhd; rmmod bcmdhd; rmmod nexmon; insmod /sdcard/bcmdhd.ko firmware_path=/sdcard/fw_bcmdhd.bin dhd_msg_level=0x48f'"
-#	adb shell "su -c 'ifconfig wlan0 down; rmmod nexdhd; rmmod bcmdhd; rmmod nexmon; insmod /sdcard/bcmdhd.ko firmware_path=/sdcard/fw_bcmdhd.bin dhd_msg_level=0x3'"
-
-reloadbcmdhdorigfirmware:
-	adb push bootimg_src/firmware/fw_bcmdhd.orig.bin /sdcard/
-	adb push kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko /sdcard/
-	adb shell "su -c 'ifconfig wlan0 down; rmmod nexdhd; rmmod bcmdhd; rmmod nexmon; insmod /sdcard/bcmdhd.ko firmware_path=/sdcard/fw_bcmdhd.bin dhd_msg_level=0x3'"
+	adb push firmware_patching/$(FWPATCH)/bcmdhd/bcmdhd.ko /sdcard/
+	adb shell "su -c 'ifconfig wlan0 down; rmmod bcmdhd; rmmod nexmon; insmod /sdcard/bcmdhd.ko firmware_path=/sdcard/fw_bcmdhd.bin dhd_msg_level=$(MSGLEVEL)'"
 
 setupnetwork:
 	adb shell "su -c 'ifconfig wlan0 down && ifconfig wlan0 up && wpa_supplicant -Dnl80211 -iwlan0 -c/data/misc/wifi/wpa_supplicant.conf -I/system/etc/wifi/wpa_supplicant_overlay.conf &'"
@@ -177,3 +158,5 @@ buildtools/mkboot/mkbootfs: src/cpio/mkbootfs.c
 
 cleanbuildtools:
 	rm -f buildtools/mkboot/*
+
+FORCE:

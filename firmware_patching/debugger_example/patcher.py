@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 
+import os
 import sys
 import time
 sys.path.append('../../buildtools/binary_patcher')
@@ -29,5 +30,5 @@ patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin",
 #	The following patch, that is necessary to access debug registers in an interrupt handler breaks normal wifi operation
 	GenericPatch4(0x18536A, 0xBF00BF00), # write nops over the si_update_chipcontrol_shm(sii, 5, 16, 0) call in si_setup_cores
 
-	StringPatch(0x1FD31B, "build: " + time.strftime("%d.%m.%Y %H:%M:%S") + "\n"), # 53 character string
+	StringPatch(0x1FD31B, (os.getcwd().split('/')[-1] + " (" + time.strftime("%d.%m.%Y %H:%M:%S") + ")\n")[:52]), # 53 character string
 	])
