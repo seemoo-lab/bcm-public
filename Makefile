@@ -97,7 +97,11 @@ boot.img: Makefile kernel/arch/arm/boot/zImage-dtb kernel/drivers/net/wireless/b
 	   cd bootimg_tmp/ramdisk && \
 	   gzip -dc ../ramdisk.cpio.gz | cpio -i \
 	   && sed -i '/service wpa_supplicant/,+11 s/^/#/' init.hammerhead.rc \
-	   && sed -i '/service p2p_supplicant/,+14 s/^/#/' init.hammerhead.rc
+	   && sed -i '/service p2p_supplicant/,+14 s/^/#/' init.hammerhead.rc \
+	   && sed -i '/^ro.debuggable=/s/=.*/=1/' default.prop \
+	   && sed -i '/^ro.secure=/s/=.*/=0/' default.prop \
+	   && sed -i '/^ro.adb.secure=/s/=.*/=0/' default.prop \
+	   && sed -i '/^on property:ro.kernel.qemu=/s/=.*/=0/' init.rc
 	mkdir bootimg_tmp/ramdisk/nexmon
 	cp kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko bootimg_tmp/ramdisk/nexmon/
 	cp kernel/drivers/net/wireless/nexmon/nexmon.ko bootimg_tmp/ramdisk/nexmon/

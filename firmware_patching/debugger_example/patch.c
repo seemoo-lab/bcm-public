@@ -222,7 +222,7 @@ set_debug_registers(void)
 	dbg_enable_monitor_mode_debugging();
 	
 	// Programm Breakpoint to match the instruction we want to hit
-	//dbg_set_breakpoint_for_addr_match(0, 0x1816e4);
+	dbg_set_breakpoint_for_addr_match(0, 0x1ecab0);
 }
 
 __attribute__((naked)) void
