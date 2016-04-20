@@ -4,8 +4,8 @@ FUNCTIONS_BIN = $(FUNCTIONS:=.bin)
 
 all: bcmdhd/bcmdhd.ko fw_bcmdhd.bin fw_bcmdhd.complete.elf
 
-bcmdhd/bcmdhd.ko: FORCE
-	if [ "$$ARCH" = "arm" ]; then make -C ../../kernel/ M=$$PWD/bcmdhd -j2; else echo "ERR: run 'source setup_env.sh' first"; fi
+bcmdhd/bcmdhd.ko: FORCE check-arch
+	make -C ../../kernel/ M=$$PWD/bcmdhd -j2
 
 fw_bcmdhd.bin: patcher.py patch.elf text.bin $(FUNCTIONS_BIN)
 	./patcher.py
@@ -32,6 +32,11 @@ fw_bcmdhd.complete.bin : fw_bcmdhd.bin ../../bootimg_src/firmware/rom.bin
 fw_bcmdhd.complete.elf : fw_bcmdhd.complete.bin
 	$(CC)objcopy -O elf32-littlearm -Barm -I binary $< $@
 	$(CC)objcopy --set-section-flags .data=code $@
+
+check-arch:
+ifndef NEXMON_SETUP_ENV
+	$(error run 'source setup_env.sh' first)
+endif
 
 clean:
 	rm -f fw_bcmdhd.bin fw_bcmdhd.complete.bin fw_bcmdhd.complete.elf patch.o patch.elf text.bin $(FUNCTIONS_BIN)
