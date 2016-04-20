@@ -53,16 +53,17 @@
  * object file ../wrapper/wrapper.o. The latter is generated using the     *
  * Makefile ../wrapper/Makefile. Besides the object file, it also creates  *
  * the linker file ../wrapper/wrapper.ld which is based on this header     *
- * file. To make this work, the function prototypes have to written as one *
- * line per prototype. Each prototype has to start with the word "extern"  *
- * and end with a comment containing the functions location in memory as a *
- * hex number. Before the address has to be a space.                       *
+ * file. To make this work, the function prototypes have to be written as  *
+ * one line per prototype. Each prototype has to start with the word       *
+ * "extern" and end with a comment containing the functions location in    *
+ * memory as a hex number. Before the address, there has to be a space.    *                                                       *
  **************************************************************************/
 
 #ifndef WRAPPER_H
 #define WRAPPER_H
+#include "../include/structs.h"
 
-extern int ai_setcoreidx(void *sii, unsigned int coreidx);
+extern int ai_setcoreidx(void *sii, unsigned int coreidx); // 0xFE44
 
 extern int bus_binddev(void *sdio_hw, void *sdiodev, void *d11dev); // 0x1837F8
 extern int bus_binddev_rom(void *sdiodev, void *d11dev); // 0x1B8C4
