@@ -88,7 +88,7 @@ su: su.img
 	adb push SuperSU.apk /sdcard/
 	adb shell "su -c 'mv /sdcard/SuperSU.apk /data/SuperSU.apk'"
 
-boot.img: Makefile kernel/arch/arm/boot/zImage-dtb $(FWPATCH) kernel/drivers/net/wireless/nexmon/nexmon.ko
+boot.img: Makefile mkboot kernel/arch/arm/boot/zImage-dtb $(FWPATCH) kernel/drivers/net/wireless/nexmon/nexmon.ko
 	rm -Rf bootimg_tmp
 	mkdir bootimg_tmp
 	cd bootimg_tmp && \
@@ -139,24 +139,7 @@ setupnetwork:
 	adb shell "su -c 'ifconfig wlan0 down && ifconfig wlan0 up && wpa_supplicant -Dnl80211 -iwlan0 -c/data/misc/wifi/wpa_supplicant.conf -I/system/etc/wifi/wpa_supplicant_overlay.conf &'"
 	adb shell "su -c 'sleep 1 && iwconfig wlan0 essid seemoo-jamming && sleep 2 && ifconfig wlan0 192.168.200.101'"
 
-tools: buildtools/mkboot/mkbootimg buildtools/mkboot/unmkbootimg buildtools/mkboot/mkbootfs
-
-buildtools/mkboot/mkbootimg: src/mkbootimg/mkbootimg.c
-	mkdir -p buildtools/mkboot
-	cd src/ && \
-	   gcc -std=c99 -o ../buildtools/mkboot/mkbootimg libmincrypt/*.c mkbootimg/mkbootimg.c -Iinclude
-
-buildtools/mkboot/unmkbootimg: src/mkbootimg/unmkbootimg.c
-	mkdir -p buildtools/mkboot
-	cd src/ && \
-	   gcc -std=c99 -o ../buildtools/mkboot/unmkbootimg libmincrypt/*.c mkbootimg/unmkbootimg.c -Iinclude
-
-buildtools/mkboot/mkbootfs: src/cpio/mkbootfs.c
-	mkdir -p buildtools/mkboot
-	cd src/ && \
-	   gcc -o ../buildtools/mkboot/mkbootfs cpio/mkbootfs.c libcutils/fs_config.c -Iinclude
-
-cleanbuildtools:
-	rm -f buildtools/mkboot/*
+mkboot:
+	cd buildtools/mkboot && make
 
 FORCE:
