@@ -4,7 +4,7 @@ FUNCTIONS_BIN = $(FUNCTIONS:=.bin)
 
 all: bcmdhd/bcmdhd.ko fw_bcmdhd.bin fw_bcmdhd.complete.elf
 
-bcmdhd/bcmdhd.ko: FORCE check-arch
+bcmdhd/bcmdhd.ko: FORCE check-nexmon-setup-env
 	make -C ../../kernel/ M=$$PWD/bcmdhd -j2
 
 fw_bcmdhd.bin: patcher.py patch.elf text.bin $(FUNCTIONS_BIN)
@@ -33,7 +33,7 @@ fw_bcmdhd.complete.elf : fw_bcmdhd.complete.bin
 	$(CC)objcopy -O elf32-littlearm -Barm -I binary $< $@
 	$(CC)objcopy --set-section-flags .data=code $@
 
-check-arch:
+check-nexmon-setup-env:
 ifndef NEXMON_SETUP_ENV
 	$(error run 'source setup_env.sh' first)
 endif
