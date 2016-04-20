@@ -69,7 +69,7 @@ cleanall: cleanbuildtools cleanboot
 
 kernel: kernel/arch/arm/boot/zImage-dtb
 
-kernel/arch/arm/boot/zImage-dtb: kernel/.config
+kernel/arch/arm/boot/zImage-dtb: kernel/.config check-nexmon-setup-env
 	cd kernel && make
 
 
@@ -79,8 +79,8 @@ bcmdhd: kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko
 $(FWPATCH): FORCE
 	cd firmware_patching/$(FWPATCH) && make
 
-kernel/drivers/net/wireless/nexmon/nexmon.ko : FORCE
-	cd kernel && if [ "$$ARCH" = "arm" ]; then make modules -j2; else echo "ERR: run 'source setup_env.sh' first"; fi
+kernel/drivers/net/wireless/nexmon/nexmon.ko : FORCE check-nexmon-setup-env
+	make modules -j2
 
 su: su.img
 	adb push su.img /sdcard/
@@ -141,5 +141,10 @@ setupnetwork:
 
 mkboot:
 	cd buildtools/mkboot && make
+
+check-nexmon-setup-env:
+ifndef NEXMON_SETUP_ENV
+	$(error run 'source setup_env.sh' first)
+endif
 
 FORCE:

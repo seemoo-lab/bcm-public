@@ -4,7 +4,7 @@ FUNCTIONS_BIN = $(FUNCTIONS:=.bin)
 
 all: bcmdhd/bcmdhd.ko fw_bcmdhd.bin fw_bcmdhd.complete.elf
 
-bcmdhd/bcmdhd.ko: FORCE check-nexmon-setup-env
+bcmdhd/bcmdhd.ko: check-nexmon-setup-env
 	make -C ../../kernel/ M=$$PWD/bcmdhd -j2
 
 fw_bcmdhd.bin: patcher.py patch.elf text.bin $(FUNCTIONS_BIN)
