@@ -122,14 +122,13 @@ static s32 wl_dongle_up(struct net_device *ndev, u32 up)
 	err = wldev_ioctl(ndev, NEX_TEST_IOCTL_1, &buf, sizeof(buf), false);
 	printf("NEX_TEST_IOCTL_1: %s\n", buf);
 	if (unlikely(err)) {
-		WL_ERR(("NEX_READ_D11_OBJMEM error (%d)\n", err));
+		WL_ERR(("NEX_TEST_IOCTL_1 error (%d)\n", err));
 	}
 
 	memcpy(buf, "hello firmware!\0", 16);
 	err = wldev_ioctl(ndev, NEX_TEST_IOCTL_2, &buf, sizeof(buf), true);
-	printf("NEX_TEST_IOCTL_1: %s\n", buf);
 	if (unlikely(err)) {
-		WL_ERR(("NEX_READ_D11_OBJMEM error (%d)\n", err));
+		WL_ERR(("NEX_TEST_IOCTL_2 error (%d)\n", err));
 	}
 
 	return err;
