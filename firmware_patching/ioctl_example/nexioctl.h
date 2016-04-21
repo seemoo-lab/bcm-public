@@ -1,0 +1,4 @@
+#define NEX_TEST_IOCTL_1			15
+#define NEX_TEST_IOCTL_2			16
+#define NEX_TEST_IOCTL_3			17
+#define NEX_TEST_IOCTL_4			18
