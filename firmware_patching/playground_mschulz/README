@@ -1,5 +1,20 @@
-The intention of this patch is to find all pathes to the dma_txfast function. 
-Hence, we like to transmit a stack trace to the Linux driver, whenever 
-dma_txfast gets call. To transmit the stack trace, we would like to use 
-the dngl_sendpkt function, which also calls the dma_txfast function. To avoid
-loops, we copy the whole path from dngl_sendpkt to dma_txfast to 0x180050.
+
+    ###########   ###########   ##########    ##########
+   ############  ############  ############  ############
+   ##            ##            ##   ##   ##  ##        ##
+   ##            ##            ##   ##   ##  ##        ##
+   ###########   ####  ######  ##   ##   ##  ##    ######
+    ###########  ####  #       ##   ##   ##  ##    #    #
+             ##  ##    ######  ##   ##   ##  ##    #    #
+             ##  ##    #       ##   ##   ##  ##    #    #
+   ############  ##### ######  ##   ##   ##  ##### ######
+   ###########    ###########  ##   ##   ##   ##########
+
+      S E C U R E   M O B I L E   N E T W O R K I N G
+
+
+##################
+playground_mschulz
+##################
+
+Simply a playground to tinker on new patches ;-)
