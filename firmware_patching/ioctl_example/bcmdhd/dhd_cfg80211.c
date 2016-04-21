@@ -112,11 +112,26 @@ s32 dhd_cfg80211_clean_p2p_info(struct wl_priv *wl)
 static s32 wl_dongle_up(struct net_device *ndev, u32 up)
 {
 	s32 err = 0;
+	char buf[64] = { 0 };
 
 	err = wldev_ioctl(ndev, WLC_UP, &up, sizeof(up), true);
 	if (unlikely(err)) {
 		WL_ERR(("WLC_UP error (%d)\n", err));
 	}
+
+	err = wldev_ioctl(ndev, NEX_TEST_IOCTL_1, &buf, sizeof(buf), false);
+	printf("NEX_TEST_IOCTL_1: %s\n", buf);
+	if (unlikely(err)) {
+		WL_ERR(("NEX_READ_D11_OBJMEM error (%d)\n", err));
+	}
+
+	memcpy(buf, "hello firmware!\0", 16);
+	err = wldev_ioctl(ndev, NEX_TEST_IOCTL_2, &buf, sizeof(buf), true);
+	printf("NEX_TEST_IOCTL_1: %s\n", buf);
+	if (unlikely(err)) {
+		WL_ERR(("NEX_READ_D11_OBJMEM error (%d)\n", err));
+	}
+
 	return err;
 }
 s32 dhd_config_dongle(struct wl_priv *wl, bool need_lock)

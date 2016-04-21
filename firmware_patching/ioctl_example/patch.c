@@ -47,11 +47,57 @@
  *                                                                         *                                                       *
  **************************************************************************/
 
-#include "../include/bcm4339.h"	// contains addresses specific for BCM4339
-#include "../include/debug.h"	// contains macros to access the debug hardware
-#include "../include/wrapper.h"	// wrapper definitions for functions that already exist in the firmware
-#include "../include/structs.h"	// structures that are used by the code in the firmware
-#include "../include/helper.h"	// useful helper functions
+#include "../include/bcm4339.h"		// contains addresses specific for BCM4339
+#include "../include/debug.h"		// contains macros to access the debug hardware
+#include "../include/wrapper.h"		// wrapper definitions for functions that already exist in the firmware
+#include "../include/structs.h"		// structures that are used by the code in the firmware
+#include "../include/helper.h"		// useful helper functions
+#include "nexioctl.h"				// holds the ioctl numbers used by the driver
+
+/**
+ *	Handler for our own ioctls that are not used by the firmware.
+ *	NEX_TEST_IOCTL_1 sends a string back to the driver
+ *	NEX_TEST_IOCTL_2 prints a string to the WiFi chips console
+ */
+int
+nex_ioctl_handler_in_c(struct wlc_info *wlc, int cmd, void *arg, unsigned int len)
+{
+	printf("%s: cmd=%d, arg=%08x, len=%d\n", __FUNCTION__, cmd, (int) arg, len);
+
+	switch(cmd) {
+		case NEX_TEST_IOCTL_1:
+			if (len >= 17) {
+				memcpy(arg, "hello driver!\0", 13);
+			}
+			break;
+		case NEX_TEST_IOCTL_2:
+			printf("NEX_TEST_IOCTL_2: %s\n", (char *) arg);
+			break;
+		case NEX_TEST_IOCTL_3:
+		case NEX_TEST_IOCTL_4:
+			break;
+	}
+
+	return 0;
+}
+
+/**
+ *	This handler can be made an entry in the wlc_ioctl jump table (0x19561C for cmd == 1, 0x0x195AFC for cmd == 312)
+ *	it is used to call the nex_ioctl_handler_in_c and then execute the code to return from wlc_ioctl
+ */
+__attribute__((naked)) void
+nex_ioctl_handler(void)
+{
+	asm(
+		"mov r0, r4\n"							// Store wlc in r0
+		"mov r1, r8\n"							// Store cmd in r1
+		"mov r2, r5\n"							// Store arg in r2
+		"mov r3, r7\n"							// Store len in r3
+		"bl nex_ioctl_handler_in_c\n"
+		"add sp, #364\n"
+		"pop {r4-r11, pc}\n"					// return from wlc_ioctl
+		);
+}
 
 /**
  *	Just inserted to produce an error while linking, when we try to overwrite memory used by the original firmware

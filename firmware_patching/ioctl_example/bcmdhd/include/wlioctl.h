@@ -37,6 +37,7 @@
 #include <proto/802.11.h>
 #include <bcmwifi_channels.h>
 #include <bcmwifi_rates.h>
+#include "../../nexioctl.h"
 
 #ifndef LINUX_POSTMOGRIFY_REMOVAL
 #include <bcm_mpool_pub.h>

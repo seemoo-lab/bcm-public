@@ -18,7 +18,7 @@ def getSectionAddr(name):
 patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin", 
     "fw_bcmdhd.bin", [
 	# The text section is always required and contains code that is called by patches and hooks but not directly placed to predefined memory locations
-	#ExternalArmPatch(getSectionAddr(".text"), "text.bin"),
+	ExternalArmPatch(getSectionAddr(".text"), "text.bin"),
 
 	# ExternalArmPatch instructions copy the contents of a binary file to an address in the firmware
 	# ExternalArmPatch(<address to store binary blob>, <file name>),
@@ -39,6 +39,17 @@ patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin",
 	# GenericPatch2 instructions replace a word (two bytes) at a given address in the firmware
 	# 0xBF00 can be used to place a NOP instruction
 	# GenericPatch2(<address to replace word>, <two byte value>),
+
+	# Add a new handler for our own ioctls
+	ExternalArmPatch(getSectionAddr(".text.nex_ioctl_handler"), "nex_ioctl_handler.bin"),
+	# Overwrite address of ioctl 15 in the wlc_ioctl's jump table
+	GenericPatch4(0x195658, getSectionAddr(".text.nex_ioctl_handler")+1),
+	# Overwrite address of ioctl 16 in the wlc_ioctl's jump table
+	GenericPatch4(0x19565C, getSectionAddr(".text.nex_ioctl_handler")+1),
+	# Overwrite address of ioctl 17 in the wlc_ioctl's jump table
+	GenericPatch4(0x195660, getSectionAddr(".text.nex_ioctl_handler")+1),
+	# Overwrite address of ioctl 18 in the wlc_ioctl's jump table
+	GenericPatch4(0x195664, getSectionAddr(".text.nex_ioctl_handler")+1),
 
 	# This line replaces the firmware version string that is printed to the console on startup to identify which firmware is loaded by the driver
 	StringPatch(0x1FD31B, (os.getcwd().split('/')[-1] + " (" + time.strftime("%d.%m.%Y %H:%M:%S") + ")\n")[:52]), # 53 character string
