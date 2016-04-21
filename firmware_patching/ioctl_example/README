@@ -58,7 +58,7 @@ The output of the kernel log should be:
 <4>[20339.600177] NEX_TEST_IOCTL_1: hello driver!
 ################################################################
 
-The output of the firmware log should be:
+The output of the firmware console should be:
 ################################################################
 start=0x001eb5cc len=0x00000800
 
