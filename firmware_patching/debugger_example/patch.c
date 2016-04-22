@@ -106,7 +106,7 @@ handle_pref_abort_exception(struct trace *trace)
 		} else if (breakpoint_hit & DBGBP0) {
 			// we reset the the breakpoint for address matching
 			dbg_set_breakpoint_type_to_instr_addr_match(0);
-			if (0 && breakpoint_hit_counter[0] == breakpoint_hit_limit[0]) {
+			if (breakpoint_hit_counter[0] == breakpoint_hit_limit[0]) {
 				dbg_disable_breakpoint(0);
 			}
 			// we set the bit in the breakpoint_hit variable to 0
@@ -222,7 +222,8 @@ set_debug_registers(void)
 	dbg_enable_monitor_mode_debugging();
 	
 	// Programm Breakpoint to match the instruction we want to hit
-	dbg_set_breakpoint_for_addr_match(0, 0x1ecab0);
+	//dbg_set_breakpoint_for_addr_match(0, 0x1ecab0);
+	dbg_set_breakpoint_for_addr_match(0, 0x1AAD98); // wlc_bmac_recv
 }
 
 __attribute__((naked)) void
