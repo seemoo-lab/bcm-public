@@ -1,5 +1,5 @@
 CC=../../buildtools/arm-eabi-4.7/bin/arm-eabi-
-FUNCTIONS = wlc_ucode_download_hook
+FUNCTIONS = tr_pref_abort_hook handle_exceptions before_before_initialize_memory_hook
 FUNCTIONS_BIN = $(FUNCTIONS:=.bin)
 
 all: bcmdhd/bcmdhd.ko fw_bcmdhd.bin fw_bcmdhd.complete.elf

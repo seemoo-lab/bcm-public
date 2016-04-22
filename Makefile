@@ -79,7 +79,7 @@ bcmdhd: kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko
 $(FWPATCH): FORCE
 	cd firmware_patching/$(FWPATCH) && make
 
-kernel/drivers/net/wireless/nexmon/nexmon.ko : FORCE check-nexmon-setup-env
+kernel/drivers/net/wireless/nexmon/nexmon.ko: FORCE check-nexmon-setup-env
 	cd kernel && make modules -j2
 
 su: su.img

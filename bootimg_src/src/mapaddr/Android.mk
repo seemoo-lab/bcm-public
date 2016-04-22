@@ -56,7 +56,7 @@ LOCAL_CFLAGS += -D_GL_UNUSED=
 LOCAL_CFLAGS += -DMAP_FILE_NAME=/nexmon/firmware/firmware.map
 LOCAL_CFLAGS += -DROM_FILE_NAME=/nexmon/firmware/rom.bin
 LOCAL_CFLAGS += -DRAM_FILE_NAME=/nexmon/firmware/fw_bcmdhd.bin
-LOCAL_CFLGGS += -DUSE_LIBPCAP
+LOCAL_CFLGGS += -DUSE_LIBPCAP=1
 ifeq ($(TARGET_ARCH),arm)
 LOCAL_CFLAGS += -mabi=aapcs-linux
 endif

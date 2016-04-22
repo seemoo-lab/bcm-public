@@ -65,6 +65,7 @@
 
 extern int ai_setcoreidx(void *sii, unsigned int coreidx); // 0xFE44
 
+extern void before_before_initialize_memory(void); // 0x183886
 extern int bus_binddev(void *sdio_hw, void *sdiodev, void *d11dev); // 0x1837F8
 extern int bus_binddev_rom(void *sdiodev, void *d11dev); // 0x1B8C4
 
@@ -116,6 +117,7 @@ extern void wlc_bmac_mctrl(void *wlc_hw, int mask, int val); // 0x4F080
 extern void wlc_bmac_write_template_ram(void *wlc_hw, int offset, int len, void *buf); // 0x504B0
 extern void wlc_coreinit(void *wlc_hw); // 0x1AB66C
 extern int wlc_init(void *wlc); // 0x199874
+extern int wlc_ioctl(void *wlc, int cmd, void *arg, int len, void *wlc_if); // 0x19551C
 extern void wlc_mctrl_write(void *wlc_hw); // 0x4DF60
 extern void wlc_txfifo(void *wlc, int fifo, void *p, void *txh, unsigned char commit, char txpktpend); // 0x193744
 extern void wlc_ucode_download(void *wlc_hw); // 0x1F4EF8

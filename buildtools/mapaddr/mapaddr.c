@@ -1,4 +1,5 @@
 #define _XOPEN_SOURCE 700
+#define USE_LIBPCAP
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,7 +52,7 @@ static char doc[] = "mapaddr -- a program to read stack dumps of the BCM4339 chi
 
 static struct argp_option options[] = {
 #ifdef USE_LIBPCAP
-	{"pcapfile", 'c', "FILE", 0, "Read pcap file from FILE"},
+	{"pcapfile", 'c', "FILE", 0, "Read pcap file from FILE, or perform live capture if FILE=wlan0"},
 #endif
 	{"mapfile", 'm', "FILE", 0, "Read symbol map from FILE instead of " AS_STR(MAP_FILE_NAME)},
 	{"romfile", 'o', "FILE", 0, "Read rom from FILE instead of " AS_STR(ROM_FILE_NAME)},
@@ -330,7 +331,17 @@ analyse_pcap_file(char *filename)
 	char *trace_array = NULL;
 	long trace_len = 0;
 
-	pcap = pcap_open_offline(filename, errbuf);
+	if(!strcmp(filename, "wlan0")) {
+		pcap = pcap_open_live("wlan0", BUFSIZ, 1, 0, errbuf);	
+	} else {
+		pcap = pcap_open_offline(filename, errbuf);	
+	}
+
+	if(!pcap) {
+		printf("ERR: %s\n", errbuf);
+		return;
+	}
+
 	while ((packet = pcap_next(pcap, &header)) != NULL) {
 		if(!memcmp(packet, ethernet_ipv6_udp_header_array, 18) && !memcmp(packet + 20, ethernet_ipv6_udp_header_array + 20, 42)) {
 			get_name(*((unsigned int *) (packet+62)), &fct_name, NULL);

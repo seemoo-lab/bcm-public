@@ -59,3 +59,4 @@ Currently, the following example projects exist:
  * hello_world_example: Prints hello world to the chips console
  * ioctl_example: Exchanges ioctl messages with the firmware
  * mapaddr_example: Analysis of stack traces
+ * udp_to_android_example: Send UDP frames over SDIO to Android
