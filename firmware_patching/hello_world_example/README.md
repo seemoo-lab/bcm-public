@@ -1,41 +1,23 @@
-
-    ###########   ###########   ##########    ##########
-   ############  ############  ############  ############
-   ##            ##            ##   ##   ##  ##        ##
-   ##            ##            ##   ##   ##  ##        ##
-   ###########   ####  ######  ##   ##   ##  ##    ######
-    ###########  ####  #       ##   ##   ##  ##    #    #
-             ##  ##    ######  ##   ##   ##  ##    #    #
-             ##  ##    #       ##   ##   ##  ##    #    #
-   ############  ##### ######  ##   ##   ##  ##### ######
-   ###########    ###########  ##   ##   ##   ##########
-
-      S E C U R E   M O B I L E   N E T W O R K I N G
-
-
-###################
-hello_world_example
-###################
+# hello_world_example
 
 This example simply prints "hello world!" on the WiFi chips
 internal console.
 
-How to run the example?
-=======================
+## How to run the example?
 
 To run the example, first load the patched firmware and driver:
-################################################################
+```
 make reloadfirmware FWPATCH=hello_world_example
-################################################################
+```
 
 Then set up the wifi interface and print the firmware console:
-################################################################
+```
 adb shell "su -c 'ifconfig wlan0 down && ifconfig wlan0 up && \
   dhdutil -i wlan0 consoledump'"
-################################################################
+```
 
 The output of the firmware console should be:
-################################################################
+```
 start=0x001eb5cc len=0x00000800
 
 RTE (USB-SDIO-CDC) 6.37.32.RC23.34.40 (r581243) on BCM4339 r1 @ 37.4/161.3/161.3MHz
@@ -51,4 +33,4 @@ RTE (USB-SDIO-CDC) 6.37.32.RC23.34.40 (r581243) on BCM4339 r1 @ 37.4/161.3/161.3
 000000.140 wl0: wlc_enable_probe_req: state down, deferring setting of host flags
 000000.205 wl0: wlc_enable_probe_req: state down, deferring setting of host flags
 000000.213 wl0: wlc_enable_probe_req: state down, deferring setting of host flags
-################################################################
+```
