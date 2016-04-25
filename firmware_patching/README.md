@@ -1,4 +1,4 @@
-
+```
     ###########   ###########   ##########    ##########
    ############  ############  ############  ############
    ##            ##            ##   ##   ##  ##        ##
@@ -11,11 +11,9 @@
    ###########    ###########  ##   ##   ##   ##########
 
       S E C U R E   M O B I L E   N E T W O R K I N G
+```
 
-
-#################
-firmware_patching
-#################
+# firmware_patching
 
 This directory contains all firmware patches in separate 
 directories. The patches generally consist of ...
@@ -40,9 +38,9 @@ directories. The patches generally consist of ...
     generally have to be run in the repositories root directory.
 
 To generate a new firmware patching project, you can simply run
-################################################################
+```
 make newproject NEWPROJECT=name_of_new_project
-################################################################
+```
 in this directory. It will copy the template_project to a new 
 directory called name_of_new_project and adjust the Makefile of
 the driver to find the correct include files. After creating a
@@ -51,8 +49,7 @@ After that, you can start working on your patches. This way, you
 can always see what changed in your project compared to the 
 original template files.
 
-Currently, the following example projects exist:
-================================================
+## Currently, the following example projects exist:
 
  * d11_example: Interaction with the D11 core
  * debugger_example: Using the ARM Debugging interface
