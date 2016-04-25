@@ -52,6 +52,47 @@
 #include "../include/wrapper.h"	// wrapper definitions for functions that already exist in the firmware
 #include "../include/structs.h"	// structures that are used by the code in the firmware
 #include "../include/helper.h"	// useful helper functions
+#include "../include/bcmdhd/bcmsdpcm.h"
+#include "../include/bcmdhd/bcmcdc.h"
+
+unsigned char bcd_header_array[] = { 0x20, 0x00, 0x00, 0x00 };
+
+int
+wlc_bmac_recv_hook(struct wlc_hw_info *wlc_hw, unsigned int fifo, int bound, int *processed_frame_cnt)
+{
+    struct wlc_pub *pub = wlc_hw->wlc->pub;
+    sk_buff *p;
+    char is_amsdu = pub->is_amsdu;
+    int n = 0;
+    int bound_limit;
+    if(bound) {
+        bound_limit = pub->tunables->rxbnd;
+    } else {
+        bound_limit = -1;
+    }
+    do {
+        p = dma_rx (wlc_hw->di[fifo]);
+        if(!p) {
+            goto LEAVE;
+        }
+
+        if(is_amsdu) {
+            is_amsdu = 0;
+        }
+        dngl_sendpkt(SDIO_INFO_ADDR, p, SDPCM_DATA_CHANNEL);
+        ++n;
+    } while(n < bound_limit);
+LEAVE:
+    dma_rxfill(wlc_hw->di[fifo]);
+    wlc_bmac_mctrl(wlc_hw, 0x41d60000, 0x41d20000);
+    bcd_header_array[0] = 0x20;
+    *processed_frame_cnt += n;
+    if ( n < bound_limit ) {
+        return 0;
+    } else {
+        return 1;
+    }
+}
 
 /**
  *	Just inserted to produce an error while linking, when we try to overwrite memory used by the original firmware

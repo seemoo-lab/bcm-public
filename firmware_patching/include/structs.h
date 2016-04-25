@@ -563,6 +563,30 @@ struct d11regs {
     unsigned short PAD[0x380]; /* 0x800 - 0xEFE */
 } __attribute__((packed));
 
+/*== maccontrol register ==*/
+#define MCTL_GMODE      (1U << 31)
+#define MCTL_DISCARD_PMQ    (1 << 30)
+#define MCTL_WAKE       (1 << 26)
+#define MCTL_HPS        (1 << 25)
+#define MCTL_PROMISC        (1 << 24)
+#define MCTL_KEEPBADFCS     (1 << 23)
+#define MCTL_KEEPCONTROL    (1 << 22)
+#define MCTL_PHYLOCK        (1 << 21)
+#define MCTL_BCNS_PROMISC   (1 << 20)
+#define MCTL_LOCK_RADIO     (1 << 19)
+#define MCTL_AP         (1 << 18)
+#define MCTL_INFRA      (1 << 17)
+#define MCTL_BIGEND     (1 << 16)
+#define MCTL_GPOUT_SEL_MASK (3 << 14)
+#define MCTL_GPOUT_SEL_SHIFT    14
+#define MCTL_EN_PSMDBG      (1 << 13)
+#define MCTL_IHR_EN     (1 << 10)
+#define MCTL_SHM_UPPER      (1 <<  9)
+#define MCTL_SHM_EN     (1 <<  8)
+#define MCTL_PSM_JMP_0      (1 <<  2)
+#define MCTL_PSM_RUN        (1 <<  1)
+#define MCTL_EN_MAC     (1 <<  0)
+
 
 struct ethernet_header {
     uint8 dst[6];
