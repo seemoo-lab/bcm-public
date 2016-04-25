@@ -99,10 +99,10 @@ boot.img: Makefile mkboot kernel/arch/arm/boot/zImage-dtb $(FWPATCH) kernel/driv
 	   gzip -dc ../ramdisk.cpio.gz | cpio -i \
 	   && sed -i '/service wpa_supplicant/,+11 s/^/#/' init.hammerhead.rc \
 	   && sed -i '/service p2p_supplicant/,+14 s/^/#/' init.hammerhead.rc \
-	   && sed -i '/^ro.debuggable=/s/=.*/=1/' default.prop \
-	   && sed -i '/^ro.secure=/s/=.*/=0/' default.prop \
-	   && sed -i '/^ro.adb.secure=/s/=.*/=0/' default.prop \
-	   && sed -i '/^on property:ro.kernel.qemu=/s/=.*/=0/' init.rc
+#	   && sed -i '/^ro.debuggable=/s/=.*/=1/' default.prop \
+#	   && sed -i '/^ro.secure=/s/=.*/=0/' default.prop \
+#	   && sed -i '/^ro.adb.secure=/s/=.*/=0/' default.prop \
+#	   && sed -i '/^on property:ro.kernel.qemu=/s/=.*/=0/' init.rc
 	mkdir bootimg_tmp/ramdisk/nexmon
 	cp firmware_patching/$(FWPATCH)/bcmdhd/bcmdhd.ko bootimg_tmp/ramdisk/nexmon/
 	cp kernel/drivers/net/wireless/nexmon/nexmon.ko bootimg_tmp/ramdisk/nexmon/
