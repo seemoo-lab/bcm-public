@@ -1,21 +1,4 @@
-
-    ###########   ###########   ##########    ##########
-   ############  ############  ############  ############
-   ##            ##            ##   ##   ##  ##        ##
-   ##            ##            ##   ##   ##  ##        ##
-   ###########   ####  ######  ##   ##   ##  ##    ######
-    ###########  ####  #       ##   ##   ##  ##    #    #
-             ##  ##    ######  ##   ##   ##  ##    #    #
-             ##  ##    #       ##   ##   ##  ##    #    #
-   ############  ##### ######  ##   ##   ##  ##### ######
-   ###########    ###########  ##   ##   ##   ##########
-
-      S E C U R E   M O B I L E   N E T W O R K I N G
-
-
-################
-debugger_example
-################
+# debugger_example
 
 This example demonstrates how to use the hardware debug 
 registers in the ARM Cortex-R4 core that runs the firmware in 
@@ -44,11 +27,12 @@ into abort mode. The original firmware directly switches back
 to system mode. Our patch, however, needs to stay in abort mode 
 and also allocate a stack for function calls in this mode.
 
+## Function Explanation
+
 The debugger patch consists of multiple functions, of which I
 present the most important in the following:
 
-set_debug_registers:
---------------------
+### set_debug_registers:
 This function is called at the beginning of the initialization
 phase of the WiFi chip, shortly after it comes out of reset. It
 first places the stack pointer of the abort mode to the end of
@@ -58,18 +42,16 @@ registers, initialize them to be disabled and activate monitor-
 mode debugging. After that we can simply set breakpoints and
 watchpoints.
 
-tr_pref_abort_hook:
-tr_data_abort_hook:
--------------------
+### tr_pref_abort_hook:
+### tr_data_abort_hook:
 Both functions overwrite the assembler code that is executed 
 directly after triggering an exception. Here, we avoid switching
 to system mode and stay in abort mode. A prefetch abort 
 exception is indicated by number 3 in register 0 and a data
 about exception by number 4.
 
-handle_exceptions:
-choose_exception_handler:
--------------------------
+### handle_exceptions:
+### choose_exception_handler:
 We extended the existing handle_exceptions function by the
 choose_exception_handler function and use it to evaluate the
 exception number saved before in register 0. On a prefetch abort
@@ -77,8 +59,7 @@ exception, we call the handle_pref_abort_exception handler and
 on a data abort exception, we call the 
 handle_data_abort_exception handler.
 
-fix_sp_lr:
-----------
+### fix_sp_lr:
 At the beginning of both exception handlers 
 handle_pref_abort_exception and handle_data_abort_exception, we
 execute the fix_sp_lr function. It switches to system mode, 
@@ -89,8 +70,7 @@ step is only required as we stay in abort mode instaed of
 directly switching back to system mode like the original 
 firmware.
 
-handle_pref_abort_exception:
-----------------------------
+### handle_pref_abort_exception:
 This is our handler for prefetch abort exceptions and is 
 triggered by hardware breakpoints. It checks which breakpoint
 triggered the exception, resets this breakpoint to trigger on
@@ -101,8 +81,7 @@ reaches a limit, we disable the breakpoint. Over all, we can
 have four hardware breakpoints and use the last one to handle 
 instruction mismatch hits set by watchpoints.
 
-handle_data_abort_exception:
-----------------------------
+### handle_data_abort_exception:
 This is our handler for data abort exceptions and is triggered
 by watchpoints. It cannot differentiate which of the four 
 watchpoints was triggered, hence, we disable all and set an
@@ -110,27 +89,26 @@ instruction mismatch breakpoint on the address that triggered
 the watchpoint. The breakpoint handler is then used to reset
 the watchpoint.
 
-How to run the example?
-=======================
+## How to run the example?
 
 To run the example, first load the patched firmware and driver:
-################################################################
+```
 make reloadfirmware FWPATCH=debugger_example
-################################################################
+```
 
 Then start printing the kernel log and grep for our output:
-################################################################
+```
 adb shell "su -c 'cat /proc/kmsg | grep NEX_TEST_IOCTL_1'"
-################################################################
+```
 
 Then, set up the wifi interface and print the firmware console:
-################################################################
+```
 adb shell "su -c 'ifconfig wlan0 down && ifconfig wlan0 up && \
   dhdutil -i wlan0 consoledump'"
-################################################################
+```
 
 The output of the firmware console should be:
-################################################################
+```
 start=0x001eb5cc len=0x00000800
 
 RTE (USB-SDIO-CDC) 6.37.32.RC23.34.40 (r581243) on BCM4339 r1 @ 37.4/161.3/161.3MHz
@@ -147,4 +125,4 @@ RTE (USB-SDIO-CDC) 6.37.32.RC23.34.40 (r581243) on BCM4339 r1 @ 37.4/161.3/161.3
 000000.239 wl0: wlc_enable_probe_req: state down, deferring setting of host flags
 000000.358 wl0: wlc_enable_probe_req: state down, deferring setting of host flags
 000000.366 wl0: wlc_enable_probe_req: state down, deferring setting of host flags
-################################################################
+```
