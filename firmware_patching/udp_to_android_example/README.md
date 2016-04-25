@@ -1,21 +1,4 @@
-
-    ###########   ###########   ##########    ##########
-   ############  ############  ############  ############
-   ##            ##            ##   ##   ##  ##        ##
-   ##            ##            ##   ##   ##  ##        ##
-   ###########   ####  ######  ##   ##   ##  ##    ######
-    ###########  ####  #       ##   ##   ##  ##    #    #
-             ##  ##    ######  ##   ##   ##  ##    #    #
-             ##  ##    #       ##   ##   ##  ##    #    #
-   ############  ##### ######  ##   ##   ##  ##### ######
-   ###########    ###########  ##   ##   ##   ##########
-
-      S E C U R E   M O B I L E   N E T W O R K I N G
-
-
-######################
-udp_to_android_example
-######################
+# udp_to_android_example
 
 This example firmware patch packs a payload into a UDP frame and
 sends it over the SDIO interface to Android. The UDP frame is 
@@ -27,27 +10,26 @@ The frame transmission is triggered by a call to the hooked
 wlc_ioctl function that is called to dispatch ioctls (see also
 the ioctl_example).
 
-How to run the example?
-=======================
+## How to run the example?
 
 To run the example, first load the patched firmware and driver:
-################################################################
+```
 make reloadfirmware FWPATCH=udp_to_android_example
-################################################################
+```
 
 Then set up the wifi interface and print the firmware console:
-################################################################
+```
 adb shell "su -c 'ifconfig wlan0 down && ifconfig wlan0 up && \
   dhdutil -i wlan0 consoledump'"
-################################################################
+```
 
 Then start tcpdump in a new terminal:
-################################################################
+```
 adb shell "su -c 'tcpdump -i wlan0 -s0'"
-################################################################
+```
 
 Tcpdump's output should be as follows:
-################################################################
+```
 tcpdump: WARNING: wlan0: no IPv4 address assigned
 tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
 listening on wlan0, link-type EN10MB (Ethernet), capture size 65535 bytes
@@ -61,10 +43,10 @@ listening on wlan0, link-type EN10MB (Ethernet), capture size 65535 bytes
   0x0010:  0000 0000 0000 0001 ff02 0000 0000 0000  ................
   0x0020:  0000 0000 0000 0001 d6d8 d6d8 0008 5246  ..............RF
   0x0030:  4865 6c6c 6f20 416e 6472 6f69 6421 00    Hello.Android!.
-################################################################
+```
 
 If you do not see any output, generate some ioctls. For example,
 by triggering a scan for WiFi access points:
-################################################################
+```
 adb shell "su -c 'iwlist wlan0 scan'"
-################################################################
+```
