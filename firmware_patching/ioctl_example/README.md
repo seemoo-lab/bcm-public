@@ -1,21 +1,4 @@
-
-    ###########   ###########   ##########    ##########
-   ############  ############  ############  ############
-   ##            ##            ##   ##   ##  ##        ##
-   ##            ##            ##   ##   ##  ##        ##
-   ###########   ####  ######  ##   ##   ##  ##    ######
-    ###########  ####  #       ##   ##   ##  ##    #    #
-             ##  ##    ######  ##   ##   ##  ##    #    #
-             ##  ##    #       ##   ##   ##  ##    #    #
-   ############  ##### ######  ##   ##   ##  ##### ######
-   ###########    ###########  ##   ##   ##   ##########
-
-      S E C U R E   M O B I L E   N E T W O R K I N G
-
-
-#############
-ioctl_example
-#############
+# ioctl_example
 
 This example demonstrates the exchange of ioctl messages between
 firmware and driver. The driver can trigger the transmission of
@@ -27,8 +10,7 @@ information from the firmware (GET operation). The caller passes
 an empty or prefilled buffer to the firmware and the firmware
 can modify this buffer.
 
-How to run the example?
-=======================
+## How to run the example?
 
 After sending the WLC_UP ioctl in the dhd_cfg80211.c file, we 
 send two additional ioctls. The first one (NEX_TEST_IOCTL_1) 
@@ -37,29 +19,29 @@ The second one (NEX_TEST_IOCTL_2) sends a string to the firmware
 which prints it on its console.
 
 To run the example, first load the patched firmware and driver:
-################################################################
+```
 make reloadfirmware FWPATCH=ioctl_example
-################################################################
+```
 
 Then start printing the kernel log and grep for our output:
-################################################################
+```
 adb shell "su -c 'cat /proc/kmsg | grep NEX_TEST_IOCTL_1'"
-################################################################
+```
 
 In a different terminal window you can set up the wifi interface
 and print the firmware console:
-################################################################
+```
 adb shell "su -c 'ifconfig wlan0 down && ifconfig wlan0 up && \
   dhdutil -i wlan0 consoledump'"
-################################################################
+```
 
 The output of the kernel log should be:
-################################################################
+```
 <4>[20339.600177] NEX_TEST_IOCTL_1: hello driver!
-################################################################
+```
 
 The output of the firmware console should be:
-################################################################
+```
 start=0x001eb5cc len=0x00000800
 
 RTE (USB-SDIO-CDC) 6.37.32.RC23.34.40 (r581243) on BCM4339 r1 @ 37.4/161.3/161.3MHz
@@ -77,4 +59,4 @@ RTE (USB-SDIO-CDC) 6.37.32.RC23.34.40 (r581243) on BCM4339 r1 @ 37.4/161.3/161.3
 000000.216 nex_ioctl_handler_in_c: cmd=15, arg=0022ded8, len=64
 000000.222 nex_ioctl_handler_in_c: cmd=16, arg=0022d750, len=64
 000000.227 NEX_TEST_IOCTL_2: hello firmware!
-################################################################
+```
