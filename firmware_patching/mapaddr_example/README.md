@@ -1,21 +1,4 @@
-
-    ###########   ###########   ##########    ##########
-   ############  ############  ############  ############
-   ##            ##            ##   ##   ##  ##        ##
-   ##            ##            ##   ##   ##  ##        ##
-   ###########   ####  ######  ##   ##   ##  ##    ######
-    ###########  ####  #       ##   ##   ##  ##    #    #
-             ##  ##    ######  ##   ##   ##  ##    #    #
-             ##  ##    #       ##   ##   ##  ##    #    #
-   ############  ##### ######  ##   ##   ##  ##### ######
-   ###########    ###########  ##   ##   ##   ##########
-
-      S E C U R E   M O B I L E   N E T W O R K I N G
-
-
-###############
-mapaddr_example
-###############
+# mapaddr_example
 
 The mapaddr program is used to match addresses in a stack trace
 to function names in a map file. Everytime the firmware in the 
@@ -34,22 +17,22 @@ debugger_example to set a breakpoint in the firmware, where we
 intend to dump the stack. In the following example, this would
 be the dma_txfast function that sends an sk_buff either to the
 D11 core, or the SDIO core:
-################################################################
+```
 dbg_set_breakpoint_for_addr_match(0, 0x1844B2); // dma_txfast
-################################################################
+```
 
 When the breakpoint hits, it first checks if the target of the
 dma_txfast call is not the DMA of the SDIO controller and then
 creates a new frame that contains a stack trace, similar to the
 udp_to_android_example.
-################################################################
+```
 if (trace->r0 != 0x1eab98) {
   p = create_frame(trace->pc, trace->r0, trace->r1, trace->r2, 
     (void *) trace->sp, 
     BOTTOM_OF_STACK - (unsigned int) trace->sp);
   dngl_sendpkt(SDIO_INFO_ADDR, p, SDPCM_DATA_CHANNEL);
 }
-################################################################
+```
 
 The created frames encapsulate the stack trace into UDPLite, 
 IPv6 and Ethernet frames that can be received by Android user
@@ -57,8 +40,7 @@ space applications. One can either dump those frames into a file
 using tcpdump, or get live traces by telling mapaddr to listen 
 on an interface.
 
-How to run the example?
-=======================
+## How to run the example?
 
 To compile the mapaddr tool, you need the libpcap sources placed
 in the external directory in your NDK root. The mapaddr tool can
@@ -67,27 +49,27 @@ for a Linux host (bcm-public/buildtools/mapaddr). The latter is
 useful to analyze pcap dumps from tcpdump offline.
 
 To run the example, first load the patched firmware and driver:
-################################################################
+```
 make reloadfirmware FWPATCH=mapaddr_example
-################################################################
+```
 
 Then, set up the wifi interface:
-################################################################
+```
 adb shell "su -c 'ifconfig wlan0 up'"
-################################################################
+```
 
 Then start mapaddr and tell it to listen on the wlan0 interface:
-################################################################
+```
 adb shell "su -c 'mapaddr -c wlan0'"
-################################################################
+```
 
 To generate some calls to dma_txfast, we scan for access points:
-################################################################
+```
 adb shell "su -c 'iwlist wlan0 scan'"
-################################################################
+```
 
 The output of the mapaddr tool should contain the following:
-################################################################
+```
 dma_txfast 001844b2 001e2e24 001d1424 00000001
 0022 0000fffa: get_erom_ent (0000ff98+98) BL malloc_with_osh_wrapper
 0046 00192814: wlc_send_q (001926b8+348) BL wlc_txfifo
@@ -108,7 +90,7 @@ dma_txfast 001844b2 001e2e24 001d1424 00000001
 0630 00015680: indirectly_called_by_intr_handler (00015654+44) BLX r3
 0646 00181aa4: external_interrupt_handler (00181a88+28) BLX r3
 0738 000166c4: enable_interrupts_and_wait (000166b4+16) BL wait_for_interrupt
-################################################################
+```
 
 The output tells you that function in which the stack trace
 was created based on the address passed as first argument to the
