@@ -10,7 +10,7 @@
 #define _SEARCH_H_
 
 #include <sys/cdefs.h>
-#include <sys/_types.h>
+#include <sys/types.h>
 
 #if 0
 #ifndef _SIZE_T_DECLARED

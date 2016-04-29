@@ -124,6 +124,8 @@ include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := iw
+LOCAL_CFLAGS += -fPIE
+LOCAL_LDFLAGS += -fPIE -pie
 LOCAL_SRC_FILES :=  $(call list-all,$(LOCAL_PATH),iw/*.c)
 LOCAL_SHARED_LIBRARIES := nl-3 nl-genl-3
 include $(BUILD_EXECUTABLE)
