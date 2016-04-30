@@ -2125,6 +2125,7 @@ nexmon_send_filter_pkt(char* msg, int msg_len) {
     osl_t *osh;
 
     DHD_INFO(("Enter %s\n", __FUNCTION__));
+    prhex("nexmon_send_filter_pkt() got data: ", data, msg_len);
 
     if(nexmon_glob_bus == NULL) {
         DHD_ERROR(("Nexmon no bus! available %s: \n", __FUNCTION__));
@@ -2142,7 +2143,7 @@ nexmon_send_filter_pkt(char* msg, int msg_len) {
     PKTALIGN(osh, pkt, (SDPCM_HDRLEN + msg_len ), DHD_SDALIGN);
 
     // Copy data
-    strncpy(PKTDATA(osh, pkt), data, msg_len);
+    memcpy(PKTDATA(osh, pkt), data, msg_len);
 
     // Add NexMon HDR
     DHD_INFO(("%s: Adding NexMon Header\n", __FUNCTION__));

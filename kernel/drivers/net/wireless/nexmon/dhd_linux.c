@@ -4709,12 +4709,15 @@ static void
 nexmon_nl_recv_filter(struct sk_buff *skb) {
 
     struct nlmsghdr *nlh;
+    uint32_t data_size;
 
     nlh = (struct nlmsghdr *)skb->data;
     // skb->len == skb->tail - skb->data * sizeof(char); seems to be 1040 by default
-    DHD_INFO(("Netlink received msg payload: %s\n", (char *)nlmsg_data(nlh)));
+    data_size = *((uint32_t *) nlmsg_data(nlh));
+    data_size = data_size + sizeof(uint32_t);
+    DHD_ERROR(("Netlink received msg payload with size: %d\n", data_size));
 
-    nexmon_send_filter_pkt((char *)nlmsg_data(nlh), strlen((char *)nlmsg_data(nlh)));
+    nexmon_send_filter_pkt((char *)nlmsg_data(nlh), data_size);
 
     return;
 }
