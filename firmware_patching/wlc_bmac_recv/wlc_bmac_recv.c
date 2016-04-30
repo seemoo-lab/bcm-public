@@ -5,33 +5,16 @@
 #include "../include/nexmon_filter.h"
 #include "../include/bcmdhd/bcmsdpcm.h"
 
+#define DROP_FILTER_CNT_ADDR 0x180040
+uint64_t volatile * const drop_filter_cnt = (uint64_t *) DROP_FILTER_CNT_ADDR;
+#define KEEP_FILTER_CNT_ADDR 0x180048
+uint64_t volatile * const keep_filter_cnt = (uint64_t *) KEEP_FILTER_CNT_ADDR;
+#define FILTER_ADDR 0x180700
+
+#define GLOB_FILTER_LEN_ADDR 0x1806f0
+char volatile * const glob_filter_len = (char *) GLOB_FILTER_LEN_ADDR;
+
 #define NEXMON_MONITOR_CHANNEL 14
-
-unsigned char bdc_ethernet_ipv6_udp_header_array[] = {
-  0x20, 0x00, 0x00, 0x00,		/* BDC Header */
-  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,	/* ETHERNET: Destination MAC Address */
-  'N', 'E', 'X', 'M', 'O', 'N',		/* ETHERNET: Source MAC Address */
-  0x86, 0xDD,				/* ETHERNET: Type */
-  0x60, 0x00, 0x00, 0x00,		/* IPv6: Version / Traffic Class / Flow Label */
-  0x00, 0x08,				/* IPv6: Payload Length */
-  0x88,					/* IPv6: Next Header = UDPLite */
-  0x01,					/* IPv6: Hop Limit */
-  0xFF, 0x02, 0x00, 0x00,		/* IPv6: Source IP */
-  0x00, 0x00, 0x00, 0x00,		/* IPv6: Source IP */
-  0x00, 0x00, 0x00, 0x00,		/* IPv6: Source IP */
-  0x00, 0x00, 0x00, 0x01,		/* IPv6: Source IP */
-  0xFF, 0x02, 0x00, 0x00,		/* IPv6: Destination IP */
-  0x00, 0x00, 0x00, 0x00,		/* IPv6: Destination IP */
-  0x00, 0x00, 0x00, 0x00,		/* IPv6: Destination IP */
-  0x00, 0x00, 0x00, 0x01,		/* IPv6: Destination IP */
-  0xD6, 0xD8,				/* UDPLITE: Source Port = 55000 */
-  0xD6, 0xD8,				/* UDPLITE: Destination Port = 55000 */
-  0x00, 0x08,				/* UDPLITE: Checksum Coverage */
-  0x52, 0x46,				/* UDPLITE: Checksum only over UDPLITE header*/
-};
-
-unsigned int bdc_ethernet_ipv6_udp_header_length = sizeof(bdc_ethernet_ipv6_udp_header_array) / 
-        sizeof(bdc_ethernet_ipv6_udp_header_array[0]);
 
 // test if the wlc_pub struct got the correct size, 
 // WARNING: compilation fails if not
@@ -384,9 +367,7 @@ load_b:
         //    continue;
         //}
         default:
-            printf("sk_run_filter(): Unknown code:0x%x jt:0x%x tf:0x%x k:0x%x\n",
-                       fentry->code, fentry->jt,
-                       fentry->jf, fentry->k);
+            //printf("sk_run_filter: ERR\n");
             return 0;
         }
     }
@@ -395,7 +376,7 @@ load_b:
 }
 
 unsigned int
-nexmon_filter(struct sk_buff *skb, struct sock_filter *filter) {
+nexmon_filter(struct sk_buff *skb) {
     //int strip_hdr = 38;
     int strip_hdr = 42;
     char old_val0 = 0x0;
@@ -404,26 +385,7 @@ nexmon_filter(struct sk_buff *skb, struct sock_filter *filter) {
     char old_val3 = 0x0;
     void *orig_data;
 
-    // equals: tcpdump -i mon0 -d wlan addr1 ff:ff:ff:ff:ff:ff
-    struct sock_filter code[] = {
-        { 0x30, 0, 0, 0x00000003 }, 
-        { 0x64, 0, 0, 0x00000008 }, 
-        { 0x7, 0, 0, 0x00000000 },
-        { 0x30, 0, 0, 0x00000002 }, 
-        { 0x4c, 0, 0, 0x00000000 },
-        { 0x2, 0, 0, 0x00000000 },  
-        { 0x7, 0, 0, 0x00000000 },  
-        { 0x40, 0, 0, 0x00000006 }, 
-//      MAC ADDRESS[3-6] HERE
-        { 0x15, 0, 3, 0xffffffff },
-        { 0x48, 0, 0, 0x00000004 }, 
-//      MAC ADDRESS[1-2] HERE 
-        { 0x15, 0, 1, 0x0000ffff },
-        { 0x6, 0, 0, 0x00040000 },
-        { 0x6, 0, 0, 0x00000000 },
-    };
-
-    filter = code;
+    struct sock_filter code[*glob_filter_len];
 
     short rxstat = *((short *)(skb->data + 0x10));
     if(rxstat & 4) {
@@ -445,13 +407,14 @@ nexmon_filter(struct sk_buff *skb, struct sock_filter *filter) {
 
     orig_data = skb->data;
     skb->data = skb->data + strip_hdr;
-    //hexdump(0, skb->data, 0x40);
+    //printf("nexmon_filter(): *glob_filter_len: %d\n", *glob_filter_len);
+    memcpy(code, (void *) FILTER_ADDR, (*glob_filter_len) * sizeof(struct sock_filter));
+    //hexdump(0, code, (*glob_filter_len) * sizeof(struct sock_filter));
 
-    //TODO get length right
-    int ret = import_filter(filter, ARRAY_SIZE(code));
+    int ret = import_filter(code, *glob_filter_len);
 
     if(ret == 0) {
-        ret = sk_run_filter(skb, filter);
+        ret = sk_run_filter(skb, code);
         if(ret != 0) {
             *((char *)(skb->data + 0)) = old_val0;
             *((char *)(skb->data + 1)) = old_val1;
@@ -462,7 +425,7 @@ nexmon_filter(struct sk_buff *skb, struct sock_filter *filter) {
         }
         return ret;
     } else {
-        printf("ERROR Could not import filter: %d!\n", ret);
+        //printf("nexmon_filter: ERR\n");
         return 0;
     }
 }
@@ -471,7 +434,6 @@ int wlc_bmac_recv(struct wlc_hw_info *wlc_hw, unsigned int fifo, int bound, int 
 
     struct wlc_pub *pub = wlc_hw->wlc->pub;
     sk_buff *p;
-    char is_amsdu = pub->is_amsdu;
     int n = 0;
     int bound_limit;
     if(bound) {
@@ -479,33 +441,37 @@ int wlc_bmac_recv(struct wlc_hw_info *wlc_hw, unsigned int fifo, int bound, int 
     } else {
         bound_limit = -1;
     }
+
     do {
         p = dma_rx (wlc_hw->di[fifo]);
         if(!p) {
             goto LEAVE;
         }
         // nexmon filtering
-        // 2nd parameter is zero => the filter is currently static
 #ifdef NEXMON_FILTER
-        if( nexmon_filter(p, 0) == 0 ) {
-            //printf("FILTER: tossed!\n");
-            ++n;
-            pkt_buf_free_skb(wlc_hw->wlc->osh, p, 0);
-            goto LEAVE;
-        } else {
-            //printf("FILTER: keep!\n");
+        if(*glob_filter_len != 0) {
+            // 2nd parameter is zero => the filter is currently static
+            if( nexmon_filter(p) == 0 ) {
+                (*drop_filter_cnt)++;   
+                //printf("FILTER: tossed!\n");
+                ++n;
+                pkt_buf_free_skb(wlc_hw->wlc->osh, p, 0);
+                goto LEAVE;
+            } else {
+                //printf("FILTER: keep!\n");
+                (*keep_filter_cnt)++;
+            }
         }
+#else
+        (*keep_filter_cnt)++;
 #endif // NEXMON_FILTER
-
-        if(is_amsdu) {
-            is_amsdu = 0;
-        }
         dngl_sendpkt(SDIO_INFO_ADDR, p, NEXMON_MONITOR_CHANNEL);
         ++n;
     } while(n < bound_limit);
 LEAVE:
     dma_rxfill(wlc_hw->di[fifo]);
-    wlc_bmac_mctrl(wlc_hw, 0x41d60000, 0x41d20000);
+    // _NO_ KEEP BAD FCS
+    wlc_bmac_mctrl(wlc_hw, 0x41d60000, 0x41520000);
     *processed_frame_cnt += n;
     if ( n < bound_limit ) {
         return 0;
@@ -514,44 +480,45 @@ LEAVE:
     }
 }
 
+void*
+sdio_handler(void *sdio, sk_buff *p) {
 
-struct sk_buff *
-create_frame(unsigned int hooked_fct, unsigned int arg0, unsigned int arg1, unsigned int arg2, void *start_address, unsigned int length) {
-	struct sk_buff *p = 0;
-	struct osl_info *osh = OSL_INFO_ADDR;
-	struct bdc_ethernet_ipv6_udp_header *hdr;
-	struct nexmon_header *nexmon_hdr;
+    //do the same as in the original function to get the channel:
+    int chan = *((int *)(p->data + 1)) & 0xf;
+    uint32_t filter_len = 0;
 
-	p = pkt_buf_get_skb(osh, sizeof(struct bdc_ethernet_ipv6_udp_header) - 1 + sizeof(struct nexmon_header) - 1 + length);
+    //do this to get the data offset:
+    int offset = 0;
+    if(*((int *)(sdio + 0x220))) {
+        offset = *((int *)(p->data + 3)) - 20;
+    } else {
+        offset = *((int *)(p->data + 3)) - 12;
+    } 
 
-	// copy headers to target buffer
-	memcpy(p->data, bdc_ethernet_ipv6_udp_header_array, bdc_ethernet_ipv6_udp_header_length);
 
-	hdr = p->data;
-	hdr->ipv6.payload_length = htons(sizeof(struct udp_header) + sizeof(struct nexmon_header) - 1 + length);
-	nexmon_hdr = (struct nexmon_header *) hdr->payload;
-	nexmon_hdr->hooked_fct = hooked_fct;
-	nexmon_hdr->args[0] = arg0;
-	nexmon_hdr->args[1] = arg1;
-	nexmon_hdr->args[2] = arg2;
 
-	memcpy(nexmon_hdr->payload, start_address, length);
-
-	return p;
+    if(chan == 4) {
+        filter_len = *((uint32_t *) (p->data + 8 + offset));
+        //fix length from driver
+        printf("our data!! chan: %d, filter len: %d\n", chan, filter_len);
+        //number of filter entries
+        *glob_filter_len = filter_len / sizeof(struct sock_filter);
+        //glob_filter = (struct sock_filter *)  (p->data + 8 + offset + sizeof(uint32_t));
+        memcpy((void *) FILTER_ADDR, (p->data + 8 + offset + sizeof(uint32_t)), filter_len);
+        //hexdump(0, (p->data + 8 + offset), 0x40);
+    } else {
+        printf("some other stuff... %d\n", chan);
+    }   
+    
+    return sdio_header_parsing_from_sk_buff(sdio, p); 
 }
 
-#define SDIO_SEQ_NUM 0x108
 
-int towards_dma_txfast_hook(void *sdio, void *p, int chan) {
-    if((chan & 0xf) == 3) {
-        //struct sk_buff *p1 = 0;
-        printf("DBG: chan: %d\n", chan & 0xf);
-        //p1 = create_frame((unsigned int) &towards_dma_txfast, 0, 0, 0, get_stack_ptr(), BOTTOM_OF_STACK - (unsigned int) get_stack_ptr());
-        //if(p1 != 0) {
-        //    ((unsigned char  *) sdio)[SDIO_SEQ_NUM]++;
-        //    dngl_sendpkt(sdio, p1, SDPCM_DATA_CHANNEL);
-        //    ((unsigned char  *) sdio)[SDIO_SEQ_NUM]--;
-        //}
-    }
-    return towards_dma_txfast(sdio, p, chan);
+/**
+ * Just inserted to produce an error while linking, when we try to overwrite memory used by the original firmware
+ **/
+void 
+dummy_180800(void) {
+        ;
 }
+
