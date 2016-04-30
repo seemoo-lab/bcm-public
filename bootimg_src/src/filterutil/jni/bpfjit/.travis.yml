@@ -1,0 +1,19 @@
+language: c
+before_script: rm -rf sljit && svn co 'https://svn.code.sf.net/p/sljit/code@r220' sljit && curl 'http://www.opensource.apple.com/source/libpcap/libpcap-16/libpcap/pcap-bpf.h?txt' -o pcap-bpf.h
+script: make -C src/
+
+env:
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "lFz+Xycx86AunmynRYjaokY2m/e8IEGotmXf1NzcyoYJxWYqEB/dluoB8Q/BIux0MGIw0SOEPx1zpqP5+tg+gxpekBYJaDKwhjaKH7r2euLon2deStdHKz/I3KHBN9+Wnd0HS+6dYN3tMvAy8B/a8uDHIykVmhvL0DxcRn7+O30="
+
+addons:
+  coverity_scan:
+    project:
+      name: "alnsn/bpfjit"
+      description: "Build submitted via Travis CI"
+    notification_email: alnsn@yandex.ru
+    build_command_prepend: "rm -rf sljit && svn co 'https://svn.code.sf.net/p/sljit/code@r220' sljit && curl 'http://www.opensource.apple.com/source/libpcap/libpcap-16/libpcap/pcap-bpf.h?txt' -o pcap-bpf.h"
+    build_command:   "make -C src/"
+    branch_pattern: coverity_scan

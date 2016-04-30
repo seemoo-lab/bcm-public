@@ -1,0 +1,14 @@
+void test_empty(void);
+void test_ld(void);
+void test_ldx(void);
+void test_alu(void);
+void test_jmp(void);
+void test_misc(void);
+void test_st(void);
+void test_stx(void);
+void test_opt(void);
+void test_cop(void);
+void test_copx(void);
+void test_extmem(void);
+void test_cop_extmem(void);
+void test_copx_extmem(void);

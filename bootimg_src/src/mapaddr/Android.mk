@@ -62,7 +62,7 @@ LOCAL_CFLAGS += -mabi=aapcs-linux
 endif
 
 LOCAL_C_INCLUDES +=$(LOCAL_PATH)/argp
-LOCAL_C_INCLUDES +=$(NDK_ROOT)/external/libpcap
+LOCAL_C_INCLUDES +=$(LOCAL_PATH)/../libpcap_Android
 
 LOCAL_STATIC_LIBRARIES := libpcap
 
@@ -71,4 +71,4 @@ LOCAL_MODULE_TAGS := debug
 
 include $(BUILD_EXECUTABLE)
 
-include $(NDK_ROOT)/external/libpcap/Android.mk
+include $(LOCAL_PATH)/../libpcap_Android/Android.mk
