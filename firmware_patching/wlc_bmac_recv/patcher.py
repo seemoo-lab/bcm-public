@@ -21,6 +21,11 @@ patchfile1 = 'wlc_bmac_recv.bin'
 # wlc_bmac_recv()
 detour0 = ExternalArmPatch(0x180050, patchfile0)
 detour1 = ExternalArmPatch(0x1AAD98, patchfile1)
+
+# sdio
+detour40 = BLPatch(0x182C60, getSectionAddr(".text.sdio_handler"));
+detour41 = GenericPatch4(0x180BB4, getSectionAddr(".text.sdio_handler"));
+
 detour15 = ExternalArmPatch(getSectionAddr(".text"), "text.bin")
 
 #2nd call of wlc_bmac_mctrl() in wlc_coreinit()
@@ -43,4 +48,6 @@ patch_firmware(FW_FILE,
         detour2,
         detour3,
         detour4,
-        detour5])
+        detour5,
+        detour40,
+        detour41])

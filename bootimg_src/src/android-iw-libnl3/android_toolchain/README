@@ -1,0 +1,9 @@
+   1. Install Android NDK:
+      Get the official Android NDK from http://developer.android.com/tools/sdk/ndk/index.html
+      (For Windows, Cygwin 1.7 or higher is required)
+      Add the root directory of the unpacked Android NDK to your PATH variable
+
+   2. Run "ndk-build" in android_buildchain directory
+      More Android NDK parameters:
+      "ndk-build clean" (delete generated libs)
+      "ndk-build -B V=1 NDK_DEBUG=1 NDK_LOG=1" (force complete rebuild (-B), showing commands and enable debug and logs from android ndk)

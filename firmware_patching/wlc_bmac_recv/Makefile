@@ -18,12 +18,13 @@ $(FILE1)_filter.o: $(FILE1).c ../include/*.h
 	make -C ../wrapper
 
 $(FILE1).elf: $(FILE1).o ../wrapper/wrapper.o $(FILE1).ld
-	$(CC)ld -T $(FILE1).ld --entry=$(ENTRY_FUNC1) -o $(FILE1).elf --gc-sections --print-gc-sections -M
+	$(CC)ld -T $(FILE1).ld -o $(FILE1).elf --gc-sections --print-gc-sections -M
 
 $(FILE1).bin: $(FILE1).elf
 	$(CC)objcopy -O binary -j .text.wlc_bmac_recv $(FILE1).elf $(FILE1).bin
 $(FILE2).bin: $(FILE1).elf
-	$(CC)objcopy -O binary -j .text.nexmon_filter $(FILE1).elf $(FILE2).bin
+	$(CC)objcopy -O binary -j .text.nexmon_filter -j .text.sdio_handler $(FILE1).elf $(FILE2).bin
+
 text.bin: $(FILE1).elf
 	$(CC)objcopy -O binary -j .text $(FILE1).elf text.bin
 
