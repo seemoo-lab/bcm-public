@@ -73,14 +73,6 @@
 #include <wl_cfgvendor.h>
 #endif /* KERNEL > 3.13 || WL_VENDOR_EXT_SUPPORT */
 
-#ifdef WL11U
-#if !defined(WL_ENABLE_P2P_IF) && !defined(WL_CFG80211_P2P_DEV_IF)
-#error You should enable 'WL_ENABLE_P2P_IF' or 'WL_CFG80211_P2P_DEV_IF' \
-	according to Kernel version and is supported only in Android-JB
-#endif /* !WL_ENABLE_P2P_IF && !WL_CFG80211_P2P_DEV_IF */
-#endif /* WL11U */
-
-
 #define IW_WSEC_ENABLED(wsec)   ((wsec) & (WEP_ENABLED | TKIP_ENABLED | AES_ENABLED))
 
 static struct device *cfg80211_parent_dev = NULL;
@@ -5256,6 +5248,9 @@ wl_cfg80211_set_channel(struct wiphy *wiphy, struct net_device *dev,
 		u32 bw_cap;
 	} param = {0, 0};
 	struct wl_priv *wl = wiphy_priv(wiphy);
+
+	if (!dev)
+		return BCME_NOTUP;
 
 	dev = ndev_to_wlc_ndev(dev, wl);
 	_chan = ieee80211_frequency_to_channel(chan->center_freq);

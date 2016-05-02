@@ -43,6 +43,12 @@ patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin",
 	# Overwrite the existing wlc_bmac_recv function with our hook
 	ExternalArmPatch(getSectionAddr(".text.wlc_bmac_recv_hook"), "wlc_bmac_recv_hook.bin"),
 
+	# Add the dma_attach_hook function to the firmware
+	ExternalArmPatch(getSectionAddr(".text.dma_attach_hook"), "dma_attach_hook.bin"),
+
+	# Hook the first call to wlc_bmac_attach_dmapio to increase the rx extra header size
+	BLPatch(0x1F4FCE, getSectionAddr(".text.dma_attach_hook")),
+
 	# Patch parameters of call to wlc_bmac_mctrl() in wlc_coreinit()
 	GenericPatch4(0x1AB82C, 0x41d60000), # mask
 	GenericPatch4(0x1AB828, 0x41d20000), # value

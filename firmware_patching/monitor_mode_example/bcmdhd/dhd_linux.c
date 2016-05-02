@@ -43,6 +43,7 @@
 #include <linux/fcntl.h>
 #include <linux/fs.h>
 #include <linux/ip.h>
+#include <linux/if_arp.h>
 #include <net/addrconf.h>
 
 #include <asm/uaccess.h>
@@ -4357,18 +4358,6 @@ dhd_preinit_ioctls(dhd_pub_t *dhd)
 #endif
 #endif /* DISABLE_11N */
 
-    /* NexMon: we have to disable MPC to receive frames 
-     * from the firmware
-     */
-    DBG_THR(("%s: about to disable MPC\n",__FUNCTION__));
-    bcm_mkiovar("mpc", (char *)&mpc, 4, iovbuf, sizeof(iovbuf));
-    if ((ret = dhd_wl_ioctl_cmd(dhd, WLC_SET_VAR, iovbuf,
-        sizeof(iovbuf), TRUE, 0)) < 0) { 
-        DHD_ERROR(("Error on disabing MPC: %d\n", ret));
-    } else {
-        DBG_THR(("%s: disabling MPC successful!\n",__FUNCTION__));
-    }
-
 	/* query for 'ver' to get version info from firmware */
 	memset(buf, 0, sizeof(buf));
 	ptr = buf;
@@ -4747,6 +4736,8 @@ dhd_net_attach(dhd_pub_t *dhdp, int ifidx)
 #endif /* defined(WL_WIRELESS_EXT) */
 
 	dhd->pub.rxsz = DBUS_RX_BUFFER_SIZE_DHD(net);
+
+	net->type = ARPHRD_IEEE80211_RADIOTAP;
 
 	memcpy(net->dev_addr, temp_addr, ETHER_ADDR_LEN);
 
