@@ -20,8 +20,9 @@ struct osl_info {
 typedef struct sk_buff {
 	struct sk_buff *next;
 	struct sk_buff *prev;
-	int PAD[2];
-	void *data;
+	void *head;                /* head of buffer */
+    void *end;                 /* end of buffer */
+	void *data;                /* data head pointer */
 	short len;
 } __attribute__((packed)) sk_buff;
 
@@ -31,20 +32,40 @@ struct tunables {
     short rxbnd; // @ 0x40
 };
 
+struct wlc_hwband {
+    int bandtype;               /* 0x00 */
+    int bandunit;               /* 0x04 */
+    char mhfs;                  /* 0x05 */
+    char PAD[10];               /* 0x06 */
+    char bandhw_stf_ss_mode;    /* 0x13 */
+    short CWmin;                /* 0x14 */
+    short CWmax;                /* 0x16 */
+    int core_flags;             /* 0x18 */
+    short phytype;              /* 0x1C */
+    short phyrev;               /* 0x1E */
+    short radioid;              /* 0x20 */
+    short radiorev;             /* 0x22 */
+    void *pi;                   /* 0x24 */
+    char abgphy_encore;         /* 0x25 */
+};
+
 struct wlc_hw_info {
-    struct wlc_info *wlc;
-    int PAD[4];
-    void *di[6]; // only 4 byte
+    struct wlc_info *wlc;       /* 0x00 */
+    int PAD[4];                 /* 0x04 */
+    struct dma_info *di[6];     /* 0x14 - only 4 bytes */
     int PAD[17];
     char PAD[2];
     char ucode_loaded;
     char PAD;
     int PAD;
-    int sih;
-    int vars;
-    int vars_size;
-    struct d11regs* regs;
-    int PAD[29];
+    int sih;                    /* 0x78 */
+    int vars;                   /* 0x7C */
+    int vars_size;              /* 0x80 */
+    struct d11regs* regs;       /* 0x84 */
+    int physhim;                /* 0x88 */
+    int phy_sh;                 /* 0x8C */
+    struct wlc_hwband *band;     /* 0x90 */
+    int PAD[26];
     int maccontrol; // @ 0xe7
     int PAD[18];
     sk_buff *some_skbuff_ptr; // @ 0x134
@@ -140,7 +161,22 @@ struct dma_info {
                                  * is not just an index, it needs all 13 bits to be
                                  * an offset from the addr register.
                                  */
-
+    short PAD;
+    short nrxd;
+    short rxin;
+    short rxout;
+    short PAD;
+    void **rxp;
+    int PAD;
+    int PAD;
+    int rxdpa;
+    short rxdalign;
+    short PAD;
+    int PAD;
+    int PAD;
+    int PAD;
+    int rxbufsize;              /* rx buffer size in bytes, not including the extra headroom */
+    int rxextrahdrroom;         /* extra rx headroom. */
 
 } __attribute__((packed));
 

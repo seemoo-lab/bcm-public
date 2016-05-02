@@ -69,6 +69,7 @@ extern void before_before_initialize_memory(void); // 0x183886
 extern int bus_binddev(void *sdio_hw, void *sdiodev, void *d11dev); // 0x1837F8
 extern int bus_binddev_rom(void *sdiodev, void *d11dev); // 0x1B8C4
 
+extern void *dma_attach(void *osh, char *name, void* sih, unsigned int dmaregstx, unsigned int dmaregsrx, unsigned int ntxd, unsigned int nrxd, unsigned int rxbufsize, int rxextheadroom, unsigned int nrxpost, unsigned int rxoffset, void *msg_level); // 0x15694
 extern void *dma_rx(void *di); // 0x8c69c
 extern void *dma_rxfill(void *di); // 0x8c6cc
 extern void *dma_txfast(void *di, void *p, int commit); // 0x1844B2
@@ -96,6 +97,7 @@ extern void *setup_some_stuff(void *wl, int vendor, int a3, int a4, char a5, voi
 extern unsigned int si_getcuridx(void *sii); // 0x1d474
 extern void si_setcore(void *sii, int coreid, int coreunit); // 0x1DCBC
 extern void si_update_chipcontrol_shm(void *sii, int addr, int mask, int data); // 0x184878
+extern int strncmp(char *str1, char *str2, unsigned int num); // 0x1283C
 extern void sub_166b4(void); // 0x166b4
 extern void sub_16D8C(int a1, int a2, void *a3); // 0x16D8C
 extern void *sub_1831A0(void *osh, void *a2, int a3, void *sdiodev); // 0x1831A0
@@ -114,11 +116,15 @@ extern int towards_dma_txfast(void *sdio, void *p, int chan); // 0x18256C
 
 extern void wlc_bmac_init(void *wlc_hw, unsigned int chanspec, unsigned int mute); // 0x1AB840
 extern void wlc_bmac_mctrl(void *wlc_hw, int mask, int val); // 0x4F080
+extern void wlc_bmac_read_tsf(void *wlc_hw, unsigned int *tsf_l_ptr, unsigned int *tsf_h_ptr); // 0x1AAD84
 extern void wlc_bmac_write_template_ram(void *wlc_hw, int offset, int len, void *buf); // 0x504B0
 extern void wlc_coreinit(void *wlc_hw); // 0x1AB66C
 extern int wlc_init(void *wlc); // 0x199874
 extern int wlc_ioctl(void *wlc, int cmd, void *arg, int len, void *wlc_if); // 0x19551C
+extern int wlc_iovar_op(void *wlc, char *varname, void *params, int p_len, void *arg, int len, char set, void *wlcif); // 0x18BB6C
 extern void wlc_mctrl_write(void *wlc_hw); // 0x4DF60
+extern int wlc_phy_channel2freq(unsigned int channel); // 0x1C4B40
+extern void wlc_phy_rssi_compute(void *pih, void *ctx); // 0x1C553C
 extern void wlc_txfifo(void *wlc, int fifo, void *p, void *txh, unsigned char commit, char txpktpend); // 0x193744
 extern void wlc_ucode_download(void *wlc_hw); // 0x1F4EF8
 extern void wlc_ucode_write(void *wlc_hw, const int ucode[], const unsigned int nbytes); // 0x4E0C8

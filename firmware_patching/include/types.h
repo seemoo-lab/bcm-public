@@ -26,5 +26,6 @@ typedef uint32_t                wchar_t;
 typedef uint32_t                size_t;
 typedef uint32_t                addr_t;
 typedef int32_t                 pid_t;
+typedef uint32_t				uint;
 
 #endif
