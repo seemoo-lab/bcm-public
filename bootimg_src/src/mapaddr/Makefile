@@ -4,11 +4,7 @@ all: ../../bin/mapaddr
 	cp local/armeabi/mapaddr ../../bin
 
 local/armeabi/mapaddr: Android.mk
-ifneq ("$(wildcard $(../../../../android/android-ndk-r10e/ndk-build))","")
-	../../../../android/android-ndk-r10e/ndk-build NDK_APPLICATION_MK=`pwd`/Application.mk NDK_APP_OUT=. TARGET_PLATFORM=android-21
-else
-	ndk-build NDK_APPLICATION_MK=`pwd`/Application.mk NDK_APP_OUT=. TARGET_PLATFORM=android-21
-endif
+	$(NDK_ROOT)/ndk-build NDK_APPLICATION_MK=`pwd`/Application.mk NDK_APP_OUT=. TARGET_PLATFORM=android-21
 
 clean:
 	rm -Rf libs

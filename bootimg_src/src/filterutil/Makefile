@@ -1,8 +1,8 @@
 all: jni/Android.mk
-	ndk-build TARGET_PLATFORM=android-21
+	$(NDK_ROOT)/ndk-build TARGET_PLATFORM=android-21
 
 clean:
-	ndk-build clean
+	$(NDK_ROOT)/ndk-build clean
 
 push: libs/armeabi/filterutil
 	adb push libs/armeabi/filterutil /sdcard/
