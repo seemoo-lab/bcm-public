@@ -1207,22 +1207,7 @@ static int parse_txq_params(struct nlattr *tb[],
 
 static bool nl80211_can_set_dev_channel(struct wireless_dev *wdev)
 {
-	/*
-	 * You can only set the channel explicitly for AP, mesh
-	 * and WDS type interfaces; all others have their channel
-	 * managed via their respective "establish a connection"
-	 * command (connect, join, ...)
-	 *
-	 * Monitors are special as they are normally slaved to
-	 * whatever else is going on, so they behave as though
-	 * you tried setting the wiphy channel itself.
-	 */
-	return !wdev ||
-		wdev->iftype == NL80211_IFTYPE_AP ||
-		wdev->iftype == NL80211_IFTYPE_WDS ||
-		wdev->iftype == NL80211_IFTYPE_MESH_POINT ||
-		wdev->iftype == NL80211_IFTYPE_MONITOR ||
-		wdev->iftype == NL80211_IFTYPE_P2P_GO;
+	 return true;
 }
 
 static int __nl80211_set_channel(struct cfg80211_registered_device *rdev,

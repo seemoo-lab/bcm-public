@@ -18,7 +18,7 @@ def getSectionAddr(name):
 patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin", 
     "fw_bcmdhd.bin", [
 	# The text section is always required and contains code that is called by patches and hooks but not directly placed to predefined memory locations
-	#ExternalArmPatch(getSectionAddr(".text"), "text.bin"),
+	ExternalArmPatch(getSectionAddr(".text"), "text.bin"),
 
 	# ExternalArmPatch instructions copy the contents of a binary file to an address in the firmware
 	# ExternalArmPatch(<address to store binary blob>, <file name>),
@@ -39,6 +39,19 @@ patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin",
 	# GenericPatch2 instructions replace a word (two bytes) at a given address in the firmware
 	# 0xBF00 can be used to place a NOP instruction
 	# GenericPatch2(<address to replace word>, <two byte value>),
+
+	ExternalArmPatch(getSectionAddr(".text.before_before_initialize_memory_hook"), "before_before_initialize_memory_hook.bin"),
+	GenericPatch4(0x181240, getSectionAddr(".text.before_before_initialize_memory_hook")+1),
+
+	ExternalArmPatch(getSectionAddr(".text.tr_pref_abort_hook"), "tr_pref_abort_hook.bin"), # patch to stay in abort mode to handle exception, original codes switches to system mode
+
+	ExternalArmPatch(getSectionAddr(".text.handle_exceptions"), "handle_exceptions.bin"), # patch to stay in abort mode to handle exception, original codes switches to system mode
+
+#	The following patch, that is necessary to access debug registers in an interrupt handler breaks normal wifi operation
+	GenericPatch4(0x18536A, 0xBF00BF00), # write nops over the si_update_chipcontrol_shm(sii, 5, 16, 0) call in si_setup_cores
+
+	ExternalArmPatch(getSectionAddr(".text.enable_interrupts_and_wait_hook"), "enable_interrupts_and_wait_hook.bin"),
+	BPatch(0x1838AC, getSectionAddr(".text.enable_interrupts_and_wait_hook")),
 
 	# This line replaces the firmware version string that is printed to the console on startup to identify which firmware is loaded by the driver
 	StringPatch(0x1FD31B, (os.getcwd().split('/')[-1] + " (" + time.strftime("%d.%m.%Y %H:%M:%S") + ")\n")[:52]), # 53 character string
