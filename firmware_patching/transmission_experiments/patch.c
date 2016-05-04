@@ -98,7 +98,8 @@ enable_interrupts_and_wait_hook_in_c(void)
 	scb = __wlc_scb_lookup(wlc, bsscfg, pkt, 0);
 	wlc_scb_set_bsscfg(scb, bsscfg);
 	//scb[60] = wlc->active_queue;
-	printf("scb10=%08x ac=%08x\n", scb[4], wlc->active_queue); 
+	wlc->tx_prec_map = 0xFFFF;
+	printf("tx_prec_map=%08x\n", wlc->tx_prec_map); 
 
 	printf("D %08x %08x %08x %08x\n", (int) bsscfg, *(int *) bsscfg, *(int *) (bsscfg+4), *(int *) (bsscfg_0x30C + 50));
 
@@ -155,7 +156,7 @@ handle_pref_abort_exception(struct trace *trace)
 
 			dbg_set_breakpoint_for_addr_mismatch(0, trace->pc);
 
-			if ((trace->pc > 0x197A18) && (trace->pc < 0x197E34)) {
+			if ((trace->pc > 0x1926b8) && (trace->pc < 0x192904)) {
 				printf("A%d/%d:%08x\n", breakpoint_cnt1, breakpoint_cnt2, trace->pc);
 				breakpoint_cnt2++;
 			} else {
@@ -164,7 +165,7 @@ handle_pref_abort_exception(struct trace *trace)
 			}
 			breakpoint_cnt1++;
 
-			if ((breakpoint_cnt1 > 1500) || (breakpoint_cnt2 > 150) || (trace->pc == 0x197e2c)) {
+			if ((breakpoint_cnt1 > 1500) || (breakpoint_cnt2 > 150) || (trace->pc == 0x192904)) {
 				printf("disable\n");
 				printf("0=%08x 1=%08x 2=%08x 3=%08x 6=%08x\n", trace->r0, trace->r1, trace->r2, trace->r3, trace->r6);
 				dbg_disable_breakpoint(0);
@@ -209,7 +210,8 @@ set_debug_registers(void)
 	//dbg_set_breakpoint_for_addr_match(0, 0x1AAD98); // wlc_bmac_recv
 	//dbg_set_breakpoint_for_addr_match(0, 0x19551C); // wlc_ioctl
 	//dbg_set_breakpoint_for_addr_match(0, 0x1844B2); // dma_txfast
-	dbg_set_breakpoint_for_addr_match(0, (int) wlc_sendpkt);
+	//dbg_set_breakpoint_for_addr_match(0, (int) wlc_sendpkt);
+	dbg_set_breakpoint_for_addr_match(0, (int) wlc_send_q);
 }
 
 /**

@@ -67,7 +67,7 @@ print_breakpoint_infos(int breakpoint_number, struct trace *trace, int dump_size
 {
 	switch(dump_size) {
 		case 0:
-			printf("BP%d(%d) PC=%08x LR=%08x 0=%08x 1=%08x 1=%08x 3=%08x 4=%08x 5=%08x 6=%08x\n", 
+			printf("BP%d(%d) PC=%08x LR=%08x 0=%08x 1=%08x 2=%08x 3=%08x 4=%08x 5=%08x 6=%08x\n", 
 				breakpoint_number, 
 				breakpoint_hit_counter[breakpoint_number], 
 				trace->PC, 

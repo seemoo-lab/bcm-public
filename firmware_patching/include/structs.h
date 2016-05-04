@@ -255,7 +255,8 @@ struct wlc_info {
     int PAD;                            /* 0x240 */
     int PAD;                            /* 0x244 */
     int PAD;                            /* 0x248 */
-    int PAD;                            /* 0x24C */
+    unsigned short tx_prec_map;         /* 0x24C */
+    short PAD;                          /* 0x24E */
     int PAD;                            /* 0x250 */
     int PAD;                            /* 0x254 */
     int PAD;                            /* 0x258 */

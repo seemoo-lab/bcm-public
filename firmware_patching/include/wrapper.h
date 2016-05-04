@@ -128,11 +128,13 @@ extern int wlc_iovar_op(void *wlc, char *varname, void *params, int p_len, void 
 extern void wlc_mctrl_write(void *wlc_hw); // 0x4DF60
 extern int wlc_phy_channel2freq(unsigned int channel); // 0x1C4B40
 extern void wlc_phy_rssi_compute(void *pih, void *ctx); // 0x1C553C
+extern void wlc_prep_sdu(void *wlc, void *p, int *counter, int *fifo); // 0x191B00
 extern void *wlc_scbfindband(void *wlc, void *bsscfg, char *ea, int bandunit); // 0x1C9DBE
 extern void *__wlc_scb_lookup(void *wlc, void *bsscfg, char *ea, int bandunit); // 0x1CA496
 extern void *wlc_scb_lookup(void *wlc, void *bsscfg, char *ea); // 0x1CA4CE
 extern void *wlc_scb_set_bsscfg(void *scb, void *bsscfg); // 0x76900
 extern int wlc_sendpkt(void *wlc, void *p, int wlcif); // 0x197A18
+extern void wlc_send_q(void *wlc, void *qi); // 0x1926B8
 extern void wlc_txfifo(void *wlc, int fifo, void *p, void *txh, unsigned char commit, char txpktpend); // 0x193744
 extern void wlc_ucode_download(void *wlc_hw); // 0x1F4EF8
 extern void wlc_ucode_write(void *wlc_hw, const int ucode[], const unsigned int nbytes); // 0x4E0C8
