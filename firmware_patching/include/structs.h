@@ -18,12 +18,17 @@ struct osl_info {
 } __attribute__((packed));
 
 typedef struct sk_buff {
-	struct sk_buff *next;
-	struct sk_buff *prev;
-	void *head;                /* head of buffer */
-    void *end;                 /* end of buffer */
-	void *data;                /* data head pointer */
-	short len;
+	struct sk_buff *next;       /* 0x00 */
+	struct sk_buff *prev;       /* 0x04 */
+	void *head;                 /* 0x08 - head of buffer */
+    void *end;                  /* 0x0C - end of buffer */
+	void *data;                 /* 0x10 - data head pointer */
+	short len;                  /* 0x14 */
+    short prio;                 /* 0x16 */
+    short PAD;                  /* 0x18 */
+    short PAD;                  /* 0x1A */
+    int PAD;                    /* 0x1C */
+    int flags;                  /* 0x20 */
 } __attribute__((packed)) sk_buff;
 
 struct tunables {
@@ -105,7 +110,27 @@ struct sdiox_info {
     void *sdio; // sdio_info struct
     void *osh;
     void *device_address;
-};
+} __attribute__((packed));
+
+struct wlcband {
+    int bandtype;                       /* 0x000 */
+    int bandunit;                       /* 0x004 */
+    short phytype;                      /* 0x008 */
+    short phyrev;                       /* 0x00A */
+    short radioid;                      /* 0x00C */
+    short radiorev;                     /* 0x00E */
+    void *pi;                           /* 0x010 */
+    char abgphy_encore;                 /* 0x014 */
+    char gmode;                         /* 0x015 */
+    int hwrs_scb;                       /* 0x016 */
+    int defrateset;                     /* 0x01A */
+    int rspec_override;                 /* 0x01E */
+    int mrspec_override;                /* 0x022 */
+    char band_stf_ss_mode;              /* 0x026 */
+    char band_stf_stbc_tx;              /* 0x027 */
+    int hw_rateset;                     /* 0x028 */
+    char basic_rate;                    /* 0x02C */
+} __attribute__((packed));
 
 struct wlc_info {
     struct wlc_pub *pub;                /* 0x000 */
@@ -116,7 +141,7 @@ struct wlc_info {
     int PAD;                            /* 0x014 */
     int PAD;                            /* 0x018 */
     void *core;                         /* 0x01C */
-    void *band;                         /* 0x020 */
+    struct wlcband *band;               /* 0x020 */
     int PAD;                            /* 0x024 */
     int PAD;                            /* 0x028 */
     int PAD;                            /* 0x02C */
@@ -496,9 +521,34 @@ struct wlc_info {
 };
 
 struct wlc_pub {
-    int gap1[10];
-    struct tunables *tunables; // @ 0x28
-    char gap2[187];
+    struct wlc_info *wlc;               /* 0x000 */
+    int PAD;                            /* 0x004 */
+    int PAD;                            /* 0x008 */
+    int PAD;                            /* 0x00C */
+    int PAD;                            /* 0x010 */
+    int PAD;                            /* 0x014 */
+    int PAD;                            /* 0x018 */
+    int PAD;                            /* 0x01C */
+    int PAD;                            /* 0x020 */
+    char field_24;                      /* 0x024 */
+    char field_25;                      /* 0x025 */
+    char field_26;                      /* 0x026 */
+    char field_27;                      /* 0x027 */
+    struct tunables *tunables;          /* 0x028 */
+    int PAD;                            /* 0x02C */
+    int PAD;                            /* 0x030 */
+    int PAD;                            /* 0x034 */
+    int PAD;                            /* 0x038 */
+    int PAD;                            /* 0x03C */
+    int PAD;                            /* 0x040 */
+    char PAD;                           /* 0x044 */
+    char PAD;                           /* 0x045 */
+    char field_46;                      /* 0x046 */
+    char PAD;                           /* 0x047 */
+    int PAD;                            /* 0x048 */
+    int PAD;                            /* 0x04C */
+    int PAD;                            /* 0x050 */
+    char gap2[147];
     char is_amsdu; // @ 0xe7
 } __attribute__((packed));
 

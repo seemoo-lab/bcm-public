@@ -94,21 +94,37 @@ enable_interrupts_and_wait_hook_in_c(void)
 
 	bsscfg[0x04] = 1;
 	bsscfg[0x06] = 1;
+	bsscfg[0x16] = 0;
 	
+	wlc->pub->field_24 = 1;
+	wlc->pub->field_46 = 1;
+
 	scb = __wlc_scb_lookup(wlc, bsscfg, pkt, 0);
 	wlc_scb_set_bsscfg(scb, bsscfg);
+	printf("scb28=%08x bandunit=%08x\n", scb[7], wlc->band->bandunit);
 	//scb[60] = wlc->active_queue;
 	wlc->tx_prec_map = 0xFFFF;
-	printf("tx_prec_map=%08x\n", wlc->tx_prec_map); 
+	printf("bsscfg16=%08x\n", bsscfg[0x16]);
+	printf("bsscfg0C=%08x\n", bsscfg[0x0C]);
 
 	printf("D %08x %08x %08x %08x\n", (int) bsscfg, *(int *) bsscfg, *(int *) (bsscfg+4), *(int *) (bsscfg_0x30C + 50));
 
-	ret = wlc_sendpkt(wlc, p, 0);
+	p->flags |= 0x4;
+	printf("flags=%08x\n", p->flags);
+
+	//ret = wlc_sendpkt(wlc, p, 0);
+
+	printf("%08x flags=%08x %08x\n", (int) p, p->flags, *((int *) (((char *)p) + 0x20)));
 	
 	bsscfg[0x04] = 0;
 	bsscfg[0x06] = 0;
+	bsscfg[0x16] = 1;
 
-	printf("test %d\n", ret);	
+	wlc->pub->field_24 = 0;
+	wlc->pub->field_46 = 0;
+
+	printf("test %d\n", ret);
+	printf("scb28=%08x bandunit=%08x\n", scb[7], wlc->band->bandunit);	
 }
 
 /**
@@ -136,6 +152,9 @@ fix_sp_lr(struct trace *trace)
 	return trace;
 }
 
+#define WLC_SEND_Q_START	0x1926B8
+#define WLC_SEND_Q_END		0x1928EA
+
 void __attribute__((optimize("O0")))
 handle_pref_abort_exception(struct trace *trace)
 {
@@ -156,7 +175,7 @@ handle_pref_abort_exception(struct trace *trace)
 
 			dbg_set_breakpoint_for_addr_mismatch(0, trace->pc);
 
-			if ((trace->pc > 0x1926b8) && (trace->pc < 0x192904)) {
+			if ((trace->pc > WLC_SEND_Q_START) && (trace->pc < WLC_SEND_Q_END)) {
 				printf("A%d/%d:%08x\n", breakpoint_cnt1, breakpoint_cnt2, trace->pc);
 				breakpoint_cnt2++;
 			} else {
@@ -165,10 +184,17 @@ handle_pref_abort_exception(struct trace *trace)
 			}
 			breakpoint_cnt1++;
 
-			if ((breakpoint_cnt1 > 1500) || (breakpoint_cnt2 > 150) || (trace->pc == 0x192904)) {
+			if ((breakpoint_cnt1 > 1500) || (breakpoint_cnt2 > 50) || (trace->pc == WLC_SEND_Q_END)) {
 				printf("disable\n");
 				printf("0=%08x 1=%08x 2=%08x 3=%08x 6=%08x\n", trace->r0, trace->r1, trace->r2, trace->r3, trace->r6);
 				dbg_disable_breakpoint(0);
+			}
+
+			if (trace->pc == 0x192766) {
+				printf("r3=%08x\n", trace->r3);
+			}
+			if (trace->pc == 0x192762) {
+				printf("r1=%08x %08x\n", trace->r1, ((sk_buff *) (trace->r1))->flags);
 			}
 
 			// we set the bit in the breakpoint_hit variable to 0
@@ -211,6 +237,7 @@ set_debug_registers(void)
 	//dbg_set_breakpoint_for_addr_match(0, 0x19551C); // wlc_ioctl
 	//dbg_set_breakpoint_for_addr_match(0, 0x1844B2); // dma_txfast
 	//dbg_set_breakpoint_for_addr_match(0, (int) wlc_sendpkt);
+	//dbg_set_breakpoint_for_addr_match(0, (int) wlc_prep_sdu);
 	dbg_set_breakpoint_for_addr_match(0, (int) wlc_send_q);
 }
 
