@@ -128,12 +128,16 @@ extern int wlc_iovar_op(void *wlc, char *varname, void *params, int p_len, void 
 extern void wlc_mctrl_write(void *wlc_hw); // 0x4DF60
 extern int wlc_phy_channel2freq(unsigned int channel); // 0x1C4B40
 extern void wlc_phy_rssi_compute(void *pih, void *ctx); // 0x1C553C
+extern int wlc_prec_enq_head(void *wlc, void *q, void *pkt, int prec, char head); // 0x35aa0
+extern int wlc_prep_pdu(void *wlc, void *p, int *fifo); // 0x191654
 extern void wlc_prep_sdu(void *wlc, void *p, int *counter, int *fifo); // 0x191B00
+extern void wlc_radio_upd(void *wlc); // 0x19123C
 extern void *wlc_scbfindband(void *wlc, void *bsscfg, char *ea, int bandunit); // 0x1C9DBE
 extern void *__wlc_scb_lookup(void *wlc, void *bsscfg, char *ea, int bandunit); // 0x1CA496
 extern void *wlc_scb_lookup(void *wlc, void *bsscfg, char *ea); // 0x1CA4CE
 extern void *wlc_scb_set_bsscfg(void *scb, void *bsscfg); // 0x76900
 extern int wlc_sendpkt(void *wlc, void *p, int wlcif); // 0x197A18
+extern int wlc_sendctl(void *wlc, void *p, void *qi, void *scb, unsigned int fifo, void *rate_override, char enq_only); // 0x38BB0
 extern void wlc_send_q(void *wlc, void *qi); // 0x1926B8
 extern void wlc_txfifo(void *wlc, int fifo, void *p, void *txh, unsigned char commit, char txpktpend); // 0x193744
 extern void wlc_ucode_download(void *wlc_hw); // 0x1F4EF8

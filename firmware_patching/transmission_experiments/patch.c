@@ -66,10 +66,48 @@ enable_interrupts_and_wait_hook(void)
 {
 	asm(
 		"push {r0-r3,lr}\n"
-		"bl enable_interrupts_and_wait_hook_in_c\n"
+//		"bl enable_interrupts_and_wait_hook_in_c\n"
 		"pop {r0-r3,lr}\n"
 		"b enable_interrupts_and_wait\n"
 		);
+}
+
+__attribute__((naked)) void
+wlc_radio_upd_hook(void)
+{
+	asm(
+		"push {lr}\n"
+		"bl wlc_radio_upd\n"
+//		"pop {pc}\n"
+		"push {r0-r3}\n"
+		"bl enable_interrupts_and_wait_hook_in_c\n"
+		"pop {r0-r3}\n"
+		"pop {pc}\n"
+		);
+}
+
+/**
+ *	add data to the start of a buffer
+ */
+void *
+skb_push(sk_buff *p, unsigned int len)
+{
+	p->data -= len;
+	p->len += len;
+
+	return p->data;
+}
+
+/**
+ *	remove data from the start of a buffer
+ */
+void *
+skb_pull(sk_buff *p, unsigned int len)
+{
+	p->data += len;
+	p->len -= len;
+
+	return p->data;
 }
 
 char *pkt = "\xaa\xaa\xaa\xaa\xaa\xaa\xbb\xbb\xbb\xbb\xbb\xbb\xbb\x08\x00""AAAAAAAA";
@@ -81,47 +119,63 @@ enable_interrupts_and_wait_hook_in_c(void)
 	int ret = 0;
 	struct wlc_info *wlc = (struct wlc_info *) 0x1e8d7c;
 	char *bsscfg;
+	int *bsscfg_int;
 	char *bsscfg_0x30C;
 	int *scb;
 
 	printf("test\n");
-	p = pkt_buf_get_skb(wlc->osh, 22);
+	p = pkt_buf_get_skb(wlc->osh, 22 + 202);
+	skb_pull(p, 202);
 
 	memcpy(p->data,pkt,22);
 
 	bsscfg = (char *) wlc_bsscfg_find_by_wlcif(wlc, 0);
+	bsscfg_int = (int *) bsscfg;
 	bsscfg_0x30C = *(char **) (bsscfg+0x30c);
 
-	bsscfg[0x04] = 1;
-	bsscfg[0x06] = 1;
-	bsscfg[0x16] = 0;
+//	bsscfg[0x04] = 1;
+//	bsscfg[0x06] = 1;
+//	bsscfg[0x16] = 0;
+	p->prio |= 7;
+//	wlc->wme_dp = 0xFFFF;
 	
-	wlc->pub->field_24 = 1;
-	wlc->pub->field_46 = 1;
+//	wlc->pub->field_24 = 1;
+//	wlc->pub->field_46 = 1;
 
 	scb = __wlc_scb_lookup(wlc, bsscfg, pkt, 0);
 	wlc_scb_set_bsscfg(scb, bsscfg);
+
 	printf("scb28=%08x bandunit=%08x\n", scb[7], wlc->band->bandunit);
 	//scb[60] = wlc->active_queue;
 	wlc->tx_prec_map = 0xFFFF;
 	printf("bsscfg16=%08x\n", bsscfg[0x16]);
 	printf("bsscfg0C=%08x\n", bsscfg[0x0C]);
+	printf("bsscfg_int03=%08x %08x %08x\n", bsscfg_int[0x03], (bsscfg_int[3] + 12), wlc->active_queue);
+	printf("prio=%04x\n", p->prio);
+	printf("p=%04x data=%08x head=%08x diff=%d\n", (int) p, p->data, p->head, p->data - p->head);
 
 	printf("D %08x %08x %08x %08x\n", (int) bsscfg, *(int *) bsscfg, *(int *) (bsscfg+4), *(int *) (bsscfg_0x30C + 50));
 
-	p->flags |= 0x4;
+//	p->flags |= 0x4;
 	printf("flags=%08x\n", p->flags);
 
 	//ret = wlc_sendpkt(wlc, p, 0);
+	wlc_sendctl(wlc, p, (void *) wlc->active_queue, scb, 1, 0, 0);
+
+	printf("p=%04x pscb=%08x\n", (int) p, p->scb);
 
 	printf("%08x flags=%08x %08x\n", (int) p, p->flags, *((int *) (((char *)p) + 0x20)));
 	
-	bsscfg[0x04] = 0;
-	bsscfg[0x06] = 0;
-	bsscfg[0x16] = 1;
+	printf("p=%04x data=%08x head=%08x diff=%d\n", (int) p, p->data, p->head, p->data - p->head);
 
-	wlc->pub->field_24 = 0;
-	wlc->pub->field_46 = 0;
+	printf("d=%08x %08x", *(((int *)p->data) + 32), *(((int *)p->data) + 33));
+
+//	bsscfg[0x04] = 0;
+//	bsscfg[0x06] = 0;
+//	bsscfg[0x16] = 1;
+
+//	wlc->pub->field_24 = 0;
+//	wlc->pub->field_46 = 0;
 
 	printf("test %d\n", ret);
 	printf("scb28=%08x bandunit=%08x\n", scb[7], wlc->band->bandunit);	
@@ -152,8 +206,14 @@ fix_sp_lr(struct trace *trace)
 	return trace;
 }
 
-#define WLC_SEND_Q_START	0x1926B8
-#define WLC_SEND_Q_END		0x1928EA
+#define WLC_SEND_Q_START		0x1926B8
+#define WLC_SEND_Q_END			0x1928EA
+#define WLC_SENDCTL_START		0x38bb0
+#define WLC_SENDCTL_END			0x38c78
+#define WLC_PREC_ENQ_HEAD_START	0x35aa0
+#define WLC_PREC_ENQ_HEAD_END	0x35bb4
+#define WLC_PREP_PDU_START		0x191654
+#define WLC_PREP_PDU_END		0x191776
 
 void __attribute__((optimize("O0")))
 handle_pref_abort_exception(struct trace *trace)
@@ -175,8 +235,9 @@ handle_pref_abort_exception(struct trace *trace)
 
 			dbg_set_breakpoint_for_addr_mismatch(0, trace->pc);
 
-			if ((trace->pc > WLC_SEND_Q_START) && (trace->pc < WLC_SEND_Q_END)) {
+			if ((trace->pc > WLC_PREP_PDU_START) && (trace->pc < WLC_PREP_PDU_END)) {
 				printf("A%d/%d:%08x\n", breakpoint_cnt1, breakpoint_cnt2, trace->pc);
+				//printf("pscb=%08x\n", *(int*)(0x1d17a8+0x30));
 				breakpoint_cnt2++;
 			} else {
 				printf("");
@@ -184,17 +245,15 @@ handle_pref_abort_exception(struct trace *trace)
 			}
 			breakpoint_cnt1++;
 
-			if ((breakpoint_cnt1 > 1500) || (breakpoint_cnt2 > 50) || (trace->pc == WLC_SEND_Q_END)) {
-				printf("disable\n");
+			if ((breakpoint_cnt1 > 5000) || (breakpoint_cnt2 > 100) || (trace->pc == WLC_PREP_PDU_END)) {
+				printf("D%d/%d: PC=%08x disable\n", breakpoint_cnt1, breakpoint_cnt2, trace->pc);
 				printf("0=%08x 1=%08x 2=%08x 3=%08x 6=%08x\n", trace->r0, trace->r1, trace->r2, trace->r3, trace->r6);
 				dbg_disable_breakpoint(0);
 			}
 
-			if (trace->pc == 0x192766) {
-				printf("r3=%08x\n", trace->r3);
-			}
-			if (trace->pc == 0x192762) {
-				printf("r1=%08x %08x\n", trace->r1, ((sk_buff *) (trace->r1))->flags);
+			if (trace->pc == 0x191736 || trace->pc == 0x191734) {
+				printf("r0=%08x r3=%08x r6=%08x\n", trace->r0, trace->r3, trace->r6);
+				printf("%08x %08x %08x %08x %08x %08x\n", *(int *) 0x1e3a04, *(int *) 0x1e3a08, *(int *) 0x1e3a0C, *(int *) 0x1e3a10, *(int *) 0x1e3a14, *(int *) 0x1e3a18);
 			}
 
 			// we set the bit in the breakpoint_hit variable to 0
@@ -238,7 +297,11 @@ set_debug_registers(void)
 	//dbg_set_breakpoint_for_addr_match(0, 0x1844B2); // dma_txfast
 	//dbg_set_breakpoint_for_addr_match(0, (int) wlc_sendpkt);
 	//dbg_set_breakpoint_for_addr_match(0, (int) wlc_prep_sdu);
-	dbg_set_breakpoint_for_addr_match(0, (int) wlc_send_q);
+	//dbg_set_breakpoint_for_addr_match(0, (int) wlc_send_q);
+	//dbg_set_breakpoint_for_addr_match(0, (int) wlc_sendctl);
+	//dbg_set_breakpoint_for_addr_match(0, (int) wlc_prec_enq_head);
+	//dbg_set_breakpoint_for_addr_match(0, (int) wlc_prep_pdu);
+	//dbg_set_breakpoint_for_addr_match(0, 0x195b26);
 }
 
 /**
@@ -382,6 +445,15 @@ handle_exceptions(void)
 		"add sp, sp, #32\n"
 		"rfefd sp!\n"
 		);
+}
+
+/**
+ *	Used to jump to a certain address in memory, without using the wrapper.h file
+ */
+void 
+dummy_195B52(void)
+{
+	;
 }
 
 /**

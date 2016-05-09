@@ -29,6 +29,10 @@ typedef struct sk_buff {
     short PAD;                  /* 0x1A */
     int PAD;                    /* 0x1C */
     int flags;                  /* 0x20 */
+    int PAD;                    /* 0x24 */
+    int PAD;                    /* 0x28 */
+    int lifetime_end;           /* 0x2C */
+    void *scb;                  /* 0x30 */
 } __attribute__((packed)) sk_buff;
 
 struct tunables {
@@ -271,7 +275,8 @@ struct wlc_info {
     int PAD;                            /* 0x21C */
     int PAD;                            /* 0x220 */
     int PAD;                            /* 0x224 */
-    int PAD;                            /* 0x228 */
+    short PAD;                          /* 0x228 */
+    short wme_dp;                       /* 0x22A */
     int PAD;                            /* 0x22C */
     int PAD;                            /* 0x230 */
     int PAD;                            /* 0x234 */

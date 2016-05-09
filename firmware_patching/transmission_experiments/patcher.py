@@ -53,6 +53,9 @@ patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin",
 	ExternalArmPatch(getSectionAddr(".text.enable_interrupts_and_wait_hook"), "enable_interrupts_and_wait_hook.bin"),
 	BPatch(0x1838AC, getSectionAddr(".text.enable_interrupts_and_wait_hook")),
 
+	ExternalArmPatch(getSectionAddr(".text.wlc_radio_upd_hook"), "wlc_radio_upd_hook.bin"),
+	BLPatch(0x195B48, getSectionAddr(".text.wlc_radio_upd_hook")),
+
 	# This line replaces the firmware version string that is printed to the console on startup to identify which firmware is loaded by the driver
 	StringPatch(0x1FD31B, (os.getcwd().split('/')[-1] + " (" + time.strftime("%d.%m.%Y %H:%M:%S") + ")\n")[:52]), # 53 character string
 	])

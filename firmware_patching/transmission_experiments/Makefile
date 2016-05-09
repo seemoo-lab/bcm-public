@@ -1,5 +1,5 @@
 CC=../../buildtools/arm-eabi-4.7/bin/arm-eabi-
-FUNCTIONS = enable_interrupts_and_wait_hook tr_pref_abort_hook handle_exceptions before_before_initialize_memory_hook
+FUNCTIONS = enable_interrupts_and_wait_hook tr_pref_abort_hook handle_exceptions before_before_initialize_memory_hook wlc_radio_upd_hook
 FUNCTIONS_BIN = $(FUNCTIONS:=.bin)
 
 all: bcmdhd/bcmdhd.ko fw_bcmdhd.bin fw_bcmdhd.complete.elf

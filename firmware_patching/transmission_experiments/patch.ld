@@ -15,9 +15,13 @@ SECTIONS
 	/* used to define the end the replaced handle_exceptions function */
 	.text.dummy_181098 0x181098: { KEEP(patch.o (.text.dummy_181098)) }
 
+	.text.dummy_195B52 0x195B52: { KEEP(patch.o (.text.dummy_195B52)) }
+
 	.text.before_before_initialize_memory_hook 0x180020: { KEEP(patch.o (.text.before_before_initialize_memory_hook)) }
 
 	.text.enable_interrupts_and_wait_hook : { KEEP(patch.o (.text.enable_interrupts_and_wait_hook)) }
+
+	.text.wlc_radio_upd_hook : { KEEP(patch.o (.text.wlc_radio_upd_hook)) }
 	
 	/* All other sections that were not yet placed but referenced by a kept section are collected in the text section */
 	.text : { patch.o (.text .text.* .data .data.* .bss .bss.* .rodata .rodata.*) }
