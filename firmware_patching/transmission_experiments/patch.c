@@ -110,75 +110,32 @@ skb_pull(sk_buff *p, unsigned int len)
 	return p->data;
 }
 
-char *pkt = "\xaa\xaa\xaa\xaa\xaa\xaa\xbb\xbb\xbb\xbb\xbb\xbb\xbb\x08\x00""AAAAAAAA";
+//char *pkt = "\xaa\xaa\xaa\xaa\xaa\xaa\xbb\xbb\xbb\xbb\xbb\xbb\xbb\x08\x00""AAAAAAAA";
+#define FRM "\x80\x00\x00\x00\xff\xff\xff\xff\xff\xff\xcc\xcc\xcc\xcc\xcc\xcc\xdd\xdd\xdd\xdd\xdd\xdd\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00""d\x00!\x05\x00\x06WINWIN\x01\x08\x0c\x12\x18$0H`l\x03\x01""\x03"
+char *pkt = FRM;
 
 void
 enable_interrupts_and_wait_hook_in_c(void)
 {
 	sk_buff *p;
-	int ret = 0;
 	struct wlc_info *wlc = (struct wlc_info *) 0x1e8d7c;
 	char *bsscfg;
-	int *bsscfg_int;
-	char *bsscfg_0x30C;
 	int *scb;
 
 	printf("test\n");
-	p = pkt_buf_get_skb(wlc->osh, 22 + 202);
+	p = pkt_buf_get_skb(wlc->osh, sizeof(FRM)-1 + 202);
 	skb_pull(p, 202);
 
-	memcpy(p->data,pkt,22);
+	memcpy(p->data,pkt, sizeof(FRM)-1);
 
 	bsscfg = (char *) wlc_bsscfg_find_by_wlcif(wlc, 0);
-	bsscfg_int = (int *) bsscfg;
-	bsscfg_0x30C = *(char **) (bsscfg+0x30c);
 
-//	bsscfg[0x04] = 1;
-//	bsscfg[0x06] = 1;
-//	bsscfg[0x16] = 0;
-	p->prio |= 7;
-//	wlc->wme_dp = 0xFFFF;
-	
-//	wlc->pub->field_24 = 1;
-//	wlc->pub->field_46 = 1;
+//	p->prio |= 7;
 
 	scb = __wlc_scb_lookup(wlc, bsscfg, pkt, 0);
 	wlc_scb_set_bsscfg(scb, bsscfg);
 
-	printf("scb28=%08x bandunit=%08x\n", scb[7], wlc->band->bandunit);
-	//scb[60] = wlc->active_queue;
-	wlc->tx_prec_map = 0xFFFF;
-	printf("bsscfg16=%08x\n", bsscfg[0x16]);
-	printf("bsscfg0C=%08x\n", bsscfg[0x0C]);
-	printf("bsscfg_int03=%08x %08x %08x\n", bsscfg_int[0x03], (bsscfg_int[3] + 12), wlc->active_queue);
-	printf("prio=%04x\n", p->prio);
-	printf("p=%04x data=%08x head=%08x diff=%d\n", (int) p, p->data, p->head, p->data - p->head);
-
-	printf("D %08x %08x %08x %08x\n", (int) bsscfg, *(int *) bsscfg, *(int *) (bsscfg+4), *(int *) (bsscfg_0x30C + 50));
-
-//	p->flags |= 0x4;
-	printf("flags=%08x\n", p->flags);
-
-	//ret = wlc_sendpkt(wlc, p, 0);
 	wlc_sendctl(wlc, p, (void *) wlc->active_queue, scb, 1, 0, 0);
-
-	printf("p=%04x pscb=%08x\n", (int) p, p->scb);
-
-	printf("%08x flags=%08x %08x\n", (int) p, p->flags, *((int *) (((char *)p) + 0x20)));
-	
-	printf("p=%04x data=%08x head=%08x diff=%d\n", (int) p, p->data, p->head, p->data - p->head);
-
-	printf("d=%08x %08x", *(((int *)p->data) + 32), *(((int *)p->data) + 33));
-
-//	bsscfg[0x04] = 0;
-//	bsscfg[0x06] = 0;
-//	bsscfg[0x16] = 1;
-
-//	wlc->pub->field_24 = 0;
-//	wlc->pub->field_46 = 0;
-
-	printf("test %d\n", ret);
-	printf("scb28=%08x bandunit=%08x\n", scb[7], wlc->band->bandunit);	
 }
 
 /**
