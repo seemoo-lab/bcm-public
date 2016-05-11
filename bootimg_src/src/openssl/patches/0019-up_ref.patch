@@ -1,0 +1,96 @@
+From: Adam Langley <agl@google.com>
+Date: Tue, 5 May 2015 10:35:22 -0700
+Subject: [PATCH] Add |BIO_up_ref| and |EVP_PKEY_up_ref|.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+This avoids callers having to worry about |CRYPTO_add| and what the
+correct lock to use it with is.
+
+The function |EVP_PKEY_dup| already does exactly what the new
+|EVP_PKEY_up_ref| does. But that means that it's a “dup” that doesn't
+duplicate! BoringSSL has deprecated this and added |EVP_PKEY_up_ref| to
+be clearer and this change allows internal OpenSSL users to do the same.
+---
+ crypto/bio/bio.h     | 1 +
+ crypto/bio/bio_lib.c | 6 ++++++
+ crypto/evp/evp.h     | 1 +
+ crypto/evp/p_lib.c   | 8 ++++++--
+ 4 files changed, 14 insertions(+), 2 deletions(-)
+
+diff --git a/crypto/bio/bio.h b/crypto/bio/bio.h
+index c947abb..d1b4aa0 100644
+--- a/crypto/bio/bio.h
++++ b/crypto/bio/bio.h
+@@ -642,6 +645,7 @@
+ int	BIO_set(BIO *a,BIO_METHOD *type);
+ int	BIO_free(BIO *a);
+ void	BIO_vfree(BIO *a);
++BIO *	BIO_up_ref(BIO *bio);
+ int	BIO_read(BIO *b, void *data, int len);
+ int	BIO_gets(BIO *bp,char *buf, int size);
+ int	BIO_write(BIO *b, const void *data, int len);
+diff --git a/crypto/bio/bio_lib.c b/crypto/bio/bio_lib.c
+index 5267010..a021f38 100644
+--- a/crypto/bio/bio_lib.c
++++ b/crypto/bio/bio_lib.c
+@@ -140,6 +140,12 @@ void BIO_vfree(BIO *a)
+     BIO_free(a);
+ }
+ 
++BIO *BIO_up_ref(BIO *bio)
++{
++    CRYPTO_add(&bio->references, 1, CRYPTO_LOCK_BIO);
++    return bio;
++}
++
+ void BIO_clear_flags(BIO *b, int flags)
+ {
+     b->flags &= ~flags;
+diff --git a/crypto/evp/evp.h b/crypto/evp/evp.h
+index 48f865a..5f253da 100644
+--- a/crypto/evp/evp.h
++++ b/crypto/evp/evp.h
+@@ -921,8 +921,9 @@
+ #endif
+ 
+ EVP_PKEY *	EVP_PKEY_new(void);
+ EVP_PKEY *	EVP_PKEY_dup(EVP_PKEY *pkey);
+ void		EVP_PKEY_free(EVP_PKEY *pkey);
++EVP_PKEY *	EVP_PKEY_up_ref(EVP_PKEY *pkey);
+ 
+ EVP_PKEY *	d2i_PublicKey(int type,EVP_PKEY **a, const unsigned char **pp,
+ 			long length);
+diff --git a/crypto/evp/p_lib.c b/crypto/evp/p_lib.c
+index 8ab8f62..628697b 100644
+--- a/crypto/evp/p_lib.c
++++ b/crypto/evp/p_lib.c
+@@ -200,12 +200,11 @@
+ 	return(ret);
+ 	}
+ 
+ EVP_PKEY *EVP_PKEY_dup(EVP_PKEY *pkey)
+ 	{
+-	CRYPTO_add(&pkey->references,1,CRYPTO_LOCK_EVP_PKEY);
+-	return pkey;
++	return EVP_PKEY_up_ref(pkey);
+ 	}
+ 
+ /* Setup a public key ASN1 method and ENGINE from a NID or a string.
+  * If pkey is NULL just return 1 or 0 if the algorithm exists.
+  */
+@@ -408,6 +413,12 @@
+ 	OPENSSL_free(x);
+ 	}
+ 
++EVP_PKEY *EVP_PKEY_up_ref(EVP_PKEY *pkey)
++	{
++	CRYPTO_add(&pkey->references,1,CRYPTO_LOCK_EVP_PKEY);
++	return pkey;
++	}
++
+ static void EVP_PKEY_free_it(EVP_PKEY *x)
+ 	{
+ 	if (x->ameth && x->ameth->pkey_free)
+-- 
