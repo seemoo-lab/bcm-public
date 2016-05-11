@@ -1,5 +1,5 @@
-MDK_ROOT	= ../..
-include $(MDK_ROOT)/common.mak
+AC_ROOT	= ../..
+include $(AC_ROOT)/common.mak
 
 RTAP		= radiotap
 
@@ -34,6 +34,11 @@ all:
 
 .os.dummy: $(OBJS_DUMMY)
 	$(AR) cru $(LIB) $(OBJS_DUMMY)
+	$(RANLIB) $(LIB)
+	touch $(@)
+
+.os.DragonFly: $(OBJS_FBSD)
+	$(AR) cru $(LIB) $(OBJS_FBSD)
 	$(RANLIB) $(LIB)
 	touch $(@)
 

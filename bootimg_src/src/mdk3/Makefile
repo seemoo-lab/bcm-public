@@ -1,23 +1,11 @@
-PREFIX		= /usr/local
-SBINDIR		= $(PREFIX)/sbin
-MANDIR		= $(PREFIX)/share/man
+all: ../../bin/mdk3
 
-SRC		= src
+../../bin/mdk3: local/armeabi/mdk3
+	cp local/armeabi/mdk3 ../../bin
 
+local/armeabi/mdk3: Android.mk
+	$(NDK_ROOT)/ndk-build NDK_APPLICATION_MK=`pwd`/Application.mk NDK_APP_OUT=. TARGET_PLATFORM=android-21
 
-all: clean
-	$(MAKE) -C $(SRC)
-
-install: all
-	PREFIX=$(PREFIX) $(MAKE) -C $(SRC) install
-	install -D -m 0644 man/mdk3.8 $(MANDIR)/man8/mdk3.8
-	gzip -f $(MANDIR)/man8/mdk3.8
-
-.PHONY : clean
 clean:
-	$(MAKE) -C $(SRC) clean
-
-test:
-	$(MAKE) -C $(SRC) test
-
-distclean: clean
+	rm -Rf libs
+	rm -Rf local
