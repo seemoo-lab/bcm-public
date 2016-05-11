@@ -1,80 +1,20 @@
-need := 3.81
-ok := $(filter $(need),$(firstword $(sort $(MAKE_VERSION) \
-	$(need))))
+PROGS = airbase-ng airdecap-ng aireplay-ng airolib-ng airtun-ng buddy-ng ivstools tkiptun-ng wpaclean aircrack-ng airdecloak-ng airodump-ng airserv-ng besside-ng easside-ng kstats makeivs-ng packetforge-ng wesside-ng
 
-ifndef ok
-    $(error fatal error... Need make $(need) but using $(MAKE_VERSION), please upgrade)
-endif
+all: local/armeabi/aircrack-ng
+	cd local/armeabi/ && cp $(PROGS) ../../../../bin
 
-AC_ROOT		= .
-include		$(AC_ROOT)/common.mak
+local/armeabi/aircrack-ng: Android.mk libssl.so libcrypto.so libsqlite.so
+	$(NDK_ROOT)/ndk-build NDK_APPLICATION_MK=`pwd`/Application.mk NDK_APP_OUT=. TARGET_PLATFORM=android-21
 
-DOCFILES        = ChangeLog INSTALLING README LICENSE AUTHORS VERSION
+libssl.so: 
+	adb pull /system/lib/libssl.so .
 
-COVERITY_BUILD	?= cov-build
-COVERITY_DIR	= cov-int
+libcrypto.so: 
+	adb pull /system/lib/libcrypto.so .
 
-COVERITY_TAR_GZ	= Aircrack-ng.tar.gz
-COVERITY_CREDS_DIR	= coverity
-COVERITY_TOKEN	= $(shell cat ${COVERITY_CREDS_DIR}/token)
-COVERITY_EMAIL	= $(shell cat ${COVERITY_CREDS_DIR}/email)
-
-default: all
-
-all:
-	$(MAKE) -C src $(@)
-
-coverity-build:
-	$(COVERITY_BUILD) --dir $(COVERITY_DIR) $(MAKE) sqlite=true experimental=true pcre=true
-
-coverity-package: coverity-build
-	tar czvf $(COVERITY_TAR_GZ) $(COVERITY_DIR)
-
-coverity-upload: coverity-package
-	curl --form project=Aircrack-ng --form token=$(COVERITY_TOKEN) --form email=$(COVERITY_EMAIL) --form file=@$(COVERITY_TAR_GZ) --form version=r$(REVISION) --form description="Aircrack-ng svn r$(REVISION)" http://scan5.coverity.com/cgi-bin/upload.py
-
-coverity-show-creds:
-	@echo "Token: $(COVERITY_TOKEN)"
-	@echo "Email: $(COVERITY_EMAIL)"
-
-aircrack-ng-opt-prof_gen: all
-	mkdir -p prof
-	$(MAKE) -C src $(@)
-
-aircrack-ng-opt-prof_use:
-	$(MAKE) -C src $(@)
-
-install: all
-	$(MAKE) -C src $(@)
-	$(MAKE) -C scripts $(@)
-	$(MAKE) -C manpages $(@)
-	@echo " "
-	@echo "[*] Run 'airodump-ng-oui-update' as root (or with sudo) to install or update Airodump-ng OUI file (Internet connection required)."
-
-uninstall:
-	$(MAKE) -C src $(@)
-	-rm -fr $(DESTDIR)$(docdir)
-	$(MAKE) -C manpages $(@)
-	$(MAKE) -C scripts $(@)
-
-strip:
-	$(MAKE) -C src $(@)
-
-doc:
-	install -d $(DESTDIR)$(docdir)
-	install -m 644 $(DOCFILES) $(DESTDIR)$(docdir)
+libsqlite.so: 
+	adb pull /system/lib/libsqlite.so .
 
 clean:
-	-rm -rf $(COVERITY_DIR)
-	-rm -f common.cfg
-	$(MAKE) -C src $(@)
-	$(MAKE) -C test/cryptounittest $(@)
-	$(MAKE) -C test $(@)
-
-distclean: clean
-
-check: 
-	$(MAKE) -C src $(@)
-	$(MAKE) -C test/cryptounittest $(@)
-	$(MAKE) -C test $(@)
-	
+	rm -Rf libs
+	rm -Rf local

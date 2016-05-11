@@ -31,8 +31,10 @@
 	#include <endian.h>
 #endif
 
+#if !defined(__ANDROID__)
 #define le16_to_cpu		le16toh
 #define le32_to_cpu		le32toh
+#endif
 #define get_unaligned(p)					\
 ({								\
 	struct packed_dummy_struct {				\

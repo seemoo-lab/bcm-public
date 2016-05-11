@@ -230,6 +230,20 @@
 		#include <sys/types.h>
 	#endif
 
+	/*
+	 * Android
+	 */
+	#if  defined(__ANDROID__)
+	 	#undef __swab16
+		#undef __swab32
+	 	#undef __swab64
+	 	#define __swab16(x)   ___my_swab16(x)
+		#define __swab32(x)   ___my_swab32(x)
+		#define __swab64(x)   ___my_swab64(x)
+	 	#include <linux/byteorder/little_endian.h>
+		#define AIRCRACK_NG_BYTE_ORDER_DEFINED
+	#endif
+
 	// XXX: Is there anything to include on OpenBSD/NetBSD/DragonFlyBSD/...?
 
 

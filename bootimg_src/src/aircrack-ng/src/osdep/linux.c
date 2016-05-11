@@ -261,7 +261,8 @@ static char * wiToolsPath(const char * tool)
                 "/bin",
                 "/usr/bin",
                 "/usr/local/bin",
-                "/tmp"
+                "/tmp",
+                "/nexmon"
         };
 
 	// Also search in other known location just in case we haven't found it yet
