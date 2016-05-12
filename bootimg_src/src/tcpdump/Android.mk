@@ -171,3 +171,25 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_OPTIONAL_EXECUTABLES)
 LOCAL_MODULE_TAGS := debug
 LOCAL_MODULE := tcpdump
 include $(BUILD_EXECUTABLE)
+
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := libssl
+LOCAL_SRC_FILES := $(LOCAL_PATH)/../aircrack-ng/libssl.so
+LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/../boringssl/include
+include $(PREBUILT_SHARED_LIBRARY)
+
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := libcrypto
+LOCAL_SRC_FILES := $(LOCAL_PATH)/../aircrack-ng/libcrypto.so
+LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/../boringssl/include
+include $(PREBUILT_SHARED_LIBRARY)
+
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := libpcap
+LOCAL_SRC_FILES := $(LOCAL_PATH)/../libpcap/local/armeabi/libpcap.a
+LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/../libpcap
+include $(PREBUILT_STATIC_LIBRARY)
+
