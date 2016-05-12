@@ -9,6 +9,9 @@ libs/armeabi/tcpdump: Android.mk ../libpcap/local/armeabi/libpcap.a
 ../libpcap/local/armeabi/libpcap.a: FORCE
 	cd ../libpcap && make
 
+../shared_system_libs/libssl.so: FORCE
+	cd ../shared_system_libs && make
+
 clean:
 	rm -Rf libs
 	rm -Rf local

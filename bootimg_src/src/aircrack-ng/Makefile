@@ -6,15 +6,9 @@ all: libs/armeabi/aircrack-ng
 libs/armeabi/aircrack-ng: Android.mk libssl.so libcrypto.so libsqlite.so
 	$(NDK_ROOT)/ndk-build NDK_APPLICATION_MK=`pwd`/Application.mk NDK_APP_OUT=. TARGET_PLATFORM=android-21
 
-libssl.so: 
-	adb pull /system/lib/libssl.so .
-
-libcrypto.so: 
-	adb pull /system/lib/libcrypto.so .
-
-libsqlite.so: 
-	adb pull /system/lib/libsqlite.so .
-
+../shared_system_libs/libssl.so: FORCE
+	cd ../shared_system_libs && make
+	
 clean:
 	rm -Rf libs
 	rm -Rf local
