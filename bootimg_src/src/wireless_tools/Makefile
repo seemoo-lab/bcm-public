@@ -1,21 +1,21 @@
 all: ../../bin/iwconfig ../../bin/iwlist ../../bin/iwpriv
 
-../../bin/iwconfig: local/armeabi/iwconfig
+../../bin/iwconfig: libs/armeabi/iwconfig
 	cp $< $@
 
-../../bin/iwlist: local/armeabi/iwlist
+../../bin/iwlist: libs/armeabi/iwlist
 	cp $< $@
 
-../../bin/iwpriv: local/armeabi/iwpriv
+../../bin/iwpriv: libs/armeabi/iwpriv
 	cp $< $@
 
-local/armeabi/iwconfig: Android.mk
+libs/armeabi/iwconfig: Android.mk
 	$(NDK_ROOT)/ndk-build NDK_APPLICATION_MK=`pwd`/Application.mk NDK_APP_OUT=. TARGET_PLATFORM=android-21
 
-local/armeabi/iwlist: Android.mk
+libs/armeabi/iwlist: Android.mk
 	$(NDK_ROOT)/ndk-build NDK_APPLICATION_MK=`pwd`/Application.mk NDK_APP_OUT=. TARGET_PLATFORM=android-21
 
-local/armeabi/iwpriv: Android.mk
+libs/armeabi/iwpriv: Android.mk
 	$(NDK_ROOT)/ndk-build NDK_APPLICATION_MK=`pwd`/Application.mk NDK_APP_OUT=. TARGET_PLATFORM=android-21
 
 clean:

@@ -1,9 +1,9 @@
 all: ../../bin/nc
 
-../../bin/nc: local/armeabi/nc
-	cp local/armeabi/nc ../../bin
+../../bin/nc: libs/armeabi/nc
+	cp libs/armeabi/nc ../../bin
 
-local/armeabi/nc: netcat.c Android.mk
+libs/armeabi/nc: netcat.c Android.mk
 	$(NDK_ROOT)/ndk-build NDK_APPLICATION_MK=`pwd`/Application.mk NDK_APP_OUT=. TARGET_PLATFORM=android-21
 
 clean:
