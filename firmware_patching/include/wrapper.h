@@ -121,6 +121,7 @@ extern void wlc_bmac_mctrl(void *wlc_hw, int mask, int val); // 0x4F080
 extern void wlc_bmac_read_tsf(void *wlc_hw, unsigned int *tsf_l_ptr, unsigned int *tsf_h_ptr); // 0x1AAD84
 extern void wlc_bmac_write_template_ram(void *wlc_hw, int offset, int len, void *buf); // 0x504B0
 extern void *wlc_bsscfg_find_by_wlcif(void *wlc, int wlcif); // 0x1AC166
+extern void *wlc_compute_plcp(void *wlc, unsigned int rspec, short length, short type_subtype_frame_ctl_field, char *plcp); // 0x32A90
 extern void wlc_coreinit(void *wlc_hw); // 0x1AB66C
 extern int wlc_init(void *wlc); // 0x199874
 extern int wlc_ioctl(void *wlc, int cmd, void *arg, int len, void *wlc_if); // 0x19551C
@@ -137,7 +138,7 @@ extern void *__wlc_scb_lookup(void *wlc, void *bsscfg, char *ea, int bandunit); 
 extern void *wlc_scb_lookup(void *wlc, void *bsscfg, char *ea); // 0x1CA4CE
 extern void *wlc_scb_set_bsscfg(void *scb, void *bsscfg); // 0x76900
 extern int wlc_sendpkt(void *wlc, void *p, int wlcif); // 0x197A18
-extern int wlc_sendctl(void *wlc, void *p, void *qi, void *scb, unsigned int fifo, void *rate_override, char enq_only); // 0x38BB0
+extern int wlc_sendctl(void *wlc, void *p, void *qi, void *scb, unsigned int fifo, unsigned int rate_override, char enq_only); // 0x38BB0
 extern void wlc_send_q(void *wlc, void *qi); // 0x1926B8
 extern void wlc_txfifo(void *wlc, int fifo, void *p, void *txh, unsigned char commit, char txpktpend); // 0x193744
 extern void wlc_ucode_download(void *wlc_hw); // 0x1F4EF8

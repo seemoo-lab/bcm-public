@@ -42,3 +42,4 @@ original template files.
  * ioctl_example: Exchanges ioctl messages with the firmware
  * mapaddr_example: Analysis of stack traces
  * udp_to_android_example: Send UDP frames over SDIO to Android
+ 

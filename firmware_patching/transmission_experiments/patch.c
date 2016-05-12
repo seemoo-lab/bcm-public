@@ -114,19 +114,35 @@ skb_pull(sk_buff *p, unsigned int len)
 #define FRM "\x80\x00\x00\x00\xff\xff\xff\xff\xff\xff\xcc\xcc\xcc\xcc\xcc\xcc\xdd\xdd\xdd\xdd\xdd\xdd\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00""d\x00!\x05\x00\x06WINWIN\x01\x08\x0c\x12\x18$0H`l\x03\x01""\x03"
 char *pkt = FRM;
 
+/* defined rate in 500kbps */
+#define BRCM_MAXRATE	108	/* in 500kbps units */
+#define BRCM_RATE_1M	2	/* in 500kbps units */
+#define BRCM_RATE_2M	4	/* in 500kbps units */
+#define BRCM_RATE_5M5	11	/* in 500kbps units */
+#define BRCM_RATE_11M	22	/* in 500kbps units */
+#define BRCM_RATE_6M	12	/* in 500kbps units */
+#define BRCM_RATE_9M	18	/* in 500kbps units */
+#define BRCM_RATE_12M	24	/* in 500kbps units */
+#define BRCM_RATE_18M	36	/* in 500kbps units */
+#define BRCM_RATE_24M	48	/* in 500kbps units */
+#define BRCM_RATE_36M	72	/* in 500kbps units */
+#define BRCM_RATE_48M	96	/* in 500kbps units */
+#define BRCM_RATE_54M	108	/* in 500kbps units */
+
 void
-enable_interrupts_and_wait_hook_in_c(void)
+send_frame(int rspec)
 {
 	sk_buff *p;
 	struct wlc_info *wlc = (struct wlc_info *) 0x1e8d7c;
 	char *bsscfg;
 	int *scb;
 
-	printf("test\n");
 	p = pkt_buf_get_skb(wlc->osh, sizeof(FRM)-1 + 202);
 	skb_pull(p, 202);
 
 	memcpy(p->data,pkt, sizeof(FRM)-1);
+
+	printf("p->data=%08x\n", (int) p->data);
 
 	bsscfg = (char *) wlc_bsscfg_find_by_wlcif(wlc, 0);
 
@@ -135,7 +151,13 @@ enable_interrupts_and_wait_hook_in_c(void)
 	scb = __wlc_scb_lookup(wlc, bsscfg, pkt, 0);
 	wlc_scb_set_bsscfg(scb, bsscfg);
 
-	wlc_sendctl(wlc, p, (void *) wlc->active_queue, scb, 1, 0, 0);
+	wlc_sendctl(wlc, p, (void *) wlc->active_queue, scb, 1, rspec, 0);
+}
+
+void
+enable_interrupts_and_wait_hook_in_c(void)
+{
+	send_frame(22);
 }
 
 /**
@@ -171,6 +193,12 @@ fix_sp_lr(struct trace *trace)
 #define WLC_PREC_ENQ_HEAD_END	0x35bb4
 #define WLC_PREP_PDU_START		0x191654
 #define WLC_PREP_PDU_END		0x191776
+#define WLC_COMPUTE_PLCP_START	0x32A90
+#define WLC_COMPUTE_PLCP_END	0x32ADA
+
+int *plcp_ptr = 0;
+char plcp[6] = { 0 };
+int rspec = 0;
 
 void __attribute__((optimize("O0")))
 handle_pref_abort_exception(struct trace *trace)
@@ -183,6 +211,11 @@ handle_pref_abort_exception(struct trace *trace)
 			dbg_set_breakpoint_type_to_instr_addr_mismatch(0);
 
 			printf("hit\n");
+			if (trace->pc == 0x32A90) {
+				printf("r0=%08x r1=%08x r2=%08x r3=%08x *sp=%08x\n", trace->r0, trace->r1, trace->r2, trace->r3, *(int *) trace->sp);
+				plcp_ptr = *(int **) trace->sp;
+				rspec = trace->r1;
+			}
 
 			// to know which breakpoint mismatch was triggerd on a next breakpoint hit, we set a bit in the breakpoint_hit variable
 			breakpoint_hit |= DBGBP0;
@@ -192,7 +225,7 @@ handle_pref_abort_exception(struct trace *trace)
 
 			dbg_set_breakpoint_for_addr_mismatch(0, trace->pc);
 
-			if ((trace->pc > WLC_PREP_PDU_START) && (trace->pc < WLC_PREP_PDU_END)) {
+			if (((trace->pc > WLC_COMPUTE_PLCP_START) && (trace->pc < WLC_COMPUTE_PLCP_END)) || ((trace->pc > 0x295dc) && (trace->pc < 0x2966E))) {
 				printf("A%d/%d:%08x\n", breakpoint_cnt1, breakpoint_cnt2, trace->pc);
 				//printf("pscb=%08x\n", *(int*)(0x1d17a8+0x30));
 				breakpoint_cnt2++;
@@ -202,15 +235,32 @@ handle_pref_abort_exception(struct trace *trace)
 			}
 			breakpoint_cnt1++;
 
-			if ((breakpoint_cnt1 > 5000) || (breakpoint_cnt2 > 100) || (trace->pc == WLC_PREP_PDU_END)) {
+			if ((breakpoint_cnt1 > 1000) || (breakpoint_cnt2 > 100)) {
 				printf("D%d/%d: PC=%08x disable\n", breakpoint_cnt1, breakpoint_cnt2, trace->pc);
 				printf("0=%08x 1=%08x 2=%08x 3=%08x 6=%08x\n", trace->r0, trace->r1, trace->r2, trace->r3, trace->r6);
 				dbg_disable_breakpoint(0);
 			}
 
-			if (trace->pc == 0x191736 || trace->pc == 0x191734) {
-				printf("r0=%08x r3=%08x r6=%08x\n", trace->r0, trace->r3, trace->r6);
-				printf("%08x %08x %08x %08x %08x %08x\n", *(int *) 0x1e3a04, *(int *) 0x1e3a08, *(int *) 0x1e3a0C, *(int *) 0x1e3a10, *(int *) 0x1e3a14, *(int *) 0x1e3a18);
+			if (trace->pc == 0x18CD74) {
+				memcpy(plcp, plcp_ptr, 6);
+				printf("rspec=%08x plcp=%02x %02x %02x %02x %02x %02x\n", rspec, plcp[0], plcp[1], plcp[2], plcp[3], plcp[4], plcp[5]);
+				//dbg_disable_breakpoint(0);
+			}
+
+			if (trace->pc == 0x299E8) {
+				printf("VHT\n");
+			}
+
+			if (trace->pc == 0x29938) {
+				printf("MIMO\n");
+			}
+
+			if (trace->pc == 0x29988) {
+				printf("OFDM\n");
+			}
+
+			if (trace->pc == 0x298DC) {
+				printf("CCK\n");
 			}
 
 			// we set the bit in the breakpoint_hit variable to 0
@@ -259,6 +309,7 @@ set_debug_registers(void)
 	//dbg_set_breakpoint_for_addr_match(0, (int) wlc_prec_enq_head);
 	//dbg_set_breakpoint_for_addr_match(0, (int) wlc_prep_pdu);
 	//dbg_set_breakpoint_for_addr_match(0, 0x195b26);
+	dbg_set_breakpoint_for_addr_match(0, (int) wlc_compute_plcp);
 }
 
 /**
