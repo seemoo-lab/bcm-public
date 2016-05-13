@@ -20,8 +20,9 @@ char volatile * const glob_filter_len = (char *) GLOB_FILTER_LEN_ADDR;
 // WARNING: compilation fails if not
 typedef char assertion_on_mystruct[ (sizeof(struct wlc_pub)==232)*2-1 ];
 
-
-//from skbuff.h
+/**
+ * from skbuff.h
+ */
 inline void *
 skb_header_pointer(const struct sk_buff *skb, int offset, int len, void *buffer) {
     return skb->data + offset;
@@ -47,12 +48,13 @@ load_pointer(const struct sk_buff *skb, int k, unsigned int size, void *buffer) 
     }
     return 0;
     // k should be always be >= 0 in our case, we should be able to skip this for now
-    //return bpf_internal_load_pointer_neg_helper(skb, k, size);
 }
 
-// Corresponds to net/core/filter.c:sk_chk_filter()
-// to substitue the instructions with the enum BPF_S...
-// decreases the amount of generated code!!!
+/**
+ * Corresponds to net/core/filter.c:sk_chk_filter()
+ * substitue the instructions with the enum BPF_S
+ * this decreases the amount of generated code!!!
+ */
 inline int 
 import_filter(struct sock_filter *filter, unsigned int flen) {
     static const uint8_t codes[] = {
@@ -128,6 +130,7 @@ import_filter(struct sock_filter *filter, unsigned int flen) {
 }
 
 
+// Corresponds to net/core/filter.c:sk_run_filter()
 // return == 0 => throw packet away; return != 0 => keep it
 inline unsigned int 
 sk_run_filter(const struct sk_buff *skb, const struct sock_filter *fentry) {
@@ -303,71 +306,8 @@ load_b:
         case BPF_S_STX:
             mem[K] = X;
             continue;
-        //case BPF_S_ANC_PROTOCOL:
-        //    A = ntohs(skb->protocol);
-        //    continue;
-        //case BPF_S_ANC_PKTTYPE:
-        //    A = skb->pkt_type;
-        //    continue;
-        //case BPF_S_ANC_IFINDEX:
-        //    if (!skb->dev)
-        //        return 0;
-        //    A = skb->dev->ifindex;
-        //    continue;
-        //case BPF_S_ANC_MARK:
-        //    A = skb->mark;
-        //    continue;
-        //case BPF_S_ANC_QUEUE:
-        //    A = skb->queue_mapping;
-        //    continue;
-        //case BPF_S_ANC_HATYPE:
-        //    if (!skb->dev)
-        //        return 0;
-        //    A = skb->dev->type;
-        //    continue;
-        //case BPF_S_ANC_RXHASH:
-        //    A = skb->rxhash;
-        //    continue;
-        //case BPF_S_ANC_CPU:
-        //    A = raw_smp_processor_id();
-        //    continue;
-        //case BPF_S_ANC_NLATTR: {
-        //    struct nlattr *nla;
-
-        //    if (skb_is_nonlinear(skb))
-        //        return 0;
-        //    if (A > skb->len - sizeof(struct nlattr))
-        //        return 0;
-
-        //    nla = nla_find((struct nlattr *)&skb->data[A],
-        //               skb->len - A, X);
-        //    if (nla)
-        //        A = (void *)nla - (void *)skb->data;
-        //    else
-        //        A = 0;
-        //    continue;
-        //}
-        //case BPF_S_ANC_NLATTR_NEST: {
-        //    struct nlattr *nla;
-
-        //    if (skb_is_nonlinear(skb))
-        //        return 0;
-        //    if (A > skb->len - sizeof(struct nlattr))
-        //        return 0;
-
-        //    nla = (struct nlattr *)&skb->data[A];
-        //    if (nla->nla_len > A - skb->len)
-        //        return 0;
-
-        //    nla = nla_find_nested(nla, X);
-        //    if (nla)
-        //        A = (void *)nla - (void *)skb->data;
-        //    else
-        //        A = 0;
-        //    continue;
-        //}
+        //some cases are unhandled currently
         default:
-            //printf("sk_run_filter: ERR\n");
             return 0;
         }
     }
@@ -375,9 +315,11 @@ load_b:
     return 0;
 }
 
+/**
+ * prepare sk_buff for filtering
+ */
 unsigned int
 nexmon_filter(struct sk_buff *skb) {
-    //int strip_hdr = 38;
     int strip_hdr = 42;
     char old_val0 = 0x0;
     char old_val1 = 0x0;
@@ -387,9 +329,9 @@ nexmon_filter(struct sk_buff *skb) {
 
     struct sock_filter code[*glob_filter_len];
 
+    //Add to bytes for alignment, if neccesary
     short rxstat = *((short *)(skb->data + 0x10));
     if(rxstat & 4) {
-        //printf("add two!\n");
         strip_hdr += 2;
     }
 
@@ -407,9 +349,7 @@ nexmon_filter(struct sk_buff *skb) {
 
     orig_data = skb->data;
     skb->data = skb->data + strip_hdr;
-    //printf("nexmon_filter(): *glob_filter_len: %d\n", *glob_filter_len);
     memcpy(code, (void *) FILTER_ADDR, (*glob_filter_len) * sizeof(struct sock_filter));
-    //hexdump(0, code, (*glob_filter_len) * sizeof(struct sock_filter));
 
     int ret = import_filter(code, *glob_filter_len);
 
@@ -425,11 +365,13 @@ nexmon_filter(struct sk_buff *skb) {
         }
         return ret;
     } else {
-        //printf("nexmon_filter: ERR\n");
         return 0;
     }
 }
 
+/**
+ * Main frame handling function
+ */
 int wlc_bmac_recv(struct wlc_hw_info *wlc_hw, unsigned int fifo, int bound, int *processed_frame_cnt) {
 
     struct wlc_pub *pub = wlc_hw->wlc->pub;
@@ -450,15 +392,12 @@ int wlc_bmac_recv(struct wlc_hw_info *wlc_hw, unsigned int fifo, int bound, int 
         // nexmon filtering
 #ifdef NEXMON_FILTER
         if(*glob_filter_len != 0) {
-            // 2nd parameter is zero => the filter is currently static
             if( nexmon_filter(p) == 0 ) {
                 (*drop_filter_cnt)++;   
-                //printf("FILTER: tossed!\n");
                 ++n;
                 pkt_buf_free_skb(wlc_hw->wlc->osh, p, 0);
                 goto LEAVE;
             } else {
-                //printf("FILTER: keep!\n");
                 (*keep_filter_cnt)++;
             }
         }
@@ -480,6 +419,9 @@ LEAVE:
     }
 }
 
+/**
+ * 
+ */
 void*
 sdio_handler(void *sdio, sk_buff *p) {
 
@@ -495,19 +437,15 @@ sdio_handler(void *sdio, sk_buff *p) {
         offset = *((int *)(p->data + 3)) - 12;
     } 
 
-
-
     if(chan == 4) {
         filter_len = *((uint32_t *) (p->data + 8 + offset));
         //fix length from driver
         printf("our data!! chan: %d, filter len: %d\n", chan, filter_len);
         //number of filter entries
         *glob_filter_len = filter_len / sizeof(struct sock_filter);
-        //glob_filter = (struct sock_filter *)  (p->data + 8 + offset + sizeof(uint32_t));
         memcpy((void *) FILTER_ADDR, (p->data + 8 + offset + sizeof(uint32_t)), filter_len);
-        //hexdump(0, (p->data + 8 + offset), 0x40);
     } else {
-        printf("some other stuff... %d\n", chan);
+        //printf("some other stuff... %d\n", chan);
     }   
     
     return sdio_header_parsing_from_sk_buff(sdio, p); 
