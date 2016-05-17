@@ -5,15 +5,10 @@
 #include <unistd.h>
 #include <linux/netlink.h>
 #include <pcap.h>
-//#include "bpfjit.h"
 #include "ethertype.h"
 
 #define NETLINK_USER 31
 #define MAX_PAYLOAD 1024 /* maximum payload size*/
-
-//TODO: fixme
-#define IPPROTO_IP 0
-#define IPPROTO_TCP 6 
 
 struct sockaddr_nl src_addr, dest_addr;
 int sock_fd;
@@ -83,9 +78,7 @@ int main(int argc, char *argv[]) {
         filter_str = argv[1];
     }
 
-    /**
-    * Gen BPF Code from user input; optimization enabled
-    */
+    // Gen BPF Code from user input; optimization enabled
     if(pcap_compile_nopcap(65535, DLT_IEEE802_11_RADIO, &code_compiled, filter_str, 1, PCAP_NETMASK_UNKNOWN) == -1) {
         printf("ERROR: could not compile BPF filter: %s\n", filter_str);
         return -1;
@@ -101,9 +94,7 @@ int main(int argc, char *argv[]) {
 
     hexdump(0, code_compiled.bf_insns, code_compiled.bf_len * sizeof(struct bpf_insn));
 
-    /**
-    * Open socket for netlink interface
-    */
+    // Open socket for netlink interface
     sock_fd = socket(PF_NETLINK, SOCK_RAW, NETLINK_USER);
     if (sock_fd < 0) {
         printf("ERROR: Could not open socket!\n");
@@ -144,7 +135,6 @@ int main(int argc, char *argv[]) {
     hexdump(0, NLMSG_DATA(nlh), complete_len + sizeof(uint32_t));
 
     printf("DEBUG: SENDING filter length: %u\n", *((unsigned int *) NLMSG_DATA(nlh)));
-    //printf("DEBUG: sizeof(bf_len): %d\n", sizeof(code_compiled.bf_len));
 
     iov.iov_base = (void *)nlh;
     iov.iov_len = nlh->nlmsg_len;
