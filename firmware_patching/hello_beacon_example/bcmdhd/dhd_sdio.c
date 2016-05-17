@@ -167,7 +167,7 @@ extern void dhd_wlfc_trigger_pktcommit(dhd_pub_t *dhd);
 #ifdef DHD_DEBUG
 /* Device console log buffer state */
 #define CONSOLE_LINE_MAX	192
-#define CONSOLE_BUFFER_MAX	2024
+#define CONSOLE_BUFFER_MAX	0x2024
 typedef struct dhd_console {
 	uint		count;			/* Poll interval msec counter */
 	uint		log_addr;		/* Log struct address (fixed) */
@@ -552,6 +552,7 @@ static void dhdsdio_sdtest_set(dhd_bus_t *bus, uint count);
 
 #ifdef DHD_DEBUG
 static int dhdsdio_checkdied(dhd_bus_t *bus, char *data, uint size);
+int dhdsdio_print_console(dhd_bus_t *bus);
 static int dhd_serialconsole(dhd_bus_t *bus, bool get, bool enable, int *bcmerror);
 #endif /* DHD_DEBUG */
 
@@ -3221,22 +3222,90 @@ break2:
 	return BCME_OK;
 }
 
+int
+dhdsdio_print_console(dhd_bus_t *bus)
+{
+	char *console_buffer = NULL;
+	uint32 console_ptr, console_size, console_index;
+	uint8 line[CONSOLE_LINE_MAX], ch;
+	uint32 n, i, addr;
+	int rv;
+	sdpcm_shared_t sdpcm_shared;
+	int bcmerror = 0;
+
+	if ((bcmerror = dhdsdio_readshared(bus, &sdpcm_shared)) < 0)
+		goto done;
+
+	addr = sdpcm_shared.console_addr + OFFSETOF(hndrte_cons_t, log);
+	if ((rv = dhdsdio_membytes(bus, FALSE, addr,
+		(uint8 *)&console_ptr, sizeof(console_ptr))) < 0)
+		return 1;
+
+	addr = sdpcm_shared.console_addr + OFFSETOF(hndrte_cons_t, log.buf_size);
+	if ((rv = dhdsdio_membytes(bus, FALSE, addr,
+		(uint8 *)&console_size, sizeof(console_size))) < 0)
+		return 2;
+
+	addr = sdpcm_shared.console_addr + OFFSETOF(hndrte_cons_t, log.idx);
+	if ((rv = dhdsdio_membytes(bus, FALSE, addr,
+		(uint8 *)&console_index, sizeof(console_index))) < 0)
+		return 3;
+
+	console_ptr = ltoh32(console_ptr);
+	console_size = ltoh32(console_size);
+	console_index = ltoh32(console_index);
+
+	DHD_ERROR(("%08x %08x %08x %08x\n", console_ptr, console_size, console_index, CONSOLE_BUFFER_MAX));
+
+	if (console_size > CONSOLE_BUFFER_MAX ||
+		!(console_buffer = MALLOC(bus->dhd->osh, console_size)))
+		return 4;
+
+	if ((rv = dhdsdio_membytes(bus, FALSE, console_ptr,
+		(uint8 *)console_buffer, console_size)) < 0)
+		return 5;
+
+	for (i = 0, n = 0; i < console_size; i += n + 1) {
+		for (n = 0; n < CONSOLE_LINE_MAX - 2; n++) {
+			ch = console_buffer[(console_index + i + n) % console_size];
+			if (ch == '\n')
+				break;
+			line[n] = ch;
+		}
+
+
+		if (n > 0) {
+			if (line[n - 1] == '\r')
+				n--;
+			line[n] = 0;
+			/* Don't use DHD_ERROR macro since we print
+			 * a lot of information quickly. The macro
+			 * will truncate a lot of the printfs
+			 */
+
+			if (dhd_msg_level & DHD_ERROR_VAL)
+				printf("CONSOLE: %s\n", line);
+		}
+	}
+
+	done:
+	if (console_buffer)
+		MFREE(bus->dhd->osh, console_buffer, console_size);
+
+	return bcmerror;
+}
+
 static int
 dhdsdio_checkdied(dhd_bus_t *bus, char *data, uint size)
 {
 	int bcmerror = 0;
-	uint msize = 512;
+	uint msize = 4096*2;
 	char *mbuffer = NULL;
-	char *console_buffer = NULL;
 	uint maxstrlen = 256;
 	char *str = NULL;
 	trap_t tr;
 	sdpcm_shared_t sdpcm_shared;
 	struct bcmstrbuf strbuf;
-	uint32 console_ptr, console_size, console_index;
-	uint8 line[CONSOLE_LINE_MAX], ch;
-	uint32 n, i, addr;
-	int rv;
 
 	DHD_TRACE(("%s: Enter\n", __FUNCTION__));
 
@@ -3332,55 +3401,8 @@ dhdsdio_checkdied(dhd_bus_t *bus, char *data, uint size)
 			ltoh32(tr.r0), ltoh32(tr.r1), ltoh32(tr.r2), ltoh32(tr.r3),
 			ltoh32(tr.r4), ltoh32(tr.r5), ltoh32(tr.r6), ltoh32(tr.r7));
 
-			addr = sdpcm_shared.console_addr + OFFSETOF(hndrte_cons_t, log);
-			if ((rv = dhdsdio_membytes(bus, FALSE, addr,
-				(uint8 *)&console_ptr, sizeof(console_ptr))) < 0)
+			if(dhdsdio_print_console(bus))
 				goto printbuf;
-
-			addr = sdpcm_shared.console_addr + OFFSETOF(hndrte_cons_t, log.buf_size);
-			if ((rv = dhdsdio_membytes(bus, FALSE, addr,
-				(uint8 *)&console_size, sizeof(console_size))) < 0)
-				goto printbuf;
-
-			addr = sdpcm_shared.console_addr + OFFSETOF(hndrte_cons_t, log.idx);
-			if ((rv = dhdsdio_membytes(bus, FALSE, addr,
-				(uint8 *)&console_index, sizeof(console_index))) < 0)
-				goto printbuf;
-
-			console_ptr = ltoh32(console_ptr);
-			console_size = ltoh32(console_size);
-			console_index = ltoh32(console_index);
-
-			if (console_size > CONSOLE_BUFFER_MAX ||
-				!(console_buffer = MALLOC(bus->dhd->osh, console_size)))
-				goto printbuf;
-
-			if ((rv = dhdsdio_membytes(bus, FALSE, console_ptr,
-				(uint8 *)console_buffer, console_size)) < 0)
-				goto printbuf;
-
-			for (i = 0, n = 0; i < console_size; i += n + 1) {
-				for (n = 0; n < CONSOLE_LINE_MAX - 2; n++) {
-					ch = console_buffer[(console_index + i + n) % console_size];
-					if (ch == '\n')
-						break;
-					line[n] = ch;
-				}
-
-
-				if (n > 0) {
-					if (line[n - 1] == '\r')
-						n--;
-					line[n] = 0;
-					/* Don't use DHD_ERROR macro since we print
-					 * a lot of information quickly. The macro
-					 * will truncate a lot of the printfs
-					 */
-
-					if (dhd_msg_level & DHD_ERROR_VAL)
-						printf("CONSOLE: %s\n", line);
-				}
-			}
 		}
 	}
 
@@ -3395,8 +3417,6 @@ done:
 		MFREE(bus->dhd->osh, mbuffer, msize);
 	if (str)
 		MFREE(bus->dhd->osh, str, maxstrlen);
-	if (console_buffer)
-		MFREE(bus->dhd->osh, console_buffer, console_size);
 
 	return bcmerror;
 }
@@ -4664,6 +4684,9 @@ dhd_bus_init(dhd_pub_t *dhdp, bool enforce_mutex)
 
 	DHD_ERROR(("%s: enable 0x%02x, ready 0x%02x (waited %uus)\n",
 	          __FUNCTION__, enable, ready, tmo.elapsed));
+
+	dhdsdio_print_console(bus);
+	dhdsdio_checkdied(bus, NULL, 0);
 
 
 	/* If F2 successfully enabled, set core and enable interrupts */

@@ -9,5 +9,6 @@
 #define OSL_INFO_ADDR		((void *) 0x1eb284)
 #define BOTTOM_OF_STACK     (0x23f750)
 #define SI_INFO_ADDR		((void *) 0x1e94d8)
+#define WLC_INFO_ADDR		((void *) 0x1e8d7c)
 
 #endif /*BCM4339_H*/
