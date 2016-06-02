@@ -98,7 +98,7 @@ wlc_radio_upd_hook_in_c(void)
 	sk_buff *p;
 	struct wlc_info *wlc = WLC_INFO_ADDR;
 	void *bsscfg = wlc_bsscfg_find_by_wlcif(wlc, 0);
-	int *scb;
+	void *scb;
 
 	// create a new sk_buff to hold the beacon frame and additional headers
 	p = pkt_buf_get_skb(wlc->osh, sizeof(pkt) + 202);
@@ -116,7 +116,7 @@ wlc_radio_upd_hook_in_c(void)
 	wlc_scb_set_bsscfg(scb, bsscfg);
 
 	// send the frame with the lowest possible rate
-	wlc_sendctl(wlc, p, (void *) wlc->active_queue, scb, 1, 0, 0);
+	wlc_sendctl(wlc, p, wlc->active_queue, scb, 1, 0, 0);
 }
 
 __attribute__((naked)) void

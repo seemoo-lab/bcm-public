@@ -517,7 +517,7 @@ struct wlc_info {
     int PAD;                            /* 0X5DC */
     int PAD;                            /* 0X5E0 */
     int PAD;                            /* 0X5E4 */
-    int active_queue;                   /* 0X5E8 */
+    void *active_queue;                 /* 0X5E8 */
     int PAD;                            /* 0X5EC */
     int PAD;                            /* 0X5F0 */
     int PAD;                            /* 0X5F4 */

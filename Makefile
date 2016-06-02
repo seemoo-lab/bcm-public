@@ -98,7 +98,8 @@ boot.img: Makefile mkboot kernel/arch/arm/boot/zImage-dtb $(FWPATCH) kernel/driv
 	   cd bootimg_tmp/ramdisk && \
 	   gzip -dc ../ramdisk.cpio.gz | cpio -i \
 	   && sed -i '/service wpa_supplicant/,+11 s/^/#/' init.hammerhead.rc \
-	   && sed -i '/service p2p_supplicant/,+14 s/^/#/' init.hammerhead.rc
+	   && sed -i '/service p2p_supplicant/,+14 s/^/#/' init.hammerhead.rc \
+	   && printf "\n# NexMon files\n/nexmon(/.*)? u:object_r:system_file:s0\n" >> file_contexts
 	mkdir bootimg_tmp/ramdisk/nexmon
 	cp firmware_patching/$(FWPATCH)/bcmdhd/bcmdhd.ko bootimg_tmp/ramdisk/nexmon/
 	cp kernel/drivers/net/wireless/nexmon/nexmon.ko bootimg_tmp/ramdisk/nexmon/
