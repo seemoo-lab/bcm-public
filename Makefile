@@ -60,7 +60,7 @@ all: tools boot.img
 setupenv:
 	source setup_env.sh
 
-.PHONY: cleanall cleanbuildtools cleanboot kernel bcmdhd reloadnex su
+.PHONY: cleanall cleanbuildtools cleanboot kernel bcmdhd su
 
 
 cleanall: cleanbuildtools cleanboot
@@ -105,9 +105,7 @@ boot.img: Makefile mkboot kernel/arch/arm/boot/zImage-dtb $(FWPATCH) kernel/driv
 	cp kernel/drivers/net/wireless/nexmon/nexmon.ko bootimg_tmp/ramdisk/nexmon/
 	mkdir bootimg_tmp/ramdisk/nexmon/firmware
 	cp firmware_patching/$(FWPATCH)/fw_bcmdhd.bin bootimg_tmp/ramdisk/nexmon/firmware/fw_bcmdhd.bin
-	cp firmware_patching/wlc_bmac_recv/fw_bcmdhd.bin bootimg_tmp/ramdisk/nexmon/firmware/fw_nexmon.bin
 	cp bootimg_src/firmware/bcmdhd.cal bootimg_tmp/ramdisk/nexmon/firmware/bcmdhd.cal
-	cp bootimg_src/firmware/bcmdhd.cal bootimg_tmp/ramdisk/nexmon/firmware/nexmon.cal
 	cp bootimg_src/firmware/rom.bin bootimg_tmp/ramdisk/nexmon/firmware/rom.bin
 	cp bootimg_src/firmware/firmware.map bootimg_tmp/ramdisk/nexmon/firmware/firmware.map
 	mkdir bootimg_tmp/ramdisk/nexmon/bin
