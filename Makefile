@@ -99,7 +99,8 @@ boot.img: Makefile mkboot kernel/arch/arm/boot/zImage-dtb $(FWPATCH) kernel/driv
 	   gzip -dc ../ramdisk.cpio.gz | cpio -i \
 	   && sed -i '/service wpa_supplicant/,+11 s/^/#/' init.hammerhead.rc \
 	   && sed -i '/service p2p_supplicant/,+14 s/^/#/' init.hammerhead.rc \
-	   && printf "\n# NexMon files\n/nexmon(/.*)? u:object_r:system_file:s0\n" >> file_contexts
+	   && printf "none /nexmon/tmp/bin tmpfs size=1M defaults\n" >> fstab.hammerhead \
+	   && printf "none /system/bin aufs br:/nexmon/tmp/bin:/nexmon/bin:/system/bin defaults\n" >> fstab.hammerhead
 	mkdir bootimg_tmp/ramdisk/nexmon
 	cp firmware_patching/$(FWPATCH)/bcmdhd/bcmdhd.ko bootimg_tmp/ramdisk/nexmon/
 	cp kernel/drivers/net/wireless/nexmon/nexmon.ko bootimg_tmp/ramdisk/nexmon/
@@ -110,7 +111,14 @@ boot.img: Makefile mkboot kernel/arch/arm/boot/zImage-dtb $(FWPATCH) kernel/driv
 	cp bootimg_src/firmware/firmware.map bootimg_tmp/ramdisk/nexmon/firmware/firmware.map
 	mkdir bootimg_tmp/ramdisk/nexmon/bin
 	cp --preserve=links bootimg_src/bin/* bootimg_tmp/ramdisk/nexmon/bin
-	sed -i 's#/su/bin#/nexmon/bin:/su/bin#g' bootimg_tmp/ramdisk/init.environ.rc
+	# create directories where we mount temporary file systems (tmpfs) used as writable
+	# branches for the aufs overlay file system 
+	mkdir bootimg_tmp/ramdisk/nexmon/tmp
+	mkdir bootimg_tmp/ramdisk/nexmon/tmp/bin
+	# copy an init variant with permissive selinux settings to avoid problems with 
+	# the aufs overlay filesystem that does not set the correct selinux contexts its fiiles
+	rm bootimg_tmp/ramdisk/init
+	cp bootimg_src/root/init-selinux-permissive bootimg_tmp/ramdisk/init
 	$(MKBOOT)mkbootfs bootimg_tmp/ramdisk | gzip > bootimg_tmp/newramdisk.cpio.gz
 	$(MKBOOT)mkbootimg --base 0 --pagesize 2048 --kernel_offset 0x00008000 \
 	   --ramdisk_offset 0x02900000 --second_offset 0x00f00000 --tags_offset 0x02700000 \
