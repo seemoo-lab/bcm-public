@@ -72,8 +72,6 @@ kernel: kernel/arch/arm/boot/zImage-dtb
 kernel/arch/arm/boot/zImage-dtb: kernel/.config check-nexmon-setup-env
 	cd kernel && make
 
-
-
 bcmdhd: kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko
 
 $(FWPATCH): FORCE
@@ -88,7 +86,7 @@ su: su.img
 	adb push SuperSU.apk /sdcard/
 	adb shell "su -c 'mv /sdcard/SuperSU.apk /data/SuperSU.apk'"
 
-boot.img: Makefile mkboot kernel/arch/arm/boot/zImage-dtb $(FWPATCH) kernel/drivers/net/wireless/nexmon/nexmon.ko
+boot.img: Makefile mkboot bootimg_src kernel/arch/arm/boot/zImage-dtb $(FWPATCH) kernel/drivers/net/wireless/nexmon/nexmon.ko
 	rm -Rf bootimg_tmp
 	mkdir bootimg_tmp
 	cd bootimg_tmp && \
@@ -125,6 +123,9 @@ boot.img: Makefile mkboot kernel/arch/arm/boot/zImage-dtb $(FWPATCH) kernel/driv
 	   --ramdisk_offset 0x02900000 --second_offset 0x00f00000 --tags_offset 0x02700000 \
 	   --cmdline 'console=ttyHSL0,115200,n8 androidboot.hardware=hammerhead user_debug=31 maxcpus=2 msm_watchdog_v2.enable=1' \
 	   --kernel bootimg_tmp/kernel --ramdisk bootimg_tmp/newramdisk.cpio.gz -o boot.img
+
+bootimg_src: FORCE
+	make -C bootimg_src
 
 cleanboot:
 	rm -f boot.img
