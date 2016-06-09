@@ -55,7 +55,7 @@ MKBOOT=$(shell pwd)/buildtools/mkboot/
 FWPATCH=original_firmware
 MSGLEVEL=0x48f
 
-all: tools boot.img
+all: boot.img
 
 setupenv:
 	source setup_env.sh
@@ -100,7 +100,8 @@ boot.img: Makefile mkboot kernel/arch/arm/boot/zImage-dtb $(FWPATCH) kernel/driv
 	   && sed -i '/service wpa_supplicant/,+11 s/^/#/' init.hammerhead.rc \
 	   && sed -i '/service p2p_supplicant/,+14 s/^/#/' init.hammerhead.rc \
 	   && printf "none /nexmon/tmp/bin tmpfs size=1M defaults\n" >> fstab.hammerhead \
-	   && printf "none /system/bin aufs br:/nexmon/tmp/bin:/nexmon/bin:/system/bin defaults\n" >> fstab.hammerhead
+	   && printf "none /system/bin aufs br:/nexmon/tmp/bin:/nexmon/bin:/system/bin defaults\n" >> fstab.hammerhead \
+	   && printf "\n\nservice su_daemon /nexmon/bin/su --daemon\n    oneshot\n    class late_start\n    user root\n" >> init.rc
 	mkdir bootimg_tmp/ramdisk/nexmon
 	cp firmware_patching/$(FWPATCH)/bcmdhd/bcmdhd.ko bootimg_tmp/ramdisk/nexmon/
 	cp kernel/drivers/net/wireless/nexmon/nexmon.ko bootimg_tmp/ramdisk/nexmon/
@@ -128,6 +129,10 @@ boot.img: Makefile mkboot kernel/arch/arm/boot/zImage-dtb $(FWPATCH) kernel/driv
 cleanboot:
 	rm -f boot.img
 
+dumpboot: FORCE
+	rm -rf bootimg_src/boot.img
+	adb shell "su -c 'dd if=/dev/block/mmcblk0p19 of=/sdcard/boot.img'"
+	adb pull /sdcard/boot.img bootimg_src/boot.img
 
 boot: boot.img
 	adb reboot bootloader
