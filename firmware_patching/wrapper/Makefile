@@ -4,7 +4,7 @@ all: wrapper.o
 
 wrapper.ld: ../include/wrapper.h Makefile
 	# read the wrapper.h file and remove the weak attribute, extract all lines starting with "extern", split them at "(" and "/" and then remove the "*" of a return type, then the function name is the second but last word and the address is the last word
-	sed -e "s/__attribute__((weak))//" ../include/wrapper.h | awk -F'[/(]' '/^extern/ {gsub(/*/,"",$$1);print $$1 $$4}' | awk -F' ' '{print ".text." $$(NF-1) " " $$NF " : { ../wrapper/wrapper.o (.text." $$(NF-1) ") }"}' > wrapper.ld
+	sed -e "s/__attribute__((weak))//" ../include/wrapper.h | gawk -F'[/(]' '/^extern/ {gsub(/*/,"",$$1);print $$1 $$4}' | gawk -F' ' '{print ".text." $$(NF-1) " " $$NF " : { ../wrapper/wrapper.o (.text." $$(NF-1) ") }"}' > wrapper.ld
 
 wrapper.c: ../include/wrapper.h
 	# read the wrapper.h file and remove comments but no #include, remove the weak attribute, remove all extern words at the beginning of a line. if the return value is not void, then insert dummy code that returns 0 otherwise do nothing in the function
