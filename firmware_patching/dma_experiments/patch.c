@@ -53,6 +53,24 @@
 #include "../include/structs.h"	// structures that are used by the code in the firmware
 #include "../include/helper.h"	// useful helper functions
 
+char test[20] = {0x14, 0x00, 0xEB, 0xFF, 0x00, 0x00, 0x00, 0x0C, 0x00, 0x75, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+void *
+dma_txfast_hook(struct dma_info *di, struct sk_buff *p, int commit)
+{
+	void *ret;
+	int *data = p->data;
+
+	if ((int) di != 0x1eab98)
+		printf("tx: %08x %08x %d\n", (int) di, (int) data, p->len);
+
+	ret = dma_txfast(di, p, commit);
+
+	//dma64_txunframed((struct dma_info *) 0x1eab98, (void *) test, 20, 1);
+
+	return ret;
+}
+
 /**
  *	Just inserted to produce an error while linking, when we try to overwrite memory used by the original firmware
  */

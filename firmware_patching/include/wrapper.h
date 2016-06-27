@@ -69,6 +69,7 @@ extern void before_before_initialize_memory(void); // 0x183886
 extern int bus_binddev(void *sdio_hw, void *sdiodev, void *d11dev); // 0x1837F8
 extern int bus_binddev_rom(void *sdiodev, void *d11dev); // 0x1B8C4
 
+extern int dma64_txunframed(void *di, void *data, unsigned int len, char commit); // 0x16284
 extern void *dma_attach(void *osh, char *name, void* sih, unsigned int dmaregstx, unsigned int dmaregsrx, unsigned int ntxd, unsigned int nrxd, unsigned int rxbufsize, int rxextheadroom, unsigned int nrxpost, unsigned int rxoffset, void *msg_level); // 0x15694
 extern void *dma_rx(void *di); // 0x8c69c
 extern void *dma_rxfill(void *di); // 0x8c6cc
