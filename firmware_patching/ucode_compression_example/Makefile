@@ -3,7 +3,7 @@ FUNCTIONS = wlc_ucode_write_alternative tinflate gen_huffman_table tinflate_part
 FUNCTIONS_BIN = $(FUNCTIONS:=.bin)
 BCMDHDFWPATH=../../bootimg_src/firmware/fw_bcmdhd.orig.bin
 
-all: bcmdhd/bcmdhd.ko fw_bcmdhd.bin fw_bcmdhd.complete.elf ucode-compressed.c
+all: bcmdhd/bcmdhd.ko fw_bcmdhd.bin fw_bcmdhd.complete.elf
 
 bcmdhd/bcmdhd.ko: check-nexmon-setup-env
 	make -C ../../kernel/ M=$$PWD/bcmdhd -j2
@@ -11,7 +11,7 @@ bcmdhd/bcmdhd.ko: check-nexmon-setup-env
 fw_bcmdhd.bin: patcher.py patch.elf text.bin $(FUNCTIONS_BIN)
 	./patcher.py
 
-patch.o: patch.c ../include/*.h
+patch.o: patch.c ../include/*.h ucode-compressed.c
 	$(CC)gcc -Wall -Werror -O2 -nostdlib -nostartfiles -ffreestanding -mthumb -march=armv7-r -ffunction-sections -fdata-sections -c $< -o $@
 
 ../wrapper/wrapper.o: ../include/wrapper.h

@@ -119,7 +119,9 @@ extern int towards_dma_txfast(void *sdio, void *p, int chan); // 0x18256C
 
 extern void wlc_bmac_init(void *wlc_hw, unsigned int chanspec, unsigned int mute); // 0x1AB840
 extern void wlc_bmac_mctrl(void *wlc_hw, int mask, int val); // 0x4F080
+extern short wlc_bmac_read_objmem(void *wlc_hw, unsigned int offset, int sel); // 0x4DB68
 extern void wlc_bmac_read_tsf(void *wlc_hw, unsigned int *tsf_l_ptr, unsigned int *tsf_h_ptr); // 0x1AAD84
+extern void *wlc_bmac_write_objmem(void *wlc_hw, unsigned int offset, short v, int sel); // 0x4DCC8
 extern void wlc_bmac_write_template_ram(void *wlc_hw, int offset, int len, void *buf); // 0x504B0
 extern void *wlc_bsscfg_find_by_wlcif(void *wlc, int wlcif); // 0x1AC166
 extern void *wlc_compute_plcp(void *wlc, unsigned int rspec, short length, short type_subtype_frame_ctl_field, char *plcp); // 0x32A90
