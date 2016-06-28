@@ -18,7 +18,14 @@ def getSectionAddr(name):
 patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin", 
     "fw_bcmdhd.bin", [
 	# The text section is always required and contains code that is called by patches and hooks but not directly placed to predefined memory locations
-	#ExternalArmPatch(getSectionAddr(".text"), "text.bin"),
+	ExternalArmPatch(getSectionAddr(".text"), "text.bin"),
+
+	ExternalArmPatch(getSectionAddr(".text.wlc_ucode_write_alternative"), "wlc_ucode_write_alternative.bin"),
+	BLPatch(0x1f4f08, getSectionAddr(".text.wlc_ucode_write_alternative")),
+
+	ExternalArmPatch(getSectionAddr(".text.gen_huffman_table"), "gen_huffman_table.bin"),
+	ExternalArmPatch(getSectionAddr(".text.tinflate_partial"), "tinflate_partial.bin"),
+	ExternalArmPatch(getSectionAddr(".text.ucode_compressed_bin"), "ucode_compressed_bin.bin"),
 
 	# ExternalArmPatch instructions copy the contents of a binary file to an address in the firmware
 	# ExternalArmPatch(<address to store binary blob>, <file name>),

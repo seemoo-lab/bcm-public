@@ -1,8 +1,9 @@
 CC=../../buildtools/arm-eabi-4.7/bin/arm-eabi-
-FUNCTIONS = wlc_ucode_download_hook
+FUNCTIONS = wlc_ucode_write_alternative tinflate gen_huffman_table tinflate_partial ucode_compressed_bin
 FUNCTIONS_BIN = $(FUNCTIONS:=.bin)
+BCMDHDFWPATH=../../bootimg_src/firmware/fw_bcmdhd.orig.bin
 
-all: bcmdhd/bcmdhd.ko fw_bcmdhd.bin fw_bcmdhd.complete.elf
+all: bcmdhd/bcmdhd.ko fw_bcmdhd.bin fw_bcmdhd.complete.elf ucode-compressed.c
 
 bcmdhd/bcmdhd.ko: check-nexmon-setup-env
 	make -C ../../kernel/ M=$$PWD/bcmdhd -j2
@@ -33,13 +34,22 @@ fw_bcmdhd.complete.elf : fw_bcmdhd.complete.bin
 	$(CC)objcopy -O elf32-littlearm -Barm -I binary $< $@
 	$(CC)objcopy --set-section-flags .data=code $@
 
+ucode.bin: $(BCMDHDFWPATH) Makefile
+	dd if=$< of=$@ bs=1 skip=$$((0x1fd820-0x180000)) count=$$((0xb2e0))
+
+ucode-compressed.bin: ucode.bin
+	cat $< | zlib-flate -compress > $@
+
+ucode-compressed.c: ucode-compressed.bin
+	xxd -i $< > $@
+
 check-nexmon-setup-env:
 ifndef NEXMON_SETUP_ENV
 	$(error run 'source setup_env.sh' first)
 endif
 
 clean:
-	rm -f fw_bcmdhd.bin fw_bcmdhd.complete.bin fw_bcmdhd.complete.elf patch.o patch.elf text.bin $(FUNCTIONS_BIN)
+	rm -f fw_bcmdhd.bin fw_bcmdhd.complete.bin fw_bcmdhd.complete.elf patch.o patch.elf text.bin $(FUNCTIONS_BIN) ucode-compressed.bin ucode.bin ucode-compressed.c
 	make -C ../../kernel/ M=$$PWD/bcmdhd clean
 
 FORCE:
