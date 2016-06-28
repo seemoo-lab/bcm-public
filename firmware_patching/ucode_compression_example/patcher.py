@@ -25,7 +25,10 @@ patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin",
 
 	ExternalArmPatch(getSectionAddr(".text.gen_huffman_table"), "gen_huffman_table.bin"),
 	ExternalArmPatch(getSectionAddr(".text.tinflate_partial"), "tinflate_partial.bin"),
+	ExternalArmPatch(getSectionAddr(".text.tinflate_write_objmem"), "tinflate_write_objmem.bin"),
+	ExternalArmPatch(getSectionAddr(".text.tinflate_read_objmem"), "tinflate_read_objmem.bin"),
 	ExternalArmPatch(getSectionAddr(".text.ucode_compressed_bin"), "ucode_compressed_bin.bin"),
+	ExternalArmPatch(getSectionAddr(".text.ucode_compressed_bin_len"), "ucode_compressed_bin_len.bin"),
 
 	# ExternalArmPatch instructions copy the contents of a binary file to an address in the firmware
 	# ExternalArmPatch(<address to store binary blob>, <file name>),

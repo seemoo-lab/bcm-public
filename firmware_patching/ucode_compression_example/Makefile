@@ -1,7 +1,9 @@
 CC=../../buildtools/arm-eabi-4.7/bin/arm-eabi-
-FUNCTIONS = wlc_ucode_write_alternative tinflate gen_huffman_table tinflate_partial ucode_compressed_bin
+FUNCTIONS = wlc_ucode_write_alternative
 FUNCTIONS_BIN = $(FUNCTIONS:=.bin)
-BCMDHDFWPATH=../../bootimg_src/firmware/fw_bcmdhd.orig.bin
+BCMDHDFWPATH =../../bootimg_src/firmware/fw_bcmdhd.orig.bin
+
+include tinflate.mk
 
 all: bcmdhd/bcmdhd.ko fw_bcmdhd.bin fw_bcmdhd.complete.elf
 
@@ -17,7 +19,7 @@ patch.o: patch.c ../include/*.h ucode-compressed.c
 ../wrapper/wrapper.o: ../include/wrapper.h
 	make -C ../wrapper
 
-patch.elf: patch.ld patch.o ../wrapper/wrapper.o
+patch.elf: patch.ld patch.o ../wrapper/wrapper.o tinflate.ld
 	$(CC)ld -T $< --entry=dma_txfast_hook -o $@ --gc-sections --print-gc-sections -M
 
 $(FUNCTIONS_BIN): patch.elf
