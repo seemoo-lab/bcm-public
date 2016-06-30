@@ -176,14 +176,14 @@ include $(BUILD_EXECUTABLE)
 include $(CLEAR_VARS)
 LOCAL_MODULE := libssl
 LOCAL_SRC_FILES := $(LOCAL_PATH)/../shared_system_libs/libssl.so
-LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/../boringssl/include
+LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/../boringssl/src/include
 include $(PREBUILT_SHARED_LIBRARY)
 
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := libcrypto
 LOCAL_SRC_FILES := $(LOCAL_PATH)/../shared_system_libs/libcrypto.so
-LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/../boringssl/include
+LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/../boringssl/src/include
 include $(PREBUILT_SHARED_LIBRARY)
 
 
