@@ -38,6 +38,9 @@ Our software may damage your hardware and may void your hardware’s warranty! Y
 * `make cleanboot`
 * `make boot.img`
 
+## Steps to create your own firmware patches
+* see the [firmware patching folder](https://dev.seemoo.tu-darmstadt.de/bcm/bcm-public/tree/master/firmware_patching)
+
 ## Caveats
 * ~~The current patch is unable to handle aggregated frames (A-MSDU's). This makes it impossible to receive frames in an 802.11n/802.11ac enabled environment.~~
  * Current Monitor Mode was tested and works for 802.11n with 20MHz wide channels (2.4 as well as 5GHz), ~~40MHz channels seems to be a problem. We keep working on it ;-)~~
@@ -66,3 +69,9 @@ This work focuses on bringing monitor mode to Nexus 5 smartphones to enhance the
 interoperability between applications that require monitor mode and BCM4339
 Wi-Fi chips. The implementation is based on our new C-based programming
 framework to extend existing Wi-Fi firmwares.
+
+## Contact
+
+* mschulz@seemoo.tu-darmstadt.de
+* dwegemer@seemoo.tu-darmstadt.de
+* mhollick@seemoo.tu-darmstadt.de

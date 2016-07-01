@@ -22,6 +22,8 @@ directories. The patches generally consist of ...
     it can be executed. The commands given in the README files
     generally have to be run in the repositories root directory.
 
+## Generate a new project:
+
 To generate a new firmware patching project, you can simply run
 ```
 make newproject NEWPROJECT=name_of_new_project
@@ -34,12 +36,19 @@ After that, you can start working on your patches. This way, you
 can always see what changed in your project compared to the 
 original template files.
 
+## Compile a already existing project:
+
+For example to compile the `hello_world_example`, you can simply run
+```make reloadfirmware FWPATCH=hello_world_example```
+from the root directory
+
 ## Currently, the following example projects exist:
 
- * d11_example: Interaction with the D11 core
- * debugger_example: Using the ARM Debugging interface
- * hello_world_example: Prints hello world to the chips console
- * ioctl_example: Exchanges ioctl messages with the firmware
- * mapaddr_example: Analysis of stack traces
- * udp_to_android_example: Send UDP frames over SDIO to Android
- 
+* d11_example: Interaction with the D11 core
+* debugger_example: Using the ARM Debugging interface
+* hello_world_example: Prints hello world to the chips console
+* hello_beacon_example: send a single beacon frame on firmware start 
+* ioctl_example: Exchanges ioctl messages with the firmware
+* mapaddr_example: Analysis of stack traces
+* udp_to_android_example: Send UDP frames over SDIO to Android
+
