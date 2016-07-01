@@ -72,6 +72,6 @@ framework to extend existing Wi-Fi firmwares.
 
 ## Contact
 
-* mschulz@seemoo.tu-darmstadt.de
-* dwegemer@seemoo.tu-darmstadt.de
-* mhollick@seemoo.tu-darmstadt.de
+* <mschulz@seemoo.tu-darmstadt.de>
+* <dwegemer@seemoo.tu-darmstadt.de>
+* <mhollick@seemoo.tu-darmstadt.de>
