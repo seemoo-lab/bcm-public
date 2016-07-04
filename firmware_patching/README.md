@@ -39,8 +39,10 @@ original template files.
 ## Compile a already existing project:
 
 For example to compile the `hello_world_example`, you can simply run
-```make reloadfirmware FWPATCH=hello_world_example```
-from the root directory
+```
+make reloadfirmware FWPATCH=hello_world_example
+```
+from the **root** directory
 
 ## Currently, the following example projects exist:
 
