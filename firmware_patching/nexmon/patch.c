@@ -197,26 +197,101 @@ wlc_bmac_recv_hook(struct wlc_hw_info *wlc_hw, unsigned int fifo, int bound, int
     return n >= bound_limit;
 }
 
+inline void
+hexdump(char *desc, void *addr, int len) {
+    int i;
+    unsigned char buff[17];
+    unsigned char *pc = (unsigned char*)addr;
+
+    // Output description if given.
+    if (desc != 0)
+        printf ("%s:\n", desc);
+
+    // Process every byte in the data.
+    for (i = 0; i < len; i++) {
+        // Multiple of 16 means new line (with line offset).
+
+        if ((i % 16) == 0) {
+            // Just don't print ASCII for the zeroth line.
+            if (i != 0)
+                printf ("  %s\n", buff);
+
+            // Output the offset.
+            printf ("  %04x ", i);
+        }
+
+        // Now the hex code for the specific character.
+        printf (" %02x", pc[i]);
+
+        // And store a printable ASCII character for later.
+        if ((pc[i] < 0x20) || (pc[i] > 0x7e))
+            buff[i % 16] = '.';
+        else
+            buff[i % 16] = pc[i];
+        buff[(i % 16) + 1] = '\0';
+    }
+
+    // Pad out last line if not exactly 16 characters.
+    while ((i % 16) != 0) {
+        printf ("   ");
+        i++;
+    }
+
+    // And print the final ASCII bit.
+    printf ("  %s\n", buff);
+}
+
+void *
+skb_pull(sk_buff *p, unsigned int len) {
+    p->data += len;
+    p->len -= len;
+
+    return p->data;
+}
+
+
 void*
 sdio_handler(void *sdio, sk_buff *p) {
     //do the same as in the original function to get the channel:
     int chan = *((int *)(p->data + 1)) & 0xf;
+    int rtap_len = 0;
+
+    //needed for sending:
+    struct wlc_info *wlc = WLC_INFO_ADDR;
+    void *bsscfg = wlc_bsscfg_find_by_wlcif(wlc, 0);
+    void *scb;
     
     //do this to get the data offset:
-    //int offset = 0;
-    //if(*((int *)(sdio + 0x220))) {
-    //    offset = *((int *)(p->data + 3)) - 20;
-    //} else {
-    //    offset = *((int *)(p->data + 3)) - 12;
-    //} 
-
-    if(chan == 2) {
-        printf("sdio_handler(): incomming data!\n");
-        //return handle_sdio_xmit_request((sdio + 0x10), p);
+    int offset = 0;
+    if(*((int *)(sdio + 0x220))) {
+        offset = *((int *)(p->data + 3)) - 20;
+    } else {
+        offset = *((int *)(p->data + 3)) - 12;
     }
-    //} else {
-    //}
-    return sdio_header_parsing_from_sk_buff(sdio, p);
+
+    if(chan && chan == 2) {
+        //see sdio_header_parsing_from_sk_buff()
+        p->data = p->data + 8 + offset;
+        p->len = p->len - 8 - offset;
+
+        //REMOVE radiotap header
+        rtap_len = *((char *)(p->data + 6));
+        skb_pull(p, rtap_len + 4);
+        printf("sdio_handler(): incomming data after removing radiotap (rtap_len %d)!\n", rtap_len);
+        hexdump(0x0, p->data, p->len);
+        
+        // get station control block (scb) for given mac address
+        scb = __wlc_scb_lookup(wlc, bsscfg, p->data, 0);
+        // set the scb's bsscfg entry
+        wlc_scb_set_bsscfg(scb, bsscfg);
+        // send the frame with the lowest possible rate
+        wlc_sendctl(wlc, p, wlc->active_queue, scb, 1, 0, 0);
+
+        //return handle_sdio_xmit_request((void *)*((int *)(sdio + 0x10)), p);
+        return 0;
+    } else {
+        return sdio_header_parsing_from_sk_buff(sdio, p);
+    }
 }
 
 /**
