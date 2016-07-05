@@ -197,6 +197,28 @@ wlc_bmac_recv_hook(struct wlc_hw_info *wlc_hw, unsigned int fifo, int bound, int
     return n >= bound_limit;
 }
 
+void*
+sdio_handler(void *sdio, sk_buff *p) {
+    //do the same as in the original function to get the channel:
+    int chan = *((int *)(p->data + 1)) & 0xf;
+    
+    //do this to get the data offset:
+    //int offset = 0;
+    //if(*((int *)(sdio + 0x220))) {
+    //    offset = *((int *)(p->data + 3)) - 20;
+    //} else {
+    //    offset = *((int *)(p->data + 3)) - 12;
+    //} 
+
+    if(chan == 2) {
+        printf("sdio_handler(): incomming data!\n");
+        //return handle_sdio_xmit_request((sdio + 0x10), p);
+    }
+    //} else {
+    //}
+    return sdio_header_parsing_from_sk_buff(sdio, p);
+}
+
 /**
  *  Just inserted to produce an error while linking, when we try to overwrite memory used by the original firmware
  */
