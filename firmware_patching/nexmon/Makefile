@@ -17,7 +17,7 @@ patch.o: patch.c ../include/*.h
 	make -C ../wrapper
 
 patch.elf: patch.ld patch.o ../wrapper/wrapper.o
-	$(CC)ld -T $< --entry=dma_txfast_hook -o $@ --gc-sections --print-gc-sections -M
+	$(CC)ld -T $< -o $@ --gc-sections --print-gc-sections -M
 
 $(FUNCTIONS_BIN): patch.elf
 	$(CC)objcopy -O binary -j .text.$(basename $@) $< $@

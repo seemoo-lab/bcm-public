@@ -12,7 +12,7 @@ SECTIONS
 	/* this dma_attach_hook resets the rxextheadroom parameter to increase the header size to store the bdc and radiotap headers */
 	.text.dma_attach_hook 0x180020: { KEEP(patch.o (.text.dma_attach_hook)) }
 
-    .text.sdio_handler 0x180500 : { KEEP(patch.o (.text.sdio_handler)) }
+    .text.sdio_handler : { KEEP(patch.o (.text.sdio_handler)) }
 
 	/* All other sections that were not yet placed but referenced by a kept section are collected in the text section */
 	.text : { patch.o (.text .text.* .data .data.* .bss .bss.* .rodata .rodata.*) }
