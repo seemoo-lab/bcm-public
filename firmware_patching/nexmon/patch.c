@@ -464,12 +464,18 @@ sdio_handler(void *sdio, sk_buff *p) {
     //do the same as in the original function to get the channel:
     int chan = *((int *)(p->data + 1)) & 0xf;
     int rtap_len = 0;
+    uint16* chanspec = 0;
+    uint16 band = 0;
     //int data_rate = 0;
+    void *scb;
 
     //needed for sending:
     struct wlc_info *wlc = WLC_INFO_ADDR;
     void *bsscfg = wlc_bsscfg_find_by_wlcif(wlc, 0);
-    void *scb;
+    //not _really_ needed but maybe needed for sending on 5ghz
+    chanspec = (uint16 *)(*((int *)(bsscfg + 0x30C)) + 0x32);
+    printf("chanspec in FW1 @ %x: 0x%x\n", chanspec, *chanspec);
+    band = (*chanspec & 0xC000) - 0xC000;
 
     //Radiotap parsing:
     struct ieee80211_radiotap_iterator iterator;
@@ -484,6 +490,9 @@ sdio_handler(void *sdio, sk_buff *p) {
     }
 
     if(chan && chan == 2) {
+        //DELME
+        //*chanspec = 0xe02a;
+
         //see sdio_header_parsing_from_sk_buff()
         p->data = p->data + 8 + offset;
         p->len = p->len - 8 - offset;
@@ -492,11 +501,13 @@ sdio_handler(void *sdio, sk_buff *p) {
         skb_pull(p, 4);
 
         //parse radiotap header
-        rtap_len = *((char *)(p->data + 6));
+        rtap_len = *((char *)(p->data + 2));
         rtap_header = (struct ieee80211_radiotap_header *) p->data;
         int ret = ieee80211_radiotap_iterator_init(&iterator, rtap_header, rtap_len);
         if(ret) {
             printf("rtap_init error\n");
+        } else {
+            printf("rtap_init ok, rtap_len: %d\n", rtap_len);
         }
         while(!ret) {
             //returns != 0 on error
@@ -521,7 +532,8 @@ sdio_handler(void *sdio, sk_buff *p) {
         skb_pull(p, rtap_len);
         
         // get station control block (scb) for given mac address
-        scb = __wlc_scb_lookup(wlc, bsscfg, p->data, 0);
+        scb = __wlc_scb_lookup(wlc, bsscfg, p->data, band <= 0);
+        printf("SCB: 0x%x, band: %d\n", scb, band <= 0);
         // set the scb's bsscfg entry
         wlc_scb_set_bsscfg(scb, bsscfg);
         // send the frame with the lowest possible rate
