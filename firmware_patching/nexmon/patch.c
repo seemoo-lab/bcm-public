@@ -471,11 +471,7 @@ sdio_handler(void *sdio, sk_buff *p) {
 
     //needed for sending:
     struct wlc_info *wlc = WLC_INFO_ADDR;
-    void *bsscfg = wlc_bsscfg_find_by_wlcif(wlc, 0);
-    //not _really_ needed but maybe needed for sending on 5ghz
-    chanspec = (uint16 *)(*((int *)(bsscfg + 0x30C)) + 0x32);
-    printf("chanspec in FW1 @ %x: 0x%x\n", chanspec, *chanspec);
-    band = (*chanspec & 0xC000) - 0xC000;
+    void *bsscfg = 0;
 
     //Radiotap parsing:
     struct ieee80211_radiotap_iterator iterator;
@@ -490,8 +486,6 @@ sdio_handler(void *sdio, sk_buff *p) {
     }
 
     if(chan && chan == 2) {
-        //DELME
-        //*chanspec = 0xe02a;
 
         //see sdio_header_parsing_from_sk_buff()
         p->data = p->data + 8 + offset;
@@ -531,7 +525,15 @@ sdio_handler(void *sdio, sk_buff *p) {
         //remove radiotap header
         skb_pull(p, rtap_len);
         
+        bsscfg = wlc_bsscfg_find_by_wlcif(wlc, 0);
+        //not _really_ needed but maybe needed for sending on 5ghz
+        chanspec = (uint16 *)(*((int *)(bsscfg + 0x30C)) + 0x32);
+        //DELME
+        //*chanspec = 0xe02a;
+        printf("chanspec in FW1 @ %x: 0x%x\n", chanspec, *chanspec);
+        band = (*chanspec & 0xC000) - 0xC000;
         // get station control block (scb) for given mac address
+        // band seems to be just 1 on 5Ghz and 0 on 2.4Ghz
         scb = __wlc_scb_lookup(wlc, bsscfg, p->data, band <= 0);
         printf("SCB: 0x%x, band: %d\n", scb, band <= 0);
         // set the scb's bsscfg entry
