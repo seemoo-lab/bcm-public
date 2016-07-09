@@ -41,6 +41,7 @@ LOCAL_CFLAGS += -DCONFIG_LIBNL20
 LOCAL_CFLAGS += -Wno-unused-parameter \
                 -Wno-sign-compare \
                 -Wno-format
+CFLAGS +="-fPIE -pie"
 LOCAL_CLANG_CFLAGS += -Wno-enum-conversion
 
 LOCAL_LDFLAGS := -Wl,--no-gc-sections
