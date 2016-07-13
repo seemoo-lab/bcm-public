@@ -84,6 +84,12 @@ int main(int argc, char *argv[]) {
         0x00, 0xf6, 0x63, 0x96, 0x6a, 0xa0, 0xf0, 0x00
     };
 
+    if(argc == 2) {
+        printf("Sending frame with rate: %dMbit, (raw: 0x%d)\n", atoi(argv[1])/2, atoi(argv[1]));
+        frame[25] = atoi(argv[1]);
+        //hexdump(0, frame, sizeof(frame));
+    }
+
     //Listen on interface
     handle = pcap_open_live(dev, BUFSIZ, 1, 1000, errbuf);
     if (handle == NULL) {
