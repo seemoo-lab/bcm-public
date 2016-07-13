@@ -466,7 +466,7 @@ sdio_handler(void *sdio, sk_buff *p) {
     int rtap_len = 0;
     uint16* chanspec = 0;
     uint16 band = 0;
-    //int data_rate = 0;
+    int data_rate = 0;
     void *scb;
 
     //needed for sending:
@@ -512,6 +512,7 @@ sdio_handler(void *sdio, sk_buff *p) {
             switch(iterator.this_arg_index) {
                 case IEEE80211_RADIOTAP_RATE:
                     printf("Data Rate: %dMbps\n", (*iterator.this_arg) / 2);
+                    data_rate = (*iterator.this_arg);
                     break;
                 case IEEE80211_RADIOTAP_CHANNEL:
                     printf("Channel (freq): %d\n", iterator.this_arg[0] | (iterator.this_arg[1] << 8) );
@@ -526,21 +527,26 @@ sdio_handler(void *sdio, sk_buff *p) {
         skb_pull(p, rtap_len);
         
         bsscfg = wlc_bsscfg_find_by_wlcif(wlc, 0);
+        printf("bsscfg @ 0x%x\n", bsscfg);
         //not _really_ needed but maybe needed for sending on 5ghz
         chanspec = (uint16 *)(*((int *)(bsscfg + 0x30C)) + 0x32);
-        //DELME
-        //*chanspec = 0xe02a;
-        printf("chanspec in FW1 @ %x: 0x%x\n", chanspec, *chanspec);
+        //DELME (chanspec for channel 36)
+        //*chanspec = 0xd024;
+        printf("chanspec in FW1 @ 0x%x: 0x%x\n", chanspec, *chanspec);
         band = (*chanspec & 0xC000) - 0xC000;
         // get station control block (scb) for given mac address
         // band seems to be just 1 on 5Ghz and 0 on 2.4Ghz
         scb = __wlc_scb_lookup(wlc, bsscfg, p->data, band <= 0);
+        //scb = sub_1CECBC(*(int **)(*((int *)(wlc + 0x140))), bsscfg, p, p->data);
         printf("SCB: 0x%x, band: %d\n", scb, band <= 0);
         // set the scb's bsscfg entry
         wlc_scb_set_bsscfg(scb, bsscfg);
-        // send the frame with the lowest possible rate
-        // TODO set datarate from radiotap header here: 6th parameter, working values 0-5 == 1-24Mpbs
-        wlc_sendctl(wlc, p, wlc->active_queue, scb, 1, 0, 0);
+        // 6th parameter: data rate in 0.5MBit units; 
+        // 2,4,11,22 => 802.11b
+        // 12,18,24,36,48,72,96,108 => 802.11g
+        // higher values (e.g. 130 for 802.11n) resulted in a 'XPHY ERR'
+        int ret2 = wlc_sendctl(wlc, p, *(int **)((*((int *)(bsscfg + 0xC))) + 0xC), scb, 1, data_rate, 0);
+        printf("wlc_sendctl() ret: %d\n", ret2);
 
         return 0;
     } else {
