@@ -52,7 +52,7 @@ CROSS_COMPILE=$(shell pwd)/buildtools/arm-eabi-4.7/bin/arm-eabi-
 ARCH=arm
 SUBARCH=arm
 MKBOOT=$(shell pwd)/buildtools/mkboot/
-FWPATCH=original_firmware
+FWPATCH=nexmon
 MSGLEVEL=0x48f
 
 all: boot.img
