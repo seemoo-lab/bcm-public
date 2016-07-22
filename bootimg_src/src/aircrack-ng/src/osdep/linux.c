@@ -1502,8 +1502,11 @@ static int openraw(struct priv_linux *dev, char *iface, int fd, int *arptype,
 
     if( ioctl( fd, SIOCGIWMODE, &wrq ) < 0 )
     {
+        perror("No monitor mode supported!!!\n");
         /* most probably not supported (ie for rtap ipw interface) *
          * so just assume its correctly set...                     */
+        wrq.u.mode = IW_MODE_MONITOR;
+    } else {
         wrq.u.mode = IW_MODE_MONITOR;
     }
 

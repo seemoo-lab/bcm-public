@@ -114,6 +114,7 @@ extern void sub_1ed584(void); // 0x1ed584
 extern void sub_1ecab0(void); // 0x1ecab0
 extern void sub_1ec6fc(void); // 0x1ec6fc
 extern void sub_1816e4(void); // 0x1816e4
+extern void *sub_1CECBC(void *a, void *bsscfg, void *p, void *data); // 0x1CECBC
 
 extern int towards_dma_txfast(void *sdio, void *p, int chan); // 0x18256C
 
@@ -143,6 +144,7 @@ extern void *wlc_scb_set_bsscfg(void *scb, void *bsscfg); // 0x76900
 extern int wlc_sendpkt(void *wlc, void *p, int wlcif); // 0x197A18
 extern int wlc_sendctl(void *wlc, void *p, void *qi, void *scb, unsigned int fifo, unsigned int rate_override, char enq_only); // 0x38BB0
 extern void wlc_send_q(void *wlc, void *qi); // 0x1926B8
+extern void *wlc_sendnulldata(void *wlc, void *bsscfg, unsigned int *ea, int datarate_maybe, int p_field_26, int prio); // 0x193348
 extern void wlc_txfifo(void *wlc, int fifo, void *p, void *txh, unsigned char commit, char txpktpend); // 0x193744
 extern void wlc_ucode_download(void *wlc_hw); // 0x1F4EF8
 extern void wlc_ucode_write(void *wlc_hw, const int ucode[], const unsigned int nbytes); // 0x4E0C8
@@ -151,5 +153,7 @@ extern void *wl_add_if(void *wl, int wlcif, int unit, int wds_or_bss); // 0x26F5
 extern void *wl_alloc_if(void *wl, int iftype, int unit, int wlc_if); // 0x271B0
 extern int wl_init(void *wl); // 0x2716C
 extern int wl_reset(void *wl); // 0x27138
+
+extern void *handle_sdio_xmit_request(void *sdio_hw, void *p); // 0x183798
 
 #endif /*WRAPPER_H*/
