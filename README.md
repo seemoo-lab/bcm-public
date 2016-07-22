@@ -62,27 +62,9 @@ Modifications on Smartphones to Enable Monitor Mode]
 (http://arxiv.org/abs/1601.07077) , CoRR, vol. abs/1601.07077, December 2015. 
 [bibtex](http://dblp.uni-trier.de/rec/bibtex/journals/corr/SchulzWH16)
 * M. Schulz, D. Wegemer, M. Hollick. [DEMO: Using NexMon, the C-based WiFi 
-firmware modification framework](https://www.seemoo.tu-darmstadt.de/fileadmin/user_upload/Group_SEEMOO/mschulz/wisec2016-using_nexmon.pdf), Proceedings of the 9th ACM Conference on 
-Security and Privacy in Wireless and Mobile Networks, WiSec 2016, July 2016. 
-
-### Abstract
-
-Full control over a Wi-Fi chip for research purposes is often limited by its
-firmware, which makes it hard to evolve communication protocols and test schemes
-in practical environments. Monitor mode, which allows eavesdropping on all
-frames on a wireless communication channel, is a first step to lower this
-barrier. Use cases include, but are not limited to, network packet analyses,
-security research and testing of new medium access control layer protocols.
-Monitor mode is generally offered by SoftMAC drivers that implement the media
-access control sublayer management entity (MLME) in the driver rather than in
-the Wi-Fi chip. On smartphones, however, mostly FullMAC chips are used to reduce
-power consumption, as MLME tasks do not need to wake up the main processor. Even
-though, monitor mode is also possible in FullMAC scenarios, it is generally not
-implemented in today's Wi-Fi firmwares used in smartphones.
-This work focuses on bringing monitor mode to Nexus 5 smartphones to enhance the
-interoperability between applications that require monitor mode and BCM4339
-Wi-Fi chips. The implementation is based on our new C-based programming
-framework to extend existing Wi-Fi firmwares.
+firmware modification framework](https://dl.acm.org/citation.cfm?id=2942419), 
+Proceedings of the 9th ACM Conference on Security and Privacy in Wireless and 
+Mobile Networks, WiSec 2016, July 2016.
 
 ## Contact
 
