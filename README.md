@@ -55,7 +55,11 @@ Our software may damage your hardware and may void your hardware’s warranty! Y
 
 ## Read our paper
 
-Feel free to read and reference our paper on the development of this project [NexMon: A Cookbook for Firmware Modifications on Smartphones to Enable Monitor Mode](http://arxiv.org/abs/1601.07077)
+Feel free to read and reference our paper on the development of this project 
+[M. Schulz, D. Wegemer and M. Hollick. NexMon: A Cookbook for Firmware 
+Modifications on Smartphones to Enable Monitor Mode, CoRR, vol. abs/1601.07077, 
+December 2015.](http://arxiv.org/abs/1601.07077) 
+[bibtex](http://dblp.uni-trier.de/rec/bibtex/journals/corr/SchulzWH16)
 
 ### Abstract
 
