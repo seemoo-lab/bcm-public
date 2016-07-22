@@ -53,13 +53,17 @@ Our software may damage your hardware and may void your hardware’s warranty! Y
  * Using this [patch](https://dev.seemoo.tu-darmstadt.de/bcm/bcm-public/blob/90bed6e1c3ad70ddc23ccf44033b152e0db300b6/kernel_patches/40mhz_channels_5GHz.patch) should enalbe `iw` to set 40MHz channels. It currently only works for 5GHz frequencies. 
    Capturing WiFi packets which use mutliple spatial streams is still not possible, this is caused by a hardware limitation of the Nexus 5
 
-## Read our paper
+## Read our papers
 
-Feel free to read and reference our paper on the development of this project 
-[M. Schulz, D. Wegemer and M. Hollick. NexMon: A Cookbook for Firmware 
-Modifications on Smartphones to Enable Monitor Mode, CoRR, vol. abs/1601.07077, 
-December 2015.](http://arxiv.org/abs/1601.07077) 
+Feel free to read and reference our papers on the development of this project 
+
+* M. Schulz, D. Wegemer and M. Hollick. [NexMon: A Cookbook for Firmware 
+Modifications on Smartphones to Enable Monitor Mode]
+(http://arxiv.org/abs/1601.07077) , CoRR, vol. abs/1601.07077, December 2015. 
 [bibtex](http://dblp.uni-trier.de/rec/bibtex/journals/corr/SchulzWH16)
+* M. Schulz, D. Wegemer, M. Hollick. [DEMO: Using NexMon, the C-based WiFi 
+firmware modification framework](https://www.seemoo.tu-darmstadt.de/fileadmin/user_upload/Group_SEEMOO/mschulz/wisec2016-using_nexmon.pdf), Proceedings of the 9th ACM Conference on 
+Security and Privacy in Wireless and Mobile Networks, WiSec 2016, July 2016. 
 
 ### Abstract
 
