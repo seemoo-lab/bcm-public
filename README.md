@@ -16,7 +16,8 @@ Our software may damage your hardware and may void your hardware’s warranty! Y
 ## Requirements
 
 * Nexus 5 with bcm4339 chipset
-* The phone needs to be rooted with [Chainfire's SuperSU v2.66 (system-less)](http://forum.xda-developers.com/showpost.php?p=64161125&postcount=3)
+* ~~The phone needs to be rooted with [Chainfire's SuperSU v2.66 (system-less)](http://forum.xda-developers.com/showpost.php?p=64161125&postcount=3)~~
+* You bootloader needs to be unlocked (no root required)
 * Android 6.0 or 6.0.1
 * Android Tools (adb + fastboot)
 
