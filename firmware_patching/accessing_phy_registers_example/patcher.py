@@ -18,7 +18,7 @@ def getSectionAddr(name):
 patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin", 
     "fw_bcmdhd.bin", [
 	# The text section is always required and contains code that is called by patches and hooks but not directly placed to predefined memory locations
-	#ExternalArmPatch(getSectionAddr(".text"), "text.bin"),
+	ExternalArmPatch(getSectionAddr(".text"), "text.bin"),
 
 	# ExternalArmPatch instructions copy the contents of a binary file to an address in the firmware
 	# ExternalArmPatch(<address to store binary blob>, <file name>),
@@ -39,6 +39,9 @@ patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin",
 	# GenericPatch2 instructions replace a word (two bytes) at a given address in the firmware
 	# 0xBF00 can be used to place a NOP instruction
 	# GenericPatch2(<address to replace word>, <two byte value>),
+
+	ExternalArmPatch(getSectionAddr(".text.wlc_radio_upd_hook"), "wlc_radio_upd_hook.bin"),
+	BLPatch(0x195B48, getSectionAddr(".text.wlc_radio_upd_hook")),
 
 	# This line replaces the firmware version string that is printed to the console on startup to identify which firmware is loaded by the driver
 	StringPatch(0x1FD31B, (os.getcwd().split('/')[-1] + " (" + time.strftime("%d.%m.%Y %H:%M:%S") + ")\n")[:52]), # 53 character string

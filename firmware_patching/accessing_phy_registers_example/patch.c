@@ -53,6 +53,29 @@
 #include "../include/structs.h"	// structures that are used by the code in the firmware
 #include "../include/helper.h"	// useful helper functions
 
+void
+wlc_radio_upd_hook_in_c(void)
+{
+	volatile short *addr = (volatile short *) 0x180013FC;
+	volatile short *data = (volatile short *) 0x180013FE;
+
+	*addr = 0x90;
+	printf("%04x\n", *data);
+}
+
+__attribute__((naked)) void
+wlc_radio_upd_hook(void)
+{
+	asm(
+		"push {lr}\n"
+		"bl wlc_radio_upd\n"
+		"push {r0-r3}\n"
+		"bl wlc_radio_upd_hook_in_c\n"
+		"pop {r0-r3}\n"
+		"pop {pc}\n"
+		);
+}
+
 /**
  *	Just inserted to produce an error while linking, when we try to overwrite memory used by the original firmware
  */
