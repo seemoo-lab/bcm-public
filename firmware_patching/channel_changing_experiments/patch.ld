@@ -11,6 +11,8 @@ SECTIONS
 	.text.wlc_valid_chanspec_ext_hook : { KEEP(patch.o (.text.wlc_valid_chanspec_ext_hook)) }
 	.text.phy_read_reg_hook : { KEEP(patch.o (.text.phy_read_reg_hook)) }
 	.text.phy_write_reg_hook : { KEEP(patch.o (.text.phy_write_reg_hook)) }
+	.text.phy_reg_and_hook : { KEEP(patch.o (.text.phy_reg_and_hook)) }
+	.text.phy_reg_or_hook : { KEEP(patch.o (.text.phy_reg_or_hook)) }
 	.text.write_radio_reg_hook : { KEEP(patch.o (.text.write_radio_reg_hook)) }
 
 	/* All other sections that were not yet placed but referenced by a kept section are collected in the text section */

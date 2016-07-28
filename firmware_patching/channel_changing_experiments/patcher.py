@@ -61,8 +61,16 @@ patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin",
 	ExternalArmPatch(getSectionAddr(".text.phy_write_reg_hook"), "phy_write_reg_hook.bin"),
 	BPatch(0x1c3d48, getSectionAddr(".text.phy_write_reg_hook")),
 
+	ExternalArmPatch(getSectionAddr(".text.phy_reg_and_hook"), "phy_reg_and_hook.bin"),
+	BPatch(0x1c465c, getSectionAddr(".text.phy_reg_and_hook")),
+
+	ExternalArmPatch(getSectionAddr(".text.phy_reg_or_hook"), "phy_reg_or_hook.bin"),
+	BPatch(0x1c4676, getSectionAddr(".text.phy_reg_or_hook")),
+
 	ExternalArmPatch(getSectionAddr(".text.write_radio_reg_hook"), "write_radio_reg_hook.bin"),
 	BPatch(0x1c3cfe, getSectionAddr(".text.write_radio_reg_hook")),
+
+	#GenericPatch4(0x87FD2, 0x096C0001),
 
 	# This line replaces the firmware version string that is printed to the console on startup to identify which firmware is loaded by the driver
 	StringPatch(0x1FD31B, (os.getcwd().split('/')[-1] + " (" + time.strftime("%d.%m.%Y %H:%M:%S") + ")\n")[:52]), # 53 character string

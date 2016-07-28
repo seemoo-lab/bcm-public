@@ -54,12 +54,14 @@
 #include "../include/helper.h"	// useful helper functions
 #include "bcmdhd/include/bcmwifi_channels.h"
 
-int cnt = 0;
+int cnt[6] = { 0, 0, 0, 0, 0, 0 };
+int cnt2 = 0;
+int debug_phy_access = 0;
 
 void
-wlc_channel_set_chanspec_hook_in_c(void *wlc_cm, unsigned short chanspec, int local_constraint_qdbm)
+wlc_channel_set_chanspec_hook_in_c(void *wlc_cm, unsigned short chanspec, int local_constraint_qdbm, int lr)
 {
-	printf("%s: %08x %08x %08x\n", __FUNCTION__, (int) wlc_cm, chanspec, local_constraint_qdbm);
+	printf("%s: %08x %08x %08x\n", __FUNCTION__, (int) lr, chanspec, local_constraint_qdbm);
 }
 
 __attribute__((naked)) void
@@ -67,6 +69,7 @@ wlc_channel_set_chanspec_hook(void)
 {
 	asm(
 		"push {r0-r3,lr}\n"
+		"mov r3, lr\n"
 		"bl wlc_channel_set_chanspec_hook_in_c\n"
 		"pop {r0-r3,lr}\n"
 		"push {r4-r8,lr}\n"
@@ -100,17 +103,84 @@ wlc_iovar_change_handler_hook(void)
 		);
 }
 
+char pkt[] = {
+	0x80, 0x00, 0x00, 0x00, 
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 			/* destination address */
+	0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc,				/* source address */
+	0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 			/* BSS address */
+	0x10, 0x00, 									/* sequence and fragment numbers */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,	/* timestamp */
+	0x64, 0x00, 0x21, 0x05, 
+	0x00, 											/* tag number: SSID parameter set */
+	0x06, 											/* tag length */
+	'N', 'E', 'X', 'M', 'O', 'N',		 			/* SSID */
+};
+
+/**
+ *	add data to the start of a buffer
+ */
+void *
+skb_push(sk_buff *p, unsigned int len)
+{
+	p->data -= len;
+	p->len += len;
+
+	return p->data;
+}
+
+/**
+ *	remove data from the start of a buffer
+ */
+void *
+skb_pull(sk_buff *p, unsigned int len)
+{
+	p->data += len;
+	p->len -= len;
+
+	return p->data;
+}
+
+#define BCMEXTRAHDROOM 132
+
+void
+send_beacon_frame(void)
+{
+	sk_buff *p;
+	struct wlc_info *wlc = WLC_INFO_ADDR;
+	void *bsscfg = wlc_bsscfg_find_by_wlcif(wlc, 0);
+	void *scb;
+
+	// create a new sk_buff to hold the beacon frame and additional headers
+	p = pkt_buf_get_skb(wlc->osh, sizeof(pkt) + BCMEXTRAHDROOM);
+
+	// shift the beginning of the frame to leave space for additional headers
+	skb_pull(p, BCMEXTRAHDROOM);
+
+	// copy the example frame to the buffer
+	memcpy(p->data, pkt, sizeof(pkt));
+
+	// get station control block (scb) for given mac address
+	scb = __wlc_scb_lookup(wlc, bsscfg, pkt, 0);
+
+	// set the scb's bsscfg entry
+	wlc_scb_set_bsscfg(scb, bsscfg);
+
+	// send the frame with the lowest possible rate
+	wlc_sendctl(wlc, p, wlc->active_queue, scb, 1, 0, 0);
+}
+
 int
 wlc_set_var_chanspec(struct wlc_info *wlc, unsigned short chanspec, struct wlc_bsscfg *bsscfg)
 {
 	char bandlocked;
 	int ret;
 
-	printf("%s: %d\n", __FUNCTION__, cnt);
+	printf("A %s: %d %d %d %d %d\n", __FUNCTION__, cnt[0], cnt[1], cnt[2], cnt[3], cnt[4]);
 
-	chanspec = 0x100f;
+	//chanspec = 0x1801;
 
 	if(wlc_valid_chanspec_db(wlc->cmi, chanspec)) {
+		printf("%s: X1\n", __FUNCTION__);
 		if (!wlc->pub->up_maybe && wlc->pub->field_30 > 1) {
 			bandlocked = wlc->bandlocked;
 			if (!bandlocked) {
@@ -125,19 +195,27 @@ wlc_set_var_chanspec(struct wlc_info *wlc, unsigned short chanspec, struct wlc_b
 		bsscfg->field_546 = chanspec;
 		ret = wlc->pub->up_maybe;
 		if (ret) {
+			printf("%s: X2\n", __FUNCTION__);
 			ret = wlc->pub->associated;
 			if (ret) {
 				ret = 0;
 			} else if (wlc_phy_chanspec_get(wlc->band->pi) != chanspec) {
+				printf("%s: X3\n", __FUNCTION__);
 				sub_39DCC(wlc, chanspec);
 				wlc_bmac_suspend_mac_and_wait_wrapper(wlc);
+				debug_phy_access = 1;
 				wlc_set_chanspec(wlc, chanspec);
+				debug_phy_access = 0;
 				wlc_enable_mac(wlc);
 			}
 		}
+		//send_beacon_frame();
 	} else {
 		return -20;
 	}
+
+	printf("B %s: %d %d %d %d %d\n", __FUNCTION__, cnt[0], cnt[1], cnt[2], cnt[3], cnt[4]);
+
 	return ret;
 }
 
@@ -278,14 +356,14 @@ wlc_valid_chanspec_ext_hook_in_c(void *wlc_cm, unsigned short chanspec, int dual
 	int off = 881;
 
 	if (dualband == 1 && (lr == 0x1ae469 || lr == 0x1ae4af || lr == 0x1ae4ed || lr == 0x1ae521)) {
-		cnt++;
-		if((cnt < (off+40)) && (cnt >= off)) {
+		cnt2++;
+		if((cnt2 < (off+40)) && (cnt2 >= off)) {
 			wf_chspec_ntoa(chanspec, buf);
-			printf("A %d %d %04x %s\n", cnt, ret, chanspec, buf);
+			printf("A %d %d %04x %s\n", cnt2, ret, chanspec, buf);
 		}
 	}
 
-	if ((chanspec == 0x100e || chanspec == 0x100f) && dualband == 1) {
+	if ((chanspec == 0x100e || chanspec == 0x100f || chanspec == 0x1801) && dualband == 1) {
 		//printf("%04x %08x %d\n", chanspec, lr, ret);
 		ret = 1;
 	}
@@ -306,7 +384,9 @@ void
 phy_read_reg_hook_in_c(void *a1, unsigned short a2)
 {
 	//printf("%s: %08x %04x\n", __FUNCTION__, (int) a1, a2);
-	//cnt++;
+	if (debug_phy_access) {
+		cnt[0]++;	
+	}
 }
 
 __attribute__((naked)) void
@@ -327,10 +407,14 @@ phy_read_reg_hook(void)
 }
 
 void
-phy_write_reg_hook_in_c(void *a1, int a2, int a3)
+phy_write_reg_hook_in_c(void *a1, int addr, int val, int lr)
 {
 	//printf("%s: %08x %04x\n", __FUNCTION__, (int) a1, a2);
-	//cnt++;
+	if (debug_phy_access) {
+		cnt[1]++;
+		if (cnt[1] < 50)
+			printf("W(%d) %08x %04x %04x\n", cnt[1], (int) lr, addr, val);
+	}
 }
 
 __attribute__((naked)) void
@@ -338,6 +422,7 @@ phy_write_reg_hook(void)
 {
 	asm(
 		"push {r0-r3,lr}\n"
+		"mov r3, lr\n"
 		"bl phy_write_reg_hook_in_c\n"
 		"pop {r0-r3,lr}\n"
 		"orr r2, r1, r2, lsl#16\n"
@@ -348,10 +433,68 @@ phy_write_reg_hook(void)
 }
 
 void
+phy_reg_and_hook_in_c(void *a1, int a2, int a3, int lr)
+{
+	//printf("%s: %08x %04x\n", __FUNCTION__, (int) a1, a2);
+	if (debug_phy_access) {
+		cnt[2]++;	
+	}
+}
+
+__attribute__((naked)) void
+phy_reg_and_hook(void)
+{
+	asm(
+		"push {r0-r3,lr}\n"
+		"mov r3, lr\n"
+		"bl phy_reg_and_hook_in_c\n"
+		"pop {r0-r3,lr}\n"
+		"ldr r3, [r0, #0xc4]\n"
+		"strh r1, [r3, #0x3fc]\n"
+		"ldrh r1, [r3, #0x3fe]\n"
+		"ands r2, r1\n"
+		"strh r2, [r3, #0x3fe]\n"
+		"movs r3, #0\n"
+		"strh r3, [r0, #0x168]\n"
+		"bx lr\n"
+		);
+}
+
+void
+phy_reg_or_hook_in_c(void *a1, int a2, int a3)
+{
+	//printf("%s: %08x %04x\n", __FUNCTION__, (int) a1, a2);
+	if (debug_phy_access) {
+		cnt[3]++;	
+	}
+}
+
+__attribute__((naked)) void
+phy_reg_or_hook(void)
+{
+	asm(
+		"push {r0-r3,lr}\n"
+		"bl phy_reg_or_hook_in_c\n"
+		"pop {r0-r3,lr}\n"
+		"ldr r3, [r0, #0xc4]\n"
+		"strh r1, [r3, #0x3fc]\n"
+		"ldrh r1, [r3, #0x3fe]\n"
+		"uxth r1, r1\n"
+		"orrs r2, r1\n"
+		"strh r2, [r3, #0x3fe]\n"
+		"movs r3, #0\n"
+		"strh r3, [r0, #0x168]\n"
+		"bx lr\n"
+		);
+}
+
+void
 write_radio_reg_hook_in_c(void *a1, int a2, int a3)
 {
 	//printf("%s: %08x %04x\n", __FUNCTION__, (int) a1, a2);
-	//cnt++;
+	if (debug_phy_access) {
+		cnt[4]++;	
+	}
 }
 
 __attribute__((naked)) void

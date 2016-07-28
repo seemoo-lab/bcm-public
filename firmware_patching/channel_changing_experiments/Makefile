@@ -7,6 +7,8 @@ FUNCTIONS = \
 	wlc_valid_chanspec_ext_hook \
 	phy_read_reg_hook \
 	phy_write_reg_hook \
+	phy_reg_and_hook \
+	phy_reg_or_hook \
 	write_radio_reg_hook
 FUNCTIONS_BIN = $(FUNCTIONS:=.bin)
 
