@@ -18,7 +18,7 @@ def getSectionAddr(name):
 patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin", 
     "fw_bcmdhd.bin", [
 	# The text section is always required and contains code that is called by patches and hooks but not directly placed to predefined memory locations
-	#ExternalArmPatch(getSectionAddr(".text"), "text.bin"),
+	ExternalArmPatch(getSectionAddr(".text"), "text.bin"),
 
 	# ExternalArmPatch instructions copy the contents of a binary file to an address in the firmware
 	# ExternalArmPatch(<address to store binary blob>, <file name>),
@@ -39,6 +39,30 @@ patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin",
 	# GenericPatch2 instructions replace a word (two bytes) at a given address in the firmware
 	# 0xBF00 can be used to place a NOP instruction
 	# GenericPatch2(<address to replace word>, <two byte value>),
+
+	ExternalArmPatch(getSectionAddr(".text.wlc_channel_set_chanspec_hook"), "wlc_channel_set_chanspec_hook.bin"),
+	BPatch(0x1AE2BC, getSectionAddr(".text.wlc_channel_set_chanspec_hook")),
+
+	ExternalArmPatch(getSectionAddr(".text.wlc_iovar_change_handler_hook"), "wlc_iovar_change_handler_hook.bin"),
+	BPatch(0x19B25C, getSectionAddr(".text.wlc_iovar_change_handler_hook")),
+
+	ExternalArmPatch(getSectionAddr(".text.wlc_set_chanspec_hook"), "wlc_set_chanspec_hook.bin"),
+	BLPatch(0x19D51C, getSectionAddr(".text.wlc_set_chanspec_hook")),
+
+	ExternalArmPatch(getSectionAddr(".text.wlc_set_var_chanspec_hook"), "wlc_set_var_chanspec_hook.bin"),
+	GenericPatch4(0x19B6F8, getSectionAddr(".text.wlc_set_var_chanspec_hook")+1),
+
+	ExternalArmPatch(getSectionAddr(".text.wlc_valid_chanspec_ext_hook"), "wlc_valid_chanspec_ext_hook.bin"),
+	BPatch(0x1ADA64, getSectionAddr(".text.wlc_valid_chanspec_ext_hook")),
+
+	ExternalArmPatch(getSectionAddr(".text.phy_read_reg_hook"), "phy_read_reg_hook.bin"),
+	BPatch(0x1C3D32, getSectionAddr(".text.phy_read_reg_hook")),
+
+	ExternalArmPatch(getSectionAddr(".text.phy_write_reg_hook"), "phy_write_reg_hook.bin"),
+	BPatch(0x1c3d48, getSectionAddr(".text.phy_write_reg_hook")),
+
+	ExternalArmPatch(getSectionAddr(".text.write_radio_reg_hook"), "write_radio_reg_hook.bin"),
+	BPatch(0x1c3cfe, getSectionAddr(".text.write_radio_reg_hook")),
 
 	# This line replaces the firmware version string that is printed to the console on startup to identify which firmware is loaded by the driver
 	StringPatch(0x1FD31B, (os.getcwd().split('/')[-1] + " (" + time.strftime("%d.%m.%Y %H:%M:%S") + ")\n")[:52]), # 53 character string

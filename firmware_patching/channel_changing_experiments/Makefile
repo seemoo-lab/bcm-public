@@ -1,5 +1,13 @@
 CC=../../buildtools/arm-eabi-4.7/bin/arm-eabi-
-FUNCTIONS = wlc_ucode_download_hook
+FUNCTIONS = \
+	wlc_channel_set_chanspec_hook \
+	wlc_set_chanspec_hook \
+	wlc_iovar_change_handler_hook \
+	wlc_set_var_chanspec_hook \
+	wlc_valid_chanspec_ext_hook \
+	phy_read_reg_hook \
+	phy_write_reg_hook \
+	write_radio_reg_hook
 FUNCTIONS_BIN = $(FUNCTIONS:=.bin)
 
 all: bcmdhd/bcmdhd.ko fw_bcmdhd.bin fw_bcmdhd.complete.elf
@@ -11,7 +19,7 @@ fw_bcmdhd.bin: patcher.py patch.elf text.bin $(FUNCTIONS_BIN)
 	./patcher.py
 
 patch.o: patch.c ../include/*.h
-	$(CC)gcc -Wall -Werror -O2 -nostdlib -nostartfiles -ffreestanding -mthumb -march=armv7-r -ffunction-sections -fdata-sections -c $< -o $@
+	$(CC)gcc -Wall -Wno-return-type -Werror -O2 -nostdlib -nostartfiles -ffreestanding -mthumb -march=armv7-r -ffunction-sections -fdata-sections -c $< -o $@
 
 ../wrapper/wrapper.o: ../include/wrapper.h
 	make -C ../wrapper
