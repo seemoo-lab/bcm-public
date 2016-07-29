@@ -53,10 +53,111 @@
 #include "../include/structs.h"	// structures that are used by the code in the firmware
 #include "../include/helper.h"	// useful helper functions
 #include "bcmdhd/include/bcmwifi_channels.h"
+ #include "../include/bcmdhd/bcmsdpcm.h"
+#include "../include/bcmdhd/bcmcdc.h"
 
 int cnt[6] = { 0, 0, 0, 0, 0, 0 };
 int cnt2 = 0;
 int debug_phy_access = 0;
+
+
+
+
+int sdio_frm_pos = 0;
+int sdio_frm_size = 1024;
+struct sk_buff *sdio_frm = 0;
+
+unsigned char bdc_ethernet_ipv6_udp_header_array[] = {
+  0x20, 0x00, 0x00, 0x00,				/* BDC Header */
+  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,	/* ETHERNET: Destination MAC Address */
+  'N', 'E', 'X', 'M', 'O', 'N',			/* ETHERNET: Source MAC Address */
+  0x86, 0xDD,							/* ETHERNET: Type */
+  0x60, 0x00, 0x00, 0x00,				/* IPv6: Version / Traffic Class / Flow Label */
+  0x00, 0x08,							/* IPv6: Payload Length */
+  0x88,									/* IPv6: Next Header = UDPLite */
+  0x01,									/* IPv6: Hop Limit */
+  0xFF, 0x02, 0x00, 0x00,				/* IPv6: Source IP */
+  0x00, 0x00, 0x00, 0x00,				/* IPv6: Source IP */
+  0x00, 0x00, 0x00, 0x00,				/* IPv6: Source IP */
+  0x00, 0x00, 0x00, 0x01,				/* IPv6: Source IP */
+  0xFF, 0x02, 0x00, 0x00,				/* IPv6: Destination IP */
+  0x00, 0x00, 0x00, 0x00,				/* IPv6: Destination IP */
+  0x00, 0x00, 0x00, 0x00,				/* IPv6: Destination IP */
+  0x00, 0x00, 0x00, 0x01,				/* IPv6: Destination IP */
+  0xD6, 0xD8,							/* UDPLITE: Source Port = 55000 */
+  0xD6, 0xD8,							/* UDPLITE: Destination Port = 55000 */
+  0x00, 0x08,							/* UDPLITE: Checksum Coverage */
+  0x52, 0x46,							/* UDPLITE: Checksum only over UDPLITE header*/
+};
+
+struct sk_buff *
+init_sdio_frame(int size)
+{
+	struct sk_buff *p = 0;
+	struct osl_info *osh = OSL_INFO_ADDR;
+	struct bdc_ethernet_ipv6_udp_header *hdr;
+
+	// Create a new sk_buff to hold the headers and the payload
+	p = pkt_buf_get_skb(osh, sizeof(bdc_ethernet_ipv6_udp_header_array) + size);
+
+	// Copy the headers to the sk_buff
+	memcpy(p->data, bdc_ethernet_ipv6_udp_header_array, sizeof(bdc_ethernet_ipv6_udp_header_array));
+
+	hdr = p->data;
+
+	// Set the IPv6 payload length
+	hdr->ipv6.payload_length = htons(sizeof(struct udp_header) + size);
+
+	return p;
+}
+
+void
+send_sdio_frame(struct sk_buff *p)
+{
+	// Send the frame over SDIO to the Linux driver, where it will be injected into the network stack
+	dngl_sendpkt(SDIO_INFO_ADDR, p, SDPCM_DATA_CHANNEL);
+}
+
+void
+sdio_flush(void)
+{
+	send_sdio_frame(sdio_frm);
+	sdio_frm = init_sdio_frame(sdio_frm_size);
+	sdio_frm_pos = 0;
+}
+
+void
+sdio_put(void *src, int len)
+{
+	struct bdc_ethernet_ipv6_udp_header *hdr;
+
+	if (!sdio_frm) {
+		sdio_frm = init_sdio_frame(sdio_frm_size);
+		sdio_frm_pos = 0;
+	}
+
+	if (len > sdio_frm_size) {
+		return;
+	}
+
+	if (sdio_frm_size - sdio_frm_pos < len) {
+		sdio_flush();
+	}
+
+	hdr = sdio_frm->data;
+
+	memcpy(hdr->payload + sdio_frm_pos, src, len);
+
+	sdio_frm_pos += len;
+}
+
+struct phy_dump {
+	int lr;
+	unsigned short addr;
+	unsigned short val;
+} __attribute__((packed));
+
+
 
 void
 wlc_channel_set_chanspec_hook_in_c(void *wlc_cm, unsigned short chanspec, int local_constraint_qdbm, int lr)
@@ -174,6 +275,7 @@ wlc_set_var_chanspec(struct wlc_info *wlc, unsigned short chanspec, struct wlc_b
 {
 	char bandlocked;
 	int ret;
+	struct phy_dump dump;
 
 	printf("A %s: %d %d %d %d %d\n", __FUNCTION__, cnt[0], cnt[1], cnt[2], cnt[3], cnt[4]);
 
@@ -204,7 +306,12 @@ wlc_set_var_chanspec(struct wlc_info *wlc, unsigned short chanspec, struct wlc_b
 				sub_39DCC(wlc, chanspec);
 				wlc_bmac_suspend_mac_and_wait_wrapper(wlc);
 				debug_phy_access = 1;
+				dump.lr = 0xffffffff;
+				dump.addr = chanspec;
+				dump.val = 0x0000;
+				sdio_put(&dump, sizeof(struct phy_dump));
 				wlc_set_chanspec(wlc, chanspec);
+				sdio_flush();
 				debug_phy_access = 0;
 				wlc_enable_mac(wlc);
 			}
@@ -407,13 +514,19 @@ phy_read_reg_hook(void)
 }
 
 void
-phy_write_reg_hook_in_c(void *a1, int addr, int val, int lr)
-{
-	//printf("%s: %08x %04x\n", __FUNCTION__, (int) a1, a2);
+phy_write_reg_hook_in_c(void *a1, unsigned short addr, unsigned short val, int lr)
+{	
+	struct phy_dump dump;
+
 	if (debug_phy_access) {
 		cnt[1]++;
-		if (cnt[1] < 50)
-			printf("W(%d) %08x %04x %04x\n", cnt[1], (int) lr, addr, val);
+		//if (cnt[1] < 100) {
+			//printf("W(%d) %08x %04x %04x\n", cnt[1], (int) lr, addr, val);
+			dump.addr = addr;
+			dump.val = val;
+			dump.lr = lr;
+			sdio_put(&dump, sizeof(struct phy_dump));
+		//}
 	}
 }
 
