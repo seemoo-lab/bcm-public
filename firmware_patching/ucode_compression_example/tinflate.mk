@@ -1,1 +1,0 @@
-FUNCTIONS += tinflate_write_objmem tinflate_read_objmem gen_huffman_table tinflate_partial ucode_compressed_bin ucode_compressed_bin_len

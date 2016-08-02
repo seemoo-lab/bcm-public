@@ -13,22 +13,22 @@ ef = elffile.open(name="patch.elf")
 
 # This function gives us the address of a function in our patch.elf file It helps to identify where functions where automatically placed by the linker
 def getSectionAddr(name):
-	return next((header for header in ef.sectionHeaders if header.name == name), None).addr
+	try:
+		return next((header for header in ef.sectionHeaders if header.name == name), None).addr
+	except:
+		return 0
 
 patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin", 
     "fw_bcmdhd.bin", [
 	# The text section is always required and contains code that is called by patches and hooks but not directly placed to predefined memory locations
 	ExternalArmPatch(getSectionAddr(".text"), "text.bin"),
 
-	ExternalArmPatch(getSectionAddr(".text.wlc_ucode_write_alternative"), "wlc_ucode_write_alternative.bin"),
-	BLPatch(0x1f4f08, getSectionAddr(".text.wlc_ucode_write_alternative")),
+	ExternalArmPatch(getSectionAddr(".text.ucode_compression_code"), "ucode_compression_code.bin"),
+	ExternalArmPatch(getSectionAddr(".text.wlc_ucode_write_compressed"), "wlc_ucode_write_compressed.bin"),
+	BLPatch(0x1f4f08, getSectionAddr(".text.wlc_ucode_write_compressed")),
 
-	ExternalArmPatch(getSectionAddr(".text.gen_huffman_table"), "gen_huffman_table.bin"),
-	ExternalArmPatch(getSectionAddr(".text.tinflate_partial"), "tinflate_partial.bin"),
-	ExternalArmPatch(getSectionAddr(".text.tinflate_write_objmem"), "tinflate_write_objmem.bin"),
-	ExternalArmPatch(getSectionAddr(".text.tinflate_read_objmem"), "tinflate_read_objmem.bin"),
-	ExternalArmPatch(getSectionAddr(".text.ucode_compressed_bin"), "ucode_compressed_bin.bin"),
-	ExternalArmPatch(getSectionAddr(".text.ucode_compressed_bin_len"), "ucode_compressed_bin_len.bin"),
+	#ExternalArmPatch(getSectionAddr(".text.wlc_bmac_write_template_ram_alternative"), "wlc_bmac_write_template_ram_alternative.bin"),
+	#BLPatch(0x1fd754, getSectionAddr(".text.wlc_bmac_write_template_ram_alternative")),
 
 	# ExternalArmPatch instructions copy the contents of a binary file to an address in the firmware
 	# ExternalArmPatch(<address to store binary blob>, <file name>),
