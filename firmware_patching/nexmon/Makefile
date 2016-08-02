@@ -4,19 +4,21 @@ FUNCTIONS_BIN = $(FUNCTIONS:=.bin)
 
 all: bcmdhd/bcmdhd.ko fw_bcmdhd.bin fw_bcmdhd.complete.elf
 
+include ucode_compression_code.mk
+
 bcmdhd/bcmdhd.ko: check-nexmon-setup-env
 	make -C ../../kernel/ M=$$PWD/bcmdhd -j2
 
 fw_bcmdhd.bin: patcher.py patch.elf text.bin $(FUNCTIONS_BIN)
 	./patcher.py
 
-patch.o: patch.c ../include/*.h
+patch.o: patch.c ../include/*.h ucode-compressed.c
 	$(CC)gcc -Wall -Werror -O2 -nostdlib -nostartfiles -ffreestanding -mthumb -march=armv7-r -ffunction-sections -fdata-sections -c $< -o $@
 
 ../wrapper/wrapper.o: ../include/wrapper.h
 	make -C ../wrapper
 
-patch.elf: patch.ld patch.o ../wrapper/wrapper.o
+patch.elf: patch.ld patch.o ../wrapper/wrapper.o ucode_compression_code.ld
 	$(CC)ld -T $< -o $@ --gc-sections --print-gc-sections -M
 
 $(FUNCTIONS_BIN): patch.elf
@@ -39,7 +41,7 @@ ifndef NEXMON_SETUP_ENV
 endif
 
 clean:
-	rm -f fw_bcmdhd.bin fw_bcmdhd.complete.bin fw_bcmdhd.complete.elf patch.o patch.elf text.bin $(FUNCTIONS_BIN)
+	rm -f fw_bcmdhd.bin fw_bcmdhd.complete.bin fw_bcmdhd.complete.elf patch.o patch.elf text.bin $(FUNCTIONS_BIN) ucode-compressed.c ucode-compressed.bin
 	make -C ../../kernel/ M=$$PWD/bcmdhd clean
 
 FORCE:

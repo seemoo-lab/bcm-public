@@ -44,7 +44,7 @@
  * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,    *
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE       *
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                  *
- *                                                                         *                                                       *
+ *                                                                         *
  **************************************************************************/
 
 #include "../include/bcm4339.h"	// contains addresses specific for BCM4339
@@ -58,6 +58,11 @@
 #include "ieee80211_radiotap.h"
 #include "radiotap.h"
 #include "d11.h"
+
+/**
+ *  Contains tinflate_partial and other functions needed for deflate decompression
+ */
+#include "ucode_compression_code.c"
 
 inline uint16_t
 get_unaligned_le16(uint8 *p) {

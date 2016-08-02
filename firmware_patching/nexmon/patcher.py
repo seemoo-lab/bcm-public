@@ -20,6 +20,10 @@ patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin",
 	# The text section is always required and contains code that is called by patches and hooks but not directly placed to predefined memory locations
 	ExternalArmPatch(getSectionAddr(".text"), "text.bin"),
 
+	ExternalArmPatch(getSectionAddr(".text.ucode_compression_code"), "ucode_compression_code.bin"),
+	ExternalArmPatch(getSectionAddr(".text.wlc_ucode_write_compressed"), "wlc_ucode_write_compressed.bin"),
+	BLPatch(0x1f4f08, getSectionAddr(".text.wlc_ucode_write_compressed")),
+
 	# ExternalArmPatch instructions copy the contents of a binary file to an address in the firmware
 	# ExternalArmPatch(<address to store binary blob>, <file name>),
 
@@ -40,9 +44,9 @@ patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin",
 	# 0xBF00 can be used to place a NOP instruction
 	# GenericPatch2(<address to replace word>, <two byte value>),
 
-        # overwrite sdio_handler calls
-        BLPatch(0x182C60, getSectionAddr(".text.sdio_handler")),
-        GenericPatch4(0x180BB4, getSectionAddr(".text.sdio_handler")),
+	# overwrite sdio_handler calls
+	BLPatch(0x182C60, getSectionAddr(".text.sdio_handler")),
+	GenericPatch4(0x180BB4, getSectionAddr(".text.sdio_handler")),
 
 	# Overwrite the existing wlc_bmac_recv function with our hook
 	ExternalArmPatch(getSectionAddr(".text.wlc_bmac_recv_hook"), "wlc_bmac_recv_hook.bin"),
@@ -50,7 +54,7 @@ patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin",
 	# Add the dma_attach_hook function to the firmware
 	ExternalArmPatch(getSectionAddr(".text.dma_attach_hook"), "dma_attach_hook.bin"),
 
-        ExternalArmPatch(getSectionAddr(".text.sdio_handler"), "sdio_handler.bin"),
+	ExternalArmPatch(getSectionAddr(".text.sdio_handler"), "sdio_handler.bin"),
 
 	# Hook the first call to wlc_bmac_attach_dmapio to increase the rx extra header size
 	BLPatch(0x1F4FCE, getSectionAddr(".text.dma_attach_hook")),

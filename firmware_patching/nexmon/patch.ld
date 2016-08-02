@@ -3,6 +3,9 @@ SECTIONS
 	/* used to define the end off the free space used for our own code */
 	.text.dummy_180800 0x180800: { KEEP(patch.o (.text.dummy_180800)) }
 
+	/* write deflation functions and compressed ucode to address of original ucode */
+	INCLUDE ucode_compression_code.ld
+
 	/* used to define the end off the free space used for our wlc_bmac_recv_hook */
 	.text.dummy_1AAEB4 0x1AAEB4: { KEEP(patch.o (.text.dummy_1AAEB4)) }
 
