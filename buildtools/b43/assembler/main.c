@@ -382,10 +382,10 @@ static unsigned int generate_mem_operand(struct assembler_context *ctx,
 			/* Assembler bug. The parser shouldn't pass this value. */
 			asm_error(ctx, "OFFR-nr too big");
 		}
-		if (reg == 6) {
-			asm_warn(ctx, "Using offset register 6. This register is broken "
-				 "on certain devices. Use off0 to off5 only.");
-		}
+		//if (reg == 6) {
+		//	asm_warn(ctx, "Using offset register 6. This register is broken "
+		//		 "on certain devices. Use off0 to off5 only.");
+		//}
 		val |= off;
 		val |= (reg << reg_shift);
 		break;
