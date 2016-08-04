@@ -32,44 +32,51 @@
 #define SHM_PHYVER		SHM(0x050) /* PHY version */
 #define SHM_PHYTYPE		SHM(0x052) /* PHY type */
 #define SHM_ANTSWAP		SHM(0x05C) /* Antenna swap threshold */
-#define SHM_HF_LO		SHM(0x05E) /* Hostflags for ucode options (low) */
-#define  SHM_HF_LO_ANTDIVHELP	0 /* bit0: ucode antenna div helper */
-#define  SHM_HF_LO_SYMW		1 /* bit1: G-PHY SYM workaround */
-#define  SHM_HF_LO_RXPULLW	2 /* bit2: RX pullup workaround */
-#define  SHM_HF_LO_CCKBOOST	3 /* bit3: 4dB CCK power boost (exclusive with OFDM boost) */
-#define  SHM_HF_LO_BTCOEX	4 /* bit4: Bluetooth coexistence */
-#define  SHM_HF_LO_GDCW		5 /* bit5: G-PHY DC canceller filter bw workaround */
-#define  SHM_HF_LO_OFDMPABOOST	6 /* bit6: Enable PA gain boost for OFDM */
-#define  SHM_HF_LO_ACPR		7 /* bit7: Disable for Japan, channel 14 */
-#define  SHM_HF_LO_EDCF		8 /* bit8: on if WME and MAC suspended */
-#define  SHM_HF_LO_TSSIRPSMW	9 /* bit9: TSSI reset PSM ucode workaround */
-#define  SHM_HF_LO_20IN40IQW	9 /* bit9: 20 in 40 MHz I/Q workaround (rev >= 13 only) */
-#define  SHM_HF_LO_DSCRQ	10 /* bit10: Disable slow clock request in ucode */
-#define  SHM_HF_LO_ACIW		11 /* bit11: ACI workaround: shift bits by 2 on PHY CRS */
-#define  SHM_HF_LO_2060W	12 /* bit12: 2060 radio workaround */
-#define  SHM_HF_LO_RADARW	13 /* bit13: Radar workaround */
-#define  SHM_HF_LO_USEDEFKEYS	14 /* bit14: Enable use of default keys */
-#define  SHM_HF_LO_AFTERBURNER	15 /* bit15: Afterburner enabled */
-#define SHM_HF_MI		SHM(0x060) /* Hostflags for ucode options (middle) */
-#define  SHM_HF_MI_BT4PRIOCOEX	0 /* bit0: Bluetooth 4-priority coexistence */
-#define  SHM_HF_MI_FWKUP	1 /* bit1: Fast wake-up ucode */
-#define  SHM_HF_MI_VCORECALC	2 /* bit2: Force VCO recalculation when powering up synthpu */
-#define  SHM_HF_MI_PCISCW	3 /* bit3: PCI slow clock workaround */
-#define  SHM_HF_MI_4318TSSI	5 /* bit5: 4318 TSSI */
-#define  SHM_HF_MI_FBCMCFIFO	6 /* bit6: Flush bcast/mcast FIFO immediately */
-#define  SHM_HF_MI_HWPCTL	7 /* bit7: Enable hardware power control */
-#define  SHM_HF_MI_BTCOEXALT	8 /* bit8: Bluetooth coexistence in alternate pins */
-#define  SHM_HF_MI_TXBTCHECK	9 /* bit9: Bluetooth check during transmission */
-#define  SHM_HF_MI_SKCFPUP	10 /* bit10: Skip CFP update */
-#define  SHM_HF_MI_N40W		11 /* bit11: N PHY 40 MHz workaround (rev >= 13 only) */
-#define  SHM_HF_MI_ANTSEL	13 /* bit13: Antenna selection (for testing antenna div.) */
-#define  SHM_HF_MI_BT3COEXT	13 /* bit13: Bluetooth 3-wire coexistence (rev >= 13 only) */
-#define  SHM_HF_MI_BTCANT	14 /* bit14: Bluetooth coexistence (antenna mode) (rev >= 13 only) */
-#define SHM_HF_HI		SHM(0x062) /* Hostflags for ucode options (high) */
-#define  SHM_HF_HI_ANTSELEN	0 /* bit0: Antenna selection enabled (rev >= 13 only) */
-#define  SHM_HF_HI_ANTSELMODE	1 /* bit1: Antenna selection mode (rev >= 13 only) */
-#define  SHM_HF_HI_MLADVW	4 /* bit4: N PHY ML ADV workaround (rev >= 13 only) */
-#define  SHM_HF_HI_PR45960W	11 /* bit11: PR 45960 workaround (rev >= 13 only) */
+
+// New SHM addresses; Source: d11.h 578947 2015-08-13 04:46:06Z
+// http://github.com/tuapuikia/asuswrt-phantom/blob/master/release/src-rt-7.14.114.x/src/include/d11.h
+/* Host flags to turn on ucode options */
+#define	SHM_HOST_FLAGS1		SHM(0x05E)
+#define  SHM_HOST_FLAGS1_ANTDIVHELP	0 /* bit0: ucode antenna div helper */
+#define  SHM_HOST_FLAGS1_SYMW		1 /* bit1: G-PHY SYM workaround */
+#define  SHM_HOST_FLAGS1_RXPULLW	2 /* bit2: RX pullup workaround */
+#define  SHM_HOST_FLAGS1_CCKBOOST	3 /* bit3: 4dB CCK power boost (exclusive with OFDM boost) */
+#define  SHM_HOST_FLAGS1_BTCOEX		4 /* bit4: Bluetooth coexistence */
+#define  SHM_HOST_FLAGS1_GDCW		5 /* bit5: G-PHY DC canceller filter bw workaround */
+#define  SHM_HOST_FLAGS1_OFDMPABOOST	6 /* bit6: Enable PA gain boost for OFDM */
+#define  SHM_HOST_FLAGS1_ACPR		7 /* bit7: Disable for Japan, channel 14 */
+#define  SHM_HOST_FLAGS1_EDCF		8 /* bit8: on if WME and MAC suspended */
+#define  SHM_HOST_FLAGS1_TSSIRPSMW	9 /* bit9: TSSI reset PSM ucode workaround */
+#define  SHM_HOST_FLAGS1_20IN40IQW	9 /* bit9: 20 in 40 MHz I/Q workaround (rev >= 13 only) */
+#define  SHM_HOST_FLAGS1_DSCRQ		10 /* bit10: Disable slow clock request in ucode */
+#define  SHM_HOST_FLAGS1_ACIW		11 /* bit11: ACI workaround: shift bits by 2 on PHY CRS */
+#define  SHM_HOST_FLAGS1_2060W		12 /* bit12: 2060 radio workaround */
+#define  SHM_HOST_FLAGS1_RADARW		13 /* bit13: Radar workaround */
+#define  SHM_HOST_FLAGS1_USEDEFKEYS	14 /* bit14: Enable use of default keys */
+#define  SHM_HOST_FLAGS1_AFTERBURNER	15 /* bit15: Afterburner enabled */
+#define	SHM_HOST_FLAGS2		SHM(0x060)
+#define  SHM_HOST_FLAGS2_BT4PRIOCOEX	0 /* bit0: Bluetooth 4-priority coexistence */
+#define  SHM_HOST_FLAGS2_FWKUP		1 /* bit1: Fast wake-up ucode */
+#define  SHM_HOST_FLAGS2_VCORECALC	2 /* bit2: Force VCO recalculation when powering up synthpu */
+#define  SHM_HOST_FLAGS2_PCISCW		3 /* bit3: PCI slow clock workaround */
+#define  SHM_HOST_FLAGS2_4318TSSI	5 /* bit5: 4318 TSSI */
+#define  SHM_HOST_FLAGS2_FBCMCFIFO	6 /* bit6: Flush bcast/mcast FIFO immediately */
+#define  SHM_HOST_FLAGS2_HWPCTL		7 /* bit7: Enable hardware power control */
+#define  SHM_HOST_FLAGS2_BTCOEXALT	8 /* bit8: Bluetooth coexistence in alternate pins */
+#define  SHM_HOST_FLAGS2_TXBTCHECK	9 /* bit9: Bluetooth check during transmission */
+#define  SHM_HOST_FLAGS2_SKCFPUP	10 /* bit10: Skip CFP update */
+#define  SHM_HOST_FLAGS2_N40W		11 /* bit11: N PHY 40 MHz workaround (rev >= 13 only) */
+#define  SHM_HOST_FLAGS2_ANTSEL		13 /* bit13: Antenna selection (for testing antenna div.) */
+#define  SHM_HOST_FLAGS2_BT3COEXT	13 /* bit13: Bluetooth 3-wire coexistence (rev >= 13 only) */
+#define  SHM_HOST_FLAGS2_BTCANT		14 /* bit14: Bluetooth coexistence (antenna mode) (rev >= 13 only) */
+#define	SHM_HOST_FLAGS3		SHM(0x062)
+#define  SHM_HOST_FLAGS3_ANTSELEN	0 /* bit0: Antenna selection enabled (rev >= 13 only) */
+#define  SHM_HOST_FLAGS3_ANTSELMODE	1 /* bit1: Antenna selection mode (rev >= 13 only) */
+#define  SHM_HOST_FLAGS3_MLADVW		4 /* bit4: N PHY ML ADV workaround (rev >= 13 only) */
+#define  SHM_HOST_FLAGS3_PR45960W	11 /* bit11: PR 45960 workaround (rev >= 13 only) */
+#define	SHM_HOST_FLAGS4		SHM(0x078)
+#define	SHM_HOST_FLAGS5		SHM(0x0D4)
+
 #define SHM_RFATT		SHM(0x064) /* Current radio attenuation value */
 #define SHM_RADAR		SHM(0x066) /* Radar register */
 #define SHM_PHYTXNOI		SHM(0x06E) /* PHY noise directly after TX (lower 8bit only) */

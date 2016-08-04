@@ -154,30 +154,41 @@
 #define SPR_TXE0_STATUS				spr087
 #define  TXE_STATUS_BUSY			7 /* bit7: TX engine busy */
 #define  TXE_STATUS_MEND			10 /* bit10: TXE M end */
-#define SPR_TXE0_0x10				spr088
-#define SPR_TXE0_0x12				spr089
-#define SPR_TXE0_0x14				spr08a
+
+// New Registers; Source: d11.h 578947 2015-08-13 04:46:06Z
+// http://github.com/tuapuikia/asuswrt-phantom/blob/master/release/src-rt-7.14.114.x/src/include/d11.h
+#define SPR_TXE0_MMPLCP0        spr088
+#define SPR_TXE0_MMPLCP1        spr089
+#define SPR_TXE0_PHY_CTL1       spr08a
+
 #define SPR_TXE0_0x16				spr08b
 #define SPR_TX_STATUS0				spr08c
 #define SPR_TX_STATUS1				spr08d
 #define SPR_TX_STATUS2				spr08e
 #define SPR_TX_STATUS3				spr08f
 #define SPR_TXE0_FIFO_Def			spr090
-#define SPR_TXE0_0x22				spr091
-#define SPR_TXE0_0x24				spr092
-#define SPR_TXE0_0x26				spr093
-#define SPR_TXE0_0x28				spr094
-#define SPR_TXE0_0x2a				spr095
-#define SPR_TXE0_0x2c				spr096
-#define SPR_TXE0_0x2e				spr097
-#define SPR_TXE0_0x30				spr098
-#define SPR_TXE0_0x32				spr099
-#define SPR_TXE0_0x34				spr09a
-#define SPR_TXE0_0x36				spr09b
-#define SPR_TXE0_0x38				spr09c
-#define SPR_TXE0_0x3a				spr09d
-#define SPR_TXE0_0x3c				spr09e
-#define SPR_TXE0_0x3e				spr09f
+
+// New Registers; Source: d11.h 578947 2015-08-13 04:46:06Z
+// http://github.com/tuapuikia/asuswrt-phantom/blob/master/release/src-rt-7.14.114.x/src/include/d11.h
+#define SPR_TXE0_FIFO_Frame_Count       spr091      /* Corerev >= 16 */
+#define SPR_TXE0_FIFO_Byte_Count        spr092      /* Corerev >= 16 */
+#define SPR_TXE0_FIFO_Head              spr093      /* Corerev >= 16 */
+#define SPR_TXE0_FIFO_Read_Pointer      spr094      /* Corerev >= 16 */
+#define SPR_TXE0_FIFO_Write_Pointer     spr095      /* Corerev >= 16 */
+#define SPR_TXE0_FIFO_DEF1              spr096      /* Corerev >= 16 */
+
+// New Registers; Source: d11.h 578947 2015-08-13 04:46:06Z
+// http://github.com/tuapuikia/asuswrt-phantom/blob/master/release/src-rt-7.14.114.x/src/include/d11.h
+#define SPR_TXE0_AGGFIFO_CMD            spr097
+#define SPR_TXE0_AGGFIFO_STAT           spr098
+#define SPR_TXE0_AGGFIFO_CFG_Control    spr099
+#define SPR_TXE0_AGGFIFO_CFG_Data       spr09a
+#define SPR_TXE0_AGGFIFO_MPDUNUM        spr09b
+#define SPR_TXE0_AGGFIFO_Length         spr09c
+#define SPR_TXE0_AGGFIFO_BMP            spr09d
+#define SPR_TXE0_AGGFIFO_ACKEDCNT       spr09e
+#define SPR_TXE0_AGGFIFO_SEL            spr09f
+
 #define SPR_TXE0_FIFO_CMD			spr0a0
 #define  TXE_FIFO_CMD_TXDONE			13 /* bit13: Set after the current transmission finished */
 #define  TXE_FIFO_CMD_COPY			14 /* bit14: Start copying of data */
@@ -189,13 +200,18 @@
 #define SPR_TXE0_Template_TX_Pointer		spr0a6
 #define SPR_TXE0_0x4e				spr0a7
 #define SPR_TXE0_Template_Pointer		spr0a8
-#define SPR_TXE0_0x52				spr0a9
-#define SPR_TXE0_0x54				spr0aa
-#define SPR_TXE0_0x56				spr0ab
-#define SPR_TXE0_0x58				spr0ac
+
+// New Registers; Source: d11.h 578947 2015-08-13 04:46:06Z
+// http://github.com/tuapuikia/asuswrt-phantom/blob/master/release/src-rt-7.14.114.x/src/include/d11.h
+#define SPR_TXE0_CLCT_STRPTR      spr0a9        	/* Corerev >= 22 */
+#define SPR_TXE0_CLCT_STPPTR      spr0aa        	/* Corerev >= 22 */
+#define SPR_TXE0_CLCT_CURPTR      spr0ab        	/* Corerev >= 22 */
+#define SPR_TXE0_AGGFIFO_Data     spr0ac
+
 #define SPR_TXE0_0x5a				spr0ad
 #define SPR_TXE0_0x5c				spr0ae
 #define SPR_TXE0_0x5e				spr0af
+
 #define SPR_TXE0_Template_Data_Low		spr0b0
 #define SPR_TXE0_Template_Data_High		spr0b1
 #define SPR_TXE0_0x64				spr0b2
@@ -375,8 +391,13 @@
 #define SPR_IFS_0x16				spr14b
 #define SPR_IFS_0x18				spr14c
 #define SPR_IFS_0x1a				spr14d
-#define SPR_IFS_0x1c				spr14e
-#define SPR_IFS_0x1e				spr14f
+
+// New Registers; Source: d11.h 578947 2015-08-13 04:46:06Z
+// http://github.com/tuapuikia/asuswrt-phantom/blob/master/release/src-rt-7.14.114.x/src/include/d11.h
+/* EDCF support in dot11macs with corerevs >= 16 */
+#define	SPR_IFS_AIFSN       spr14e
+#define	SPR_IFS_CTL1        spr14f
+
 #define SPR_SCC_Control				spr150
 #define SPR_SCC_Timer_Low			spr151
 #define SPR_SCC_Timer_High			spr152
@@ -384,20 +405,29 @@
 #define SPR_SCC_Fast_Powerup_Delay		spr154
 #define SPR_SCC_Period				spr155
 #define SPR_SCC_Period_Divisor			spr156
-#define SPR_IFS_0x2e				spr157
-#define SPR_IFS_0x30				spr158
+
+// New Registers; Source: d11.h 578947 2015-08-13 04:46:06Z
+// http://github.com/tuapuikia/asuswrt-phantom/blob/master/release/src-rt-7.14.114.x/src/include/d11.h
+#define	SPR_SCC_CAL_Timer_Low       spr157
+#define	SPR_SCC_CAL_Timer_High      spr158
+
 #define SPR_IFS_0x32				spr159
-#define SPR_IFS_0x34				spr15a
-#define SPR_IFS_0x36				spr15b
-#define SPR_IFS_0x38				spr15c
-#define SPR_IFS_0x3a				spr15d
-#define SPR_IFS_0x3c				spr15e
-#define SPR_IFS_0x3e				spr15f
-#define SPR_IFS_0x40				spr160
-#define SPR_IFS_0x42				spr161
-#define SPR_IFS_0x44				spr162
-#define SPR_IFS_0x46				spr163
-#define SPR_IFS_0x48				spr164
+
+// New Registers; Source: d11.h 578947 2015-08-13 04:46:06Z
+// http://github.com/tuapuikia/asuswrt-phantom/blob/master/release/src-rt-7.14.114.x/src/include/d11.h
+/* BTCX block on corerev >=13 */
+#define SPR_BTCX_Control                      spr15a
+#define SPR_BTCX_Stat                         spr15b
+#define SPR_BTCX_Transmit_Control             spr15c
+#define SPR_BTCX_PRI_WIN                      spr15d
+#define SPR_BTCX_TX_Conf_Timer                spr15e
+#define SPR_BTCX_ANT_SW_Timer                 spr15f
+#define SPR_BTCX_PRV_RFACT_Timer              spr160
+#define SPR_BTCX_CUR_RFACT_Timer              spr161
+#define SPR_BTCX_RFACT_DUR_Timer              spr162
+#define SPR_IFS_CTL_SEL_PRICRS                spr163
+#define SPR_IFS_CTL_SEL_SECCRS                spr164
+
 #define SPR_IFS_0x4a				spr165
 #define SPR_IFS_0x4c				spr166
 #define SPR_IFS_0x4e				spr167
@@ -417,14 +447,20 @@
 #define SPR_IFS_0x6a				spr175
 #define SPR_IFS_0x6c				spr176
 #define SPR_IFS_0x6e				spr177
-#define SPR_IFS_0x70				spr178
-#define SPR_IFS_0x72				spr179
+
+// New Registers; Source: d11.h 578947 2015-08-13 04:46:06Z
+// http://github.com/tuapuikia/asuswrt-phantom/blob/master/release/src-rt-7.14.114.x/src/include/d11.h
+/* ECI regs on corerev >=14 */
+#define SPR_BTCX_ECI_Address                  spr178
+#define SPR_BTCX_ECI_Data                     spr179
+
 #define SPR_IFS_0x74				spr17a
 #define SPR_IFS_0x76				spr17b
 #define SPR_IFS_0x78				spr17c
 #define SPR_IFS_0x7a				spr17d
 #define SPR_IFS_0x7c				spr17e
 #define SPR_IFS_0x7e				spr17f
+
 #define SPR_NAV_CTL				spr180
 #define SPR_NAV_STAT				spr181
 #define SPR_NAV_0x04				spr182
@@ -553,6 +589,127 @@
 #define SPR_PMQ_0x1a				spr1fd
 #define SPR_PMQ_0x1c				spr1fe
 #define SPR_PMQ_0x1e				spr1ff
+
+// New 802.11ac Registers; Source: d11.h 578947 2015-08-13 04:46:06Z
+// http://github.com/tuapuikia/asuswrt-phantom/blob/master/release/src-rt-7.14.114.x/src/include/d11.h
+/* AQM */
+#define SPR_AQM_Config                  spr200
+#define SPR_AQM_FIFO_Def                spr201
+#define SPR_AQM_Max_IDX                 spr202
+#define SPR_AQM_RCVD_BA0                spr203
+#define SPR_AQM_RCVD_BA1                spr204
+#define SPR_AQM_RCVD_BA2                spr205
+#define SPR_AQM_RCVD_BA3                spr206
+#define SPR_AQM_BASSN                   spr207
+#define SPR_AQM_REFSN                   spr208
+#define SPR_AQM_Max_Agg_Len_Low         spr209
+#define SPR_AQM_Max_Agg_Len_High        spr20a
+#define SPR_AQM_Agg_Params              spr20b
+#define SPR_AQM_Min_MPDU_Length         spr20c
+#define SPR_AQM_MAC_Adj_Length          spr20d
+#define SPR_AQM_Debug_Bus_Control       spr20e
+#define SPR_AQM_Agg_Stats               spr210
+#define SPR_AQM_Agg_Len_Low             spr211
+#define SPR_AQM_Agg_Len_High            spr212
+#define SPR_AQM_IDX_FIFO                spr213
+#define SPR_AQM_MPDU_Len_FIFO           spr214
+#define SPR_AQM_TX_Control_FIFO         spr215
+#define SPR_AQM_Upd_BA0                 spr216
+#define SPR_AQM_Upd_BA1                 spr217
+#define SPR_AQM_Upd_BA2                 spr218
+#define SPR_AQM_Upd_BA3                 spr219
+#define SPR_AQM_ACK_Control             spr21a
+#define SPR_AQM_Cons_Control            spr21b
+#define SPR_AQM_FIFO_Ready              spr21c
+#define SPR_AQM_Start_Loc               spr21d
+#define SPR_TDCCTL                      spr220
+#define SPR_TDC_PLCP0                   spr221
+#define SPR_TDC_PLCP1                   spr222
+#define SPR_TDC_Frame_Length0           spr223
+#define SPR_TDC_Frame_Length1           spr224
+#define SPR_TDC_TX_Time                 spr225
+#define SPR_TDC_VHT_Sig_B0              spr226
+#define SPR_TDC_VHT_Sig_B1              spr227
+#define SPR_TDC_VHT_L_Sig_Len           spr228
+#define SPR_TDC_VHT_N_Sym0              spr229
+#define SPR_TDC_VHT_N_Sym1              spr22a
+#define SPR_TDC_VHT_PSDU_Len0           spr22b
+#define SPR_TDC_VHT_PSDU_Len1           spr22c
+#define SPR_TDC_VHT_MAC_PAD             spr22d
+#define SPR_SHMDMA_Control              spr230
+#define SPR_SHMDMA_TXDC_Address         spr231
+#define SPR_SHMDMA_SHM_Address          spr232
+#define SPR_SHMDMA_Xfer_Cnt             spr233
+#define SPR_TXDC_Address                spr234
+#define SPR_TXDC_Data                   spr235
+/* RXE Register */
+#define SPR_MHP_Status                  spr240
+#define SPR_MHP_FC                      spr241
+#define SPR_MHP_DUR                     spr242
+#define SPR_MHP_SC                      spr243
+#define SPR_MHP_QOS                     spr244
+#define SPR_MHP_HTC_High                spr245
+#define SPR_MHP_HTC_Low                 spr246
+#define SPR_MHP_Addr1_High              spr247
+#define SPR_MHP_Addr1_Mid               spr248
+#define SPR_MHP_Addr1_Low               spr249
+#define SPR_MHP_Addr2_High              spr250
+#define SPR_MHP_Addr2_Mid               spr251
+#define SPR_MHP_Addr2_Low               spr252
+#define SPR_MHP_Addr3_High              spr253
+#define SPR_MHP_Addr3_Mid               spr254
+#define SPR_MHP_Addr3_Low               spr255
+#define SPR_MHP_Addr4_High              spr256
+#define SPR_MHP_Addr4_Mid               spr257
+#define SPR_MHP_Addr4_Low               spr258
+#define SPR_MHP_CFG                     spr259
+#define SPR_DAGG_CTL2                   spr260
+#define SPR_DAGG_BYTESLEFT              spr261
+#define SPR_DAGG_SH_OFFSET              spr262
+#define SPR_DAGG_STAT                   spr263
+#define SPR_DAGG_LEN                    spr264
+#define SPR_TXBA_Control                spr265
+#define SPR_TXBA_Data_Select            spr266
+#define SPR_TXBA_Data                   spr267
+#define SPR_AMT_Control                 spr270
+#define SPR_AMT_Status                  spr271
+#define SPR_AMT_Limit                   spr272
+#define SPR_AMT_Attr                    spr273
+#define SPR_AMT_Match1                  spr274
+#define SPR_AMT_Match2                  spr275
+#define SPR_AMT_Table_Address           spr276
+#define SPR_AMT_Table_Data              spr277
+#define SPR_AMT_Table_Value             spr278
+#define SPR_AMT_Debug_Select            spr279
+#define SPR_ROE_Control                 spr280
+#define SPR_ROE_Status                  spr281
+#define SPR_ROE_IP_Checksum             spr282
+#define SPR_ROE_TCPUDP_Checksum         spr283
+#define SPR_PSO_Control                 spr290
+#define SPR_PSO_RX_Words_Watermark      spr291
+#define SPR_PSO_RX_Cnt_Watermark        spr292
+#define SPR_OBFF_Control                spr298
+#define SPR_OBFF_RX_Words_Watermark     spr299
+#define SPR_OBFF_RX_Cnt_Watermark       spr29a
+/* TOE */
+#define SPR_TOE_Control                 spr300
+#define SPR_TOE_Rst                     spr301
+#define SPR_TOE_CSumNZ                  spr302
+#define SPR_TX_Serial_Control           spr320
+#define SPR_TX_PLCP_Sig0                spr321
+#define SPR_TX_PLCP_Sig1                spr322
+#define SPR_TX_PLCP_HT_Sig0             spr323
+#define SPR_TX_PLCP_HT_Sig1             spr324
+#define SPR_TX_PLCP_HT_Sig2             spr325
+#define SPR_TX_PLCP_VHT_SigB0           spr326
+#define SPR_TX_PLCP_VHT_SigB1           spr327
+#define SPR_MAC_Header_From_SHM_Length  spr329
+#define SPR_TX_PLCP_Length              spr32a
+#define SPR_TX_BF_Rpt_Length            spr32c
+#define SPR_TX_BF_Control               spr330
+#define SPR_Bfm_Rpt_Offset              spr331
+#define SPR_Bfm_Rpt_Length              spr332
+#define SPR_TX_BF_BfeRptRdCnt           spr333
 
 /* Named definitions for the Transmit Modify Engine MASK registers */
 #define SPR_TME_M_PLCP0				SPR_TME_MASK0	/* PLCP header (low) */
