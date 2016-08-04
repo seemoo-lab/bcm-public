@@ -155,12 +155,14 @@
 #define  TXE_STATUS_BUSY			7 /* bit7: TX engine busy */
 #define  TXE_STATUS_MEND			10 /* bit10: TXE M end */
 
-// New Registers; Source: d11.h 578947 2015-08-13 04:46:06Z
-// http://github.com/tuapuikia/asuswrt-phantom/blob/master/release/src-rt-7.14.114.x/src/include/d11.h
+// New TX Engine Registers; Source: d11.h 460918 2014-03-10 15:05:05Z
 #define SPR_TXE0_MMPLCP0        spr088
 #define SPR_TXE0_MMPLCP1        spr089
 #define SPR_TXE0_PHY_CTL1       spr08a
 
+#define SPR_TXE0_0x10				spr088
+#define SPR_TXE0_0x12				spr089
+#define SPR_TXE0_0x14				spr08a
 #define SPR_TXE0_0x16				spr08b
 #define SPR_TX_STATUS0				spr08c
 #define SPR_TX_STATUS1				spr08d
@@ -168,8 +170,7 @@
 #define SPR_TX_STATUS3				spr08f
 #define SPR_TXE0_FIFO_Def			spr090
 
-// New Registers; Source: d11.h 578947 2015-08-13 04:46:06Z
-// http://github.com/tuapuikia/asuswrt-phantom/blob/master/release/src-rt-7.14.114.x/src/include/d11.h
+// New Transmit Control Registers; Source: d11.h 460918 2014-03-10 15:05:05Z
 #define SPR_TXE0_FIFO_Frame_Count       spr091      /* Corerev >= 16 */
 #define SPR_TXE0_FIFO_Byte_Count        spr092      /* Corerev >= 16 */
 #define SPR_TXE0_FIFO_Head              spr093      /* Corerev >= 16 */
@@ -177,8 +178,14 @@
 #define SPR_TXE0_FIFO_Write_Pointer     spr095      /* Corerev >= 16 */
 #define SPR_TXE0_FIFO_DEF1              spr096      /* Corerev >= 16 */
 
-// New Registers; Source: d11.h 578947 2015-08-13 04:46:06Z
-// http://github.com/tuapuikia/asuswrt-phantom/blob/master/release/src-rt-7.14.114.x/src/include/d11.h
+#define SPR_TXE0_0x22				spr091
+#define SPR_TXE0_0x24				spr092
+#define SPR_TXE0_0x26				spr093
+#define SPR_TXE0_0x28				spr094
+#define SPR_TXE0_0x2a				spr095
+#define SPR_TXE0_0x2c				spr096
+
+// New AggFifo Registers; Source: d11.h 460918 2014-03-10 15:05:05Z
 #define SPR_TXE0_AGGFIFO_CMD            spr097
 #define SPR_TXE0_AGGFIFO_STAT           spr098
 #define SPR_TXE0_AGGFIFO_CFG_Control    spr099
@@ -188,6 +195,16 @@
 #define SPR_TXE0_AGGFIFO_BMP            spr09d
 #define SPR_TXE0_AGGFIFO_ACKEDCNT       spr09e
 #define SPR_TXE0_AGGFIFO_SEL            spr09f
+
+#define SPR_TXE0_0x2e				spr097
+#define SPR_TXE0_0x30				spr098
+#define SPR_TXE0_0x32				spr099
+#define SPR_TXE0_0x34				spr09a
+#define SPR_TXE0_0x36				spr09b
+#define SPR_TXE0_0x38				spr09c
+#define SPR_TXE0_0x3a				spr09d
+#define SPR_TXE0_0x3c				spr09e
+#define SPR_TXE0_0x3e				spr09f
 
 #define SPR_TXE0_FIFO_CMD			spr0a0
 #define  TXE_FIFO_CMD_TXDONE			13 /* bit13: Set after the current transmission finished */
@@ -201,13 +218,16 @@
 #define SPR_TXE0_0x4e				spr0a7
 #define SPR_TXE0_Template_Pointer		spr0a8
 
-// New Registers; Source: d11.h 578947 2015-08-13 04:46:06Z
-// http://github.com/tuapuikia/asuswrt-phantom/blob/master/release/src-rt-7.14.114.x/src/include/d11.h
+// New Registers; Source: d11.h 460918 2014-03-10 15:05:05Z
 #define SPR_TXE0_CLCT_STRPTR      spr0a9        	/* Corerev >= 22 */
 #define SPR_TXE0_CLCT_STPPTR      spr0aa        	/* Corerev >= 22 */
 #define SPR_TXE0_CLCT_CURPTR      spr0ab        	/* Corerev >= 22 */
 #define SPR_TXE0_AGGFIFO_Data     spr0ac
 
+#define SPR_TXE0_0x52				spr0a9
+#define SPR_TXE0_0x54				spr0aa
+#define SPR_TXE0_0x56				spr0ab
+#define SPR_TXE0_0x58				spr0ac
 #define SPR_TXE0_0x5a				spr0ad
 #define SPR_TXE0_0x5c				spr0ae
 #define SPR_TXE0_0x5e				spr0af
@@ -392,11 +412,13 @@
 #define SPR_IFS_0x18				spr14c
 #define SPR_IFS_0x1a				spr14d
 
-// New Registers; Source: d11.h 578947 2015-08-13 04:46:06Z
-// http://github.com/tuapuikia/asuswrt-phantom/blob/master/release/src-rt-7.14.114.x/src/include/d11.h
+// New Registers; Source: d11.h 460918 2014-03-10 15:05:05Z
 /* EDCF support in dot11macs with corerevs >= 16 */
 #define	SPR_IFS_AIFSN       spr14e
 #define	SPR_IFS_CTL1        spr14f
+
+#define SPR_IFS_0x1c				spr14e
+#define SPR_IFS_0x1e				spr14f
 
 #define SPR_SCC_Control				spr150
 #define SPR_SCC_Timer_Low			spr151
@@ -406,15 +428,16 @@
 #define SPR_SCC_Period				spr155
 #define SPR_SCC_Period_Divisor			spr156
 
-// New Registers; Source: d11.h 578947 2015-08-13 04:46:06Z
-// http://github.com/tuapuikia/asuswrt-phantom/blob/master/release/src-rt-7.14.114.x/src/include/d11.h
+// New Registers; Source: d11.h 460918 2014-03-10 15:05:05Z
 #define	SPR_SCC_CAL_Timer_Low       spr157
 #define	SPR_SCC_CAL_Timer_High      spr158
 
+#define SPR_IFS_0x2e				spr157
+#define SPR_IFS_0x30				spr158
+
 #define SPR_IFS_0x32				spr159
 
-// New Registers; Source: d11.h 578947 2015-08-13 04:46:06Z
-// http://github.com/tuapuikia/asuswrt-phantom/blob/master/release/src-rt-7.14.114.x/src/include/d11.h
+// New Registers; Source: d11.h 460918 2014-03-10 15:05:05Z
 /* BTCX block on corerev >=13 */
 #define SPR_BTCX_Control                      spr15a
 #define SPR_BTCX_Stat                         spr15b
@@ -427,7 +450,21 @@
 #define SPR_BTCX_RFACT_DUR_Timer              spr162
 #define SPR_IFS_CTL_SEL_PRICRS                spr163
 #define SPR_IFS_CTL_SEL_SECCRS                spr164
+/* ECI regs on corerev >=14 */
+#define SPR_BTCX_ECI_Address                  spr178
+#define SPR_BTCX_ECI_Data                     spr179
 
+#define SPR_IFS_0x34				spr15a
+#define SPR_IFS_0x36				spr15b
+#define SPR_IFS_0x38				spr15c
+#define SPR_IFS_0x3a				spr15d
+#define SPR_IFS_0x3c				spr15e
+#define SPR_IFS_0x3e				spr15f
+#define SPR_IFS_0x40				spr160
+#define SPR_IFS_0x42				spr161
+#define SPR_IFS_0x44				spr162
+#define SPR_IFS_0x46				spr163
+#define SPR_IFS_0x48				spr164
 #define SPR_IFS_0x4a				spr165
 #define SPR_IFS_0x4c				spr166
 #define SPR_IFS_0x4e				spr167
@@ -447,13 +484,8 @@
 #define SPR_IFS_0x6a				spr175
 #define SPR_IFS_0x6c				spr176
 #define SPR_IFS_0x6e				spr177
-
-// New Registers; Source: d11.h 578947 2015-08-13 04:46:06Z
-// http://github.com/tuapuikia/asuswrt-phantom/blob/master/release/src-rt-7.14.114.x/src/include/d11.h
-/* ECI regs on corerev >=14 */
-#define SPR_BTCX_ECI_Address                  spr178
-#define SPR_BTCX_ECI_Data                     spr179
-
+#define SPR_IFS_0x70				spr178
+#define SPR_IFS_0x72				spr179
 #define SPR_IFS_0x74				spr17a
 #define SPR_IFS_0x76				spr17b
 #define SPR_IFS_0x78				spr17c
@@ -590,8 +622,7 @@
 #define SPR_PMQ_0x1c				spr1fe
 #define SPR_PMQ_0x1e				spr1ff
 
-// New 802.11ac Registers; Source: d11.h 578947 2015-08-13 04:46:06Z
-// http://github.com/tuapuikia/asuswrt-phantom/blob/master/release/src-rt-7.14.114.x/src/include/d11.h
+// New 802.11ac Registers; Source: d11.h 460918 2014-03-10 15:05:05Z
 /* AQM */
 #define SPR_AQM_Config                  spr200
 #define SPR_AQM_FIFO_Def                spr201
@@ -814,6 +845,80 @@
 #define FIFO_MCAST		4 /* Broadcast / Multicast */
 #define FIFO_ATIM		5 /* ATIM window info */
 
+/* 802.11 Frame Types  */
+//-----  management : Type of Bits (2, 3) and Subtype of Bits (4, 5, 6, 7)
+#define MAC_SUBTYPE_MNGMNT_ASSOC_REQUEST    0x00
+#define MAC_SUBTYPE_MNGMNT_ASSOC_RESPONSE   0x10
+#define MAC_SUBTYPE_MNGMNT_REASSOC_REQUEST  0x20
+#define MAC_SUBTYPE_MNGMNT_REASSOC_RESPONSE 0x30
+#define MAC_SUBTYPE_MNGMNT_PROBE_REQUEST    0x40
+#define MAC_SUBTYPE_MNGMNT_PROBE_RESPONSE   0x50
+#define MAC_SUBTYPE_MNGMNT_BEACON           0x80
+#define MAC_SUBTYPE_MNGMNT_ATIM             0x90
+#define MAC_SUBTYPE_MNGMNT_DISASSOCIATION   0xA0
+#define MAC_SUBTYPE_MNGMNT_AUTHENTICATION   0xB0
+#define MAC_SUBTYPE_MNGMNT_DEAUTHENTICATION 0xC0
+
+//-----  control : Type of Bits (2, 3) and Subtype of Bits (4, 5, 6, 7)
+#define MAC_SUBTYPE_CONTROL_PSPOLL          0xA4
+#define MAC_SUBTYPE_CONTROL_RTS             0xB4
+#define MAC_SUBTYPE_CONTROL_CTS             0xC4
+#define MAC_SUBTYPE_CONTROL_ACK             0xD4
+#define MAC_SUBTYPE_CONTROL_CFEND           0xE4
+#define MAC_SUBTYPE_CONTROL_CFEND_CFACK     0xF4
+
+//-----  data : Type of Bits (2, 3) and Subtype of Bits (4, 5, 6, 7)
+#define MAC_SUBTYPE_DATA                    0x08
+#define MAC_SUBTYPE_DATA_CFACK              0x18
+#define MAC_SUBTYPE_DATA_CFPOLL             0x28
+#define MAC_SUBTYPE_DATA_CFACK_CFPOLL       0x38
+#define MAC_SUBTYPE_DATA_NULL               0x48
+#define MAC_SUBTYPE_DATA_CFACK_NULL         0x58
+#define MAC_SUBTYPE_DATA_CFPOLL_NULL        0x68
+#define MAC_SUBTYPE_DATA_CFACK_CFPOLL_NULL  0x78
+
+
+// Old definitions, for backwards compatibility when assembling old microcode.
+#define SPR_TXE0_0x10				spr088
+#define SPR_TXE0_0x12				spr089
+#define SPR_TXE0_0x14				spr08a
+#define SPR_TXE0_0x16				spr08b
+#define SPR_TXE0_0x22				spr091
+#define SPR_TXE0_0x24				spr092
+#define SPR_TXE0_0x26				spr093
+#define SPR_TXE0_0x28				spr094
+#define SPR_TXE0_0x2a				spr095
+#define SPR_TXE0_0x2c				spr096
+#define SPR_TXE0_0x2e				spr097
+#define SPR_TXE0_0x30				spr098
+#define SPR_TXE0_0x32				spr099
+#define SPR_TXE0_0x34				spr09a
+#define SPR_TXE0_0x36				spr09b
+#define SPR_TXE0_0x38				spr09c
+#define SPR_TXE0_0x3a				spr09d
+#define SPR_TXE0_0x3c				spr09e
+#define SPR_TXE0_0x3e				spr09f
+#define SPR_TXE0_0x52				spr0a9
+#define SPR_TXE0_0x54				spr0aa
+#define SPR_TXE0_0x56				spr0ab
+#define SPR_TXE0_0x58				spr0ac
+#define SPR_IFS_0x1c				spr14e
+#define SPR_IFS_0x1e				spr14f
+#define SPR_IFS_0x2e				spr157
+#define SPR_IFS_0x30				spr158
+#define SPR_IFS_0x34				spr15a
+#define SPR_IFS_0x36				spr15b
+#define SPR_IFS_0x38				spr15c
+#define SPR_IFS_0x3a				spr15d
+#define SPR_IFS_0x3c				spr15e
+#define SPR_IFS_0x3e				spr15f
+#define SPR_IFS_0x40				spr160
+#define SPR_IFS_0x42				spr161
+#define SPR_IFS_0x44				spr162
+#define SPR_IFS_0x46				spr163
+#define SPR_IFS_0x48				spr164
+#define SPR_IFS_0x70				spr178
+#define SPR_IFS_0x72				spr179
 
 #endif /* SPECIAL_PURPOSE_REGISTER_H_ */
 
