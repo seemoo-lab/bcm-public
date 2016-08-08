@@ -20,9 +20,9 @@ DHDCFLAGS = -Wall -Wstrict-prototypes -Dlinux -DBCMDRIVER               \
 	-DDHD_DONOT_FORWARD_BCMEVENT_AS_NETWORK_PKT -DRXFRAME_THREAD	        \
 	-DSUPPORT_PM2_ONLY -DWLTDLS     \
 	-DMIRACAST_AMPDU_SIZE=8		\
-	-I../firmware_patching/debugger_example/bcmdhd	\
-	-I../firmware_patching/debugger_example/bcmdhd/include   \
-	-I../firmware_patching/debugger_example/bcmdhd/common/include \
+	-I../firmware_patching/examples/debugger/bcmdhd	\
+	-I../firmware_patching/examples/debugger/bcmdhd/include   \
+	-I../firmware_patching/examples/debugger/bcmdhd/common/include \
 	-DBCMDBGFS
 
 DHDOFILES = aiutils.o bcmsdh_sdmmc_linux.o dhd_linux.o siutils.o bcmutils.o   \

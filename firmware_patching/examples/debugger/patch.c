@@ -1,11 +1,11 @@
-#include "../include/bcm4339.h"
-#include "../include/debug.h"
-#include "../include/wrapper.h"
-#include "../include/structs.h"
-#include "../include/helper.h"
-#include "../include/types.h" /* needs to be included before bcmsdpcm.h */
-#include "../include/bcmdhd/bcmsdpcm.h"
-#include "../include/bcmdhd/bcmcdc.h"
+#include "../../include/bcm4339.h"
+#include "../../include/debug.h"
+#include "../../include/wrapper.h"
+#include "../../include/structs.h"
+#include "../../include/helper.h"
+#include "../../include/types.h" /* needs to be included before bcmsdpcm.h */
+#include "../../include/bcmdhd/bcmsdpcm.h"
+#include "../../include/bcmdhd/bcmcdc.h"
 
 /**
  *	Saves one-hot encoded which breakpoint was hit

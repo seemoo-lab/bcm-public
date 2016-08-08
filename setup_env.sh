@@ -5,5 +5,6 @@ export ARCH=arm
 export SUBARCH=arm
 
 export NEXMON_FIRMWARE_PATCHING=$(pwd)/firmware_patching
+export NEXMON_ROOT=$(pwd)
 
 export NEXMON_SETUP_ENV=1
