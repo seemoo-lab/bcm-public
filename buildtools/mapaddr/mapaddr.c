@@ -326,13 +326,18 @@ analyse_pcap_file(char *filename)
 	char errbuf[PCAP_ERRBUF_SIZE];
 	const unsigned char *packet;
 	struct pcap_pkthdr header;
+	struct bpf_program fp;
 	char *fct_name;
+	int offset = 0;
 
 	char *trace_array = NULL;
 	long trace_len = 0;
 
 	if(!strcmp(filename, "wlan0")) {
-		pcap = pcap_open_live("wlan0", BUFSIZ, 1, 0, errbuf);	
+		pcap = pcap_open_live("wlan0", BUFSIZ, 1, 0, errbuf);
+	} else if(!strcmp(filename, "any")) {
+		pcap = pcap_open_live("any", BUFSIZ, 1, 0, errbuf);
+		offset = 2;
 	} else {
 		pcap = pcap_open_offline(filename, errbuf);	
 	}
@@ -342,14 +347,17 @@ analyse_pcap_file(char *filename)
 		return;
 	}
 
+	// filter only UDPLITE frames
+	pcap_compile(pcap, &fp, "proto 136", 0, 0);
+	pcap_setfilter(pcap, &fp);
+
 	while ((packet = pcap_next(pcap, &header)) != NULL) {
-		if(!memcmp(packet, ethernet_ipv6_udp_header_array, 18) && !memcmp(packet + 20, ethernet_ipv6_udp_header_array + 20, 42)) {
-			get_name(*((unsigned int *) (packet+62)), &fct_name, NULL);
-			printf("\n\n%s %08x %08x %08x %08x\n", fct_name, *((unsigned int *) (packet+62)), *((unsigned int *) (packet+66)), *((unsigned int *) (packet+70)), *((unsigned int *) (packet+74)));
-			trace_array = (char *) packet + 60 + 4 * 4;
-			trace_len = header.len - 60 - 4 * 4;
-			analyse_trace(trace_array, trace_len);
-		}
+		packet = packet + offset;
+		get_name(*((unsigned int *) (packet+62)), &fct_name, NULL);
+		printf("\n\n%s %08x %08x %08x %08x\n", fct_name, *((unsigned int *) (packet+62)), *((unsigned int *) (packet+66)), *((unsigned int *) (packet+70)), *((unsigned int *) (packet+74)));
+		trace_array = (char *) packet + 60 + 4 * 4;
+		trace_len = header.len - 60 - 4 * 4;
+		analyse_trace(trace_array, trace_len);
 	}
 }
 #endif
