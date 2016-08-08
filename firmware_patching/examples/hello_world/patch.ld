@@ -7,5 +7,5 @@ SECTIONS
 
 	.text : { patch.o (.text .text.* .data .data.* .bss .bss.* .rodata .rodata.*) }
 
-	INCLUDE ../wrapper/wrapper.ld
+	INCLUDE ../../wrapper/wrapper.ld
 }

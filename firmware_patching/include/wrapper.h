@@ -130,6 +130,7 @@ extern void wlc_bmac_mctrl(void *wlc_hw, int mask, int val); // 0x4F080
 extern short wlc_bmac_read_objmem(void *wlc_hw, unsigned int offset, int sel); // 0x4DB68
 extern void wlc_bmac_read_tsf(void *wlc_hw, unsigned int *tsf_l_ptr, unsigned int *tsf_h_ptr); // 0x1AAD84
 extern void wlc_bmac_suspend_mac_and_wait_wrapper(void *wlc); // 0x3B0BC
+extern void wlc_bmac_suspend_mac_and_wait(void *wlc_hw); // 0x4FC88
 extern void *wlc_bmac_write_objmem(void *wlc_hw, unsigned int offset, short v, int sel); // 0x4DCC8
 extern void wlc_bmac_write_template_ram(void *wlc_hw, int offset, int len, void *buf); // 0x504B0
 extern void *wlc_bsscfg_find_by_wlcif(void *wlc, int wlcif); // 0x1AC166
@@ -144,10 +145,16 @@ extern int wlc_iovar_change_handler(void *wlc, int a2, int cmd, char *a4, unsign
 extern int wlc_iovar_change_handler_plus4(void *wlc, int a2, int cmd, char *a4, unsigned int a6, int a7, int a8, int a9, int wlcif); // 0x19B260
 extern int wlc_iovar_op(void *wlc, char *varname, void *params, int p_len, void *arg, int len, char set, void *wlcif); // 0x18BB6C
 extern void wlc_mctrl_write(void *wlc_hw); // 0x4DF60
+extern void wlc_phyreg_enter(void *pi); // 0x1C456E
+extern void wlc_phyreg_exit(void *pi); // 0x1C4588
 extern int wlc_phy_channel2freq(unsigned int channel); // 0x1C4B40
 extern int wlc_phy_chanspec_get(void *ppi); // 0x1C4B36
 extern int wlc_phy_chan2freq_nphy_plus6(void *pi, int a2, int a3, int a4); // 0x1B39FE
 extern void wlc_phy_rssi_compute(void *pih, void *ctx); // 0x1C553C
+extern void wlc_phy_stay_in_carriersearch_phy(void *pi, int enable); // 0x1BE636
+extern void wlc_phy_table_read_phy(void *pi, unsigned int id, unsigned int len, unsigned int offset, unsigned int width, void *data); // 0x1BAF88
+extern void wlc_phy_table_write_phy(void *pi, unsigned int id, unsigned int len, unsigned int offset, unsigned int width, const void *data); // 0x1B8CD2
+extern int wlc_phy_tx_tone_phy(void *pi, int f_kHz, int max_val, char iqmode, char dac_test_mode, char modify_bbmult); // 0x1BE876
 extern int wlc_prec_enq_head(void *wlc, void *q, void *pkt, int prec, char head); // 0x35aa0
 extern int wlc_prep_pdu(void *wlc, void *p, int *fifo); // 0x191654
 extern void wlc_prep_sdu(void *wlc, void *p, int *counter, int *fifo); // 0x191B00

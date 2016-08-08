@@ -1,8 +1,8 @@
-#include "../include/bcm4339.h"
-#include "../include/debug.h"
-#include "../include/wrapper.h"
-#include "../include/structs.h"
-#include "../include/helper.h"
+#include "../../include/bcm4339.h"
+#include "../../include/debug.h"
+#include "../../include/wrapper.h"
+#include "../../include/structs.h"
+#include "../../include/helper.h"
 
 /**
  *	A simple hello world printing function
