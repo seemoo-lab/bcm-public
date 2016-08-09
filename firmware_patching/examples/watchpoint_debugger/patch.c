@@ -8,21 +8,6 @@
 #include "../../include/bcmdhd/bcmcdc.h"
 
 /**
- *	Saves one-hot encoded which breakpoint was hit
- */
-unsigned char breakpoint_hit = 0;
-
-/**
- *	Breakpoint hit counter, saves how often a breakpoint was hit
- */
-unsigned char breakpoint_hit_counter[DBG_NUMBER_OF_BREAKPOINTS] = { 0, 0, 0, 0 };
-
-/**
- *	Breakpoint hit limit, defines how often a breakpoint should trigger
- */
-unsigned char breakpoint_hit_limit[DBG_NUMBER_OF_BREAKPOINTS] = { 130, 100, 2, 1 };
-
-/**
  *	Saves one-hot encoded which watchpoint was hit
  */
 unsigned char watchpoint_hit = 0;
@@ -63,92 +48,18 @@ fix_sp_lr(struct trace *trace)
 }
 
 void
-print_breakpoint_infos(int breakpoint_number, struct trace *trace, int dump_size)
-{
-	switch(dump_size) {
-		case 0:
-			printf("BP%d(%d) PC=%08x LR=%08x 0=%08x 1=%08x 2=%08x 3=%08x 4=%08x 5=%08x 6=%08x\n", 
-				breakpoint_number, 
-				breakpoint_hit_counter[breakpoint_number], 
-				trace->PC, 
-				trace->lr, 
-				trace->r0, 
-				trace->r1, 
-				trace->r2, 
-				trace->r3, 
-				trace->r4, 
-				trace->r5, 
-				trace->r6);
-			break;
-		case 1:
-			printf("BP%d(%d) PC=%08x LR=%08x\n", 
-				breakpoint_number, 
-				breakpoint_hit_counter[breakpoint_number], 
-				trace->PC, 
-				trace->lr);
-			break;
-	}
-}
-
-void
 handle_pref_abort_exception(struct trace *trace)
 {
 	fix_sp_lr(trace);
 	
-	if(dbg_is_breakpoint_enabled(0)) {
-		if (dbg_triggers_on_breakpoint_address(0, trace->pc)) {
-			// to continue executed on the instruction where breakpoint 0 triggered, we set the breakpoint type to address mismatch to trigger on any instruction except the breakpoint address
-			dbg_set_breakpoint_type_to_instr_addr_mismatch(0);
-			// to know which breakpoint mismatch was triggerd on a next breakpoint hit, we set a bit in the breakpoint_hit variable
-			breakpoint_hit |= DBGBP0;
-			breakpoint_hit_counter[0]++;
-			print_breakpoint_infos(0, trace, 0);
-		} else if (breakpoint_hit & DBGBP0) {
-			// we reset the the breakpoint for address matching
-			dbg_set_breakpoint_type_to_instr_addr_match(0);
-			if (breakpoint_hit_counter[0] == breakpoint_hit_limit[0]) {
-				dbg_disable_breakpoint(0);
-			}
-			// we set the bit in the breakpoint_hit variable to 0
-			breakpoint_hit &= ~DBGBP0;
-			print_breakpoint_infos(0, trace, 1);
-		}
-	} else if (dbg_is_breakpoint_enabled(1)) {
-		if (dbg_triggers_on_breakpoint_address(1, trace->pc)) {
-			dbg_set_breakpoint_type_to_instr_addr_mismatch(1);
-			breakpoint_hit |= DBGBP1;
-			breakpoint_hit_counter[1]++;
-			print_breakpoint_infos(1, trace, 0);
-		} else if (breakpoint_hit & DBGBP1) {
-			dbg_set_breakpoint_type_to_instr_addr_match(1);
-			if (breakpoint_hit_counter[1] == breakpoint_hit_limit[1]) {
-				dbg_disable_breakpoint(1);
-			}
-			breakpoint_hit &= ~DBGBP1;
-			print_breakpoint_infos(1, trace, 1);
-		}
-	} else if (dbg_is_breakpoint_enabled(2)) {
-		if (dbg_triggers_on_breakpoint_address(2, trace->pc)) {
-			dbg_set_breakpoint_type_to_instr_addr_mismatch(2);
-			breakpoint_hit |= DBGBP2;
-			breakpoint_hit_counter[2]++;
-			print_breakpoint_infos(2, trace, 0);
-		} else if (breakpoint_hit & DBGBP2) {
-			dbg_set_breakpoint_type_to_instr_addr_match(2);
-			if (breakpoint_hit_counter[2] == breakpoint_hit_limit[2]) {
-				dbg_disable_breakpoint(2);
-			}
-			breakpoint_hit &= ~DBGBP2;
-			print_breakpoint_infos(2, trace, 1);
-		}
-	} else if (dbg_is_breakpoint_enabled(3)) {
+	if (dbg_is_breakpoint_enabled(3)) {
 		// Used to reset watchpoint
 		if (watchpoint_hit & DBGWP0) {
 			dbg_disable_breakpoint(3);
 			watchpoint_hit &= ~DBGWP0;
 			if (++watchpoint_hit_counter < watchpoint_hit_limit) {
 				dbg_enable_watchpoint(0);
-				dbg_enable_watchpoint(1);
+				//dbg_enable_watchpoint(1);
 				//dbg_enable_watchpoint(2);
 				//dbg_enable_watchpoint(3);
 				printf("WP0 reset (%d)\n", watchpoint_hit_counter);
@@ -221,9 +132,8 @@ set_debug_registers(void)
 	dbg_disable_breakpoint(3);
 	dbg_enable_monitor_mode_debugging();
 	
-	// Programm Breakpoint to match the instruction we want to hit
-	//dbg_set_breakpoint_for_addr_match(0, 0x1ecab0);
-	dbg_set_breakpoint_for_addr_match(0, 0x1AAD98); // wlc_bmac_recv
+	// Program watchpoint to match the address we want to monitor
+	dbg_set_watchpoint_for_addr_match(0, 0x1FB082);
 }
 
 __attribute__((naked)) void
