@@ -3,8 +3,8 @@
 import os
 import sys
 import time
-sys.path.append('../../buildtools/binary_patcher')
-sys.path.append('../../buildtools/elffile')
+sys.path.append('../../../buildtools/binary_patcher')
+sys.path.append('../../../buildtools/elffile')
 import binary_patcher
 from binary_patcher import *
 import elffile
@@ -15,7 +15,7 @@ ef = elffile.open(name="patch.elf")
 def getSectionAddr(name):
 	return next((header for header in ef.sectionHeaders if header.name == name), None).addr
 
-patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin", 
+patch_firmware("../../../bootimg_src/firmware/fw_bcmdhd.orig.bin", 
     "fw_bcmdhd.bin", [
 	# The text section is always required and contains code that is called by patches and hooks but not directly placed to predefined memory locations
 	ExternalArmPatch(getSectionAddr(".text"), "text.bin"),
@@ -39,6 +39,9 @@ patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin",
 	# GenericPatch2 instructions replace a word (two bytes) at a given address in the firmware
 	# 0xBF00 can be used to place a NOP instruction
 	# GenericPatch2(<address to replace word>, <two byte value>),
+
+	ExternalArmPatch(getSectionAddr(".text.wlc_valid_chanspec_ext_hook"), "wlc_valid_chanspec_ext_hook.bin"),
+	BPatch(0x1ADA64, getSectionAddr(".text.wlc_valid_chanspec_ext_hook")),
 
 	ExternalArmPatch(getSectionAddr(".text.wlc_radio_upd_hook"), "wlc_radio_upd_hook.bin"),
 	BLPatch(0x195B48, getSectionAddr(".text.wlc_radio_upd_hook")),

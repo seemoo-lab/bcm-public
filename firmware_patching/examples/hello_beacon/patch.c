@@ -47,11 +47,11 @@
  *                                                                         *                                                       *
  **************************************************************************/
 
-#include "../include/bcm4339.h"	// contains addresses specific for BCM4339
-#include "../include/debug.h"	// contains macros to access the debug hardware
-#include "../include/wrapper.h"	// wrapper definitions for functions that already exist in the firmware
-#include "../include/structs.h"	// structures that are used by the code in the firmware
-#include "../include/helper.h"	// useful helper functions
+#include "../../include/bcm4339.h"	// contains addresses specific for BCM4339
+#include "../../include/debug.h"	// contains macros to access the debug hardware
+#include "../../include/wrapper.h"	// wrapper definitions for functions that already exist in the firmware
+#include "../../include/structs.h"	// structures that are used by the code in the firmware
+#include "../../include/helper.h"	// useful helper functions
 
 #define BCMEXTRAHDROOM 202
 
@@ -115,8 +115,44 @@ wlc_radio_upd_hook_in_c(void)
 	// set the scb's bsscfg entry
 	wlc_scb_set_bsscfg(scb, bsscfg);
 
+	wlc_bmac_suspend_mac_and_wait_wrapper(wlc);
+	wlc_set_chanspec(wlc, 0x1904);
+	wlc_enable_mac(wlc);
+
 	// send the frame with the lowest possible rate
+	//wlc_sendctl(wlc, p, wlc->active_queue, scb, 1, 0x81020001, 0);
 	wlc_sendctl(wlc, p, wlc->active_queue, scb, 1, 0, 0);
+}
+
+__attribute__((naked)) int
+wlc_valid_chanspec_ext_orig(void *wlc_cm, unsigned short chanspec, int dualband)
+{
+	asm(
+		"push {r3-r9,lr}\n"
+		"b wlc_valid_chanspec_ext_plus4\n"
+		);
+}
+
+int
+wlc_valid_chanspec_ext_hook_in_c(void *wlc_cm, unsigned short chanspec, int dualband, int lr)
+{
+	int ret = wlc_valid_chanspec_ext_orig(wlc_cm, chanspec, dualband);
+
+	if ((chanspec == 0x1904) && dualband == 1) {
+		//printf("%04x %08x %d\n", chanspec, lr, ret);
+		ret = 1;
+	}
+
+	return ret;
+}
+
+__attribute__((naked)) void
+wlc_valid_chanspec_ext_hook(void)
+{
+	asm(
+		"mov r3, lr\n"
+		"b wlc_valid_chanspec_ext_hook_in_c\n"
+		);
 }
 
 __attribute__((naked)) void
