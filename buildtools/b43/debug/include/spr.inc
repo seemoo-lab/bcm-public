@@ -920,6 +920,21 @@
 #define SPR_IFS_0x70				spr178
 #define SPR_IFS_0x72				spr179
 
+// Francesco's definitions
+#define	SPR_TXE0_PHY_CTL_1      spr08a
+#define	SPR_TXE0_PHY_CTL_2      spr08b
+#define	SPR_SHM_DMA_CTL         spr230
+#define	SPR_SHM_DMA_TXADDR      spr231
+#define	SPR_SHM_DMA_SHMADDR     spr232
+#define	SPR_SHM_DMA_WORDCOUNT   spr233
+#define	SPR_TX_SERCTL           spr320
+#define	SPR_TX_PLCP_LS0         spr321
+#define	SPR_TX_PLCP_LS1         spr322
+#define	SPR_TX_PLCP_HT0         spr323
+#define	SPR_TX_PLCP_HT1         spr324
+#define	SPR_TX_PLCP_HT2         spr325
+#define SPR_TX_SHM_BYTELEN      spr329
+
 #endif /* SPECIAL_PURPOSE_REGISTER_H_ */
 
 // vim: syntax=b43 ts=8
