@@ -23,6 +23,8 @@ patch_firmware("../../../bootimg_src/firmware/fw_bcmdhd.orig.bin",
 
 	ExternalArmPatch(getSectionAddr(".text.tr_pref_abort_hook"), "tr_pref_abort_hook.bin"), # patch to stay in abort mode to handle exception, original codes switches to system mode
 
+	ExternalArmPatch(getSectionAddr(".text.tr_data_abort_hook"), "tr_data_abort_hook.bin"), # patch to stay in abort mode to handle exception, original codes switches to system mode
+
 	ExternalArmPatch(getSectionAddr(".text.handle_exceptions"), "handle_exceptions.bin"), # patch to stay in abort mode to handle exception, original codes switches to system mode
 
 #	The following patch, that is necessary to access debug registers in an interrupt handler breaks normal wifi operation
