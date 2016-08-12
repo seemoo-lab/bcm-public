@@ -128,6 +128,7 @@ extern int towards_dma_txfast(void *sdio, void *p, int chan); // 0x18256C
 extern void wlc_bmac_init(void *wlc_hw, unsigned int chanspec, unsigned int mute); // 0x1AB840
 extern void wlc_bmac_mctrl(void *wlc_hw, int mask, int val); // 0x4F080
 extern short wlc_bmac_read_objmem(void *wlc_hw, unsigned int offset, int sel); // 0x4DB68
+extern int wlc_bmac_read_shm(void *wlc_hw, unsigned int offset); // 0x4F79C
 extern void wlc_bmac_read_tsf(void *wlc_hw, unsigned int *tsf_l_ptr, unsigned int *tsf_h_ptr); // 0x1AAD84
 extern void wlc_bmac_suspend_mac_and_wait_wrapper(void *wlc); // 0x3B0BC
 extern void wlc_bmac_suspend_mac_and_wait(void *wlc_hw); // 0x4FC88
@@ -138,6 +139,7 @@ extern void *wlc_channel_set_chanspec(void *wlc_cm, unsigned short chanspec, int
 extern void *wlc_channel_set_chanspec_plus4(void *wlc_cm, unsigned short chanspec, int local_constraint_qdbm); // 0x1AE2C0
 extern void *wlc_compute_plcp(void *wlc, unsigned int rspec, short length, short type_subtype_frame_ctl_field, char *plcp); // 0x32A90
 extern void wlc_coreinit(void *wlc_hw); // 0x1AB66C
+extern int wlc_d11hdrs(void *wlc, void *p, void *scb, int short_preamble, unsigned int frag, unsigned int nfrag, unsigned int queue, int next_frag_len, int key, int rspec_override); // 0x18C4C8
 extern void *wlc_enable_mac(void *wlc); // 0x3352C
 extern int wlc_init(void *wlc); // 0x199874
 extern int wlc_ioctl(void *wlc, int cmd, void *arg, int len, void *wlc_if); // 0x19551C
@@ -174,6 +176,7 @@ extern void wlc_ucode_write(void *wlc_hw, const int ucode[], const unsigned int 
 extern int wlc_valid_chanspec_db(void *wlc_cm, unsigned short chanspec); // 0x5D3F4
 extern int wlc_valid_chanspec_ext(void *wlc_cm, unsigned short chanspec, int dualband); // 0x1ADA64
 extern int wlc_valid_chanspec_ext_plus4(void *wlc_cm, unsigned short chanspec, int dualband); // 0x1ADA68
+extern void *wlc_wlc_txq_enq(void *wlc, void *scb, void *p, int prec); // 0x1995C8
 
 extern void *wl_add_if(void *wl, int wlcif, int unit, int wds_or_bss); // 0x26F50
 extern void *wl_alloc_if(void *wl, int iftype, int unit, int wlc_if); // 0x271B0
