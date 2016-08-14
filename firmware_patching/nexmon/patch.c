@@ -158,16 +158,6 @@ wlc_bmac_recv_helper(struct wlc_hw_info *wlc_hw, unsigned int fifo, sk_buff *hea
         dngl_sendpkt(SDIO_INFO_ADDR, p, SDPCM_DATA_CHANNEL);
     }
 
-    wlc_bmac_mctrl(wlc_hw, 
-        MCTL_PROMISC | 
-        MCTL_KEEPBADFCS | 
-        MCTL_KEEPCONTROL | 
-        MCTL_BCNS_PROMISC, 
-        MCTL_PROMISC | 
-        //MCTL_KEEPBADFCS | 
-        MCTL_KEEPCONTROL | 
-        MCTL_BCNS_PROMISC);
-    
     wlc_iovar_op(wlc_hw->wlc, "mpc", 0, 0, &mpc, 4, 1, 0);
 }
 
@@ -184,6 +174,16 @@ wlc_bmac_recv_hook(struct wlc_hw_info *wlc_hw, unsigned int fifo, int bound, int
   
     // gather received frames
     while ((p = dma_rx(wlc_hw->di[fifo]))) {
+        wlc_bmac_mctrl(wlc_hw, 
+            MCTL_PROMISC | 
+            MCTL_KEEPBADFCS | 
+            MCTL_KEEPCONTROL | 
+            MCTL_BCNS_PROMISC, 
+            MCTL_PROMISC | 
+            //MCTL_KEEPBADFCS | 
+            MCTL_KEEPCONTROL | 
+            MCTL_BCNS_PROMISC);
+
         if (!tail) {
             head = tail = p;
         } else {
