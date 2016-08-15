@@ -171,6 +171,7 @@ extern void wlc_send_q(void *wlc, void *qi); // 0x1926B8
 extern void *wlc_sendnulldata(void *wlc, void *bsscfg, unsigned int *ea, int datarate_maybe, int p_field_26, int prio); // 0x193348
 extern void wlc_set_chanspec(void *wlc, unsigned short chanspec); // 0x399FC
 extern void wlc_txfifo(void *wlc, int fifo, void *p, void *txh, unsigned char commit, char txpktpend); // 0x193744
+extern void *wlc_txc_upd(void *wlc); // 0x18BB56
 extern void wlc_ucode_download(void *wlc_hw); // 0x1F4EF8
 extern void wlc_ucode_write(void *wlc_hw, const int ucode[], const unsigned int nbytes); // 0x4E0C8
 extern int wlc_valid_chanspec_db(void *wlc_cm, unsigned short chanspec); // 0x5D3F4
