@@ -43,6 +43,8 @@
 #include <linux/fcntl.h>
 #include <linux/fs.h>
 #include <linux/ip.h>
+/* NexMon: if_arp. include to change interface type */
+#include <linux/if_arp.h>
 #include <net/addrconf.h>
 
 #include <asm/uaccess.h>
@@ -4357,8 +4359,6 @@ dhd_preinit_ioctls(dhd_pub_t *dhd)
 #endif
 #endif /* DISABLE_11N */
 
-
-
 	/* query for 'ver' to get version info from firmware */
 	memset(buf, 0, sizeof(buf));
 	ptr = buf;
@@ -4737,6 +4737,9 @@ dhd_net_attach(dhd_pub_t *dhdp, int ifidx)
 #endif /* defined(WL_WIRELESS_EXT) */
 
 	dhd->pub.rxsz = DBUS_RX_BUFFER_SIZE_DHD(net);
+
+    /* NexMon: Change interface type to radiotap */
+	net->type = ARPHRD_IEEE80211;
 
 	memcpy(net->dev_addr, temp_addr, ETHER_ADDR_LEN);
 
