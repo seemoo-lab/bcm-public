@@ -68,6 +68,5 @@ Mobile Networks, WiSec 2016, July 2016.
 
 ## Contact
 
-* <mschulz@seemoo.tu-darmstadt.de>
-* <dwegemer@seemoo.tu-darmstadt.de>
-* <mhollick@seemoo.tu-darmstadt.de>
+* [Matthias Schulz](https://seemoo.tu-darmstadt.de/mschulz) <mschulz@seemoo.tu-darmstadt.de>
+* Daniel Wegemer <dwegemer@seemoo.tu-darmstadt.de>
