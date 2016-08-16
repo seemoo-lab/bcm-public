@@ -2,7 +2,7 @@
 
 ## What is NexMon?
 
-NexMon enables the monitor mode of the bcm4339 Wi-Fi chip on the Nexus 5.
+NexMon is a firmware patching framework for the BCM4339 WiFi firmware of Nexus 5 smartphones. It's main intension was to enable monitor mode and frame injection, which is already working quite well. Nevertheless, we also publish many example patches that allow to dive into firmware reverse engineering and firmware patching. Especially, the ability to write firmware patches in C makes it easy to use, also for beginenrs.
 
 ## WARNING
 
