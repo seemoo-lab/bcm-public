@@ -441,7 +441,7 @@ int
 main(int argc, char **argv)
 {
 	struct ifreq ifr;
-	char *ifname = NULL;
+	char *ifname = "wlan0";
 	int err = 0;
 	int help = 0;
 	int status = CMD_DHD;
@@ -455,6 +455,7 @@ main(int argc, char **argv)
 	memset(&ifr, 0, sizeof(ifr));
 	argv++;
 
+	strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
 	if ((status = dhd_option(&argv, &ifname, &help)) == CMD_OPT) {
 		if (ifname)
 			strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
