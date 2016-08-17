@@ -17,10 +17,6 @@ SECTIONS
 
     .text.sdio_handler : { KEEP(patch.o (.text.sdio_handler)) }
 
-    .text.wlc_iovar_change_handler_hook : { KEEP(patch.o (.text.wlc_iovar_change_handler_hook)) }
-
-    .text.wlc_txc_upd_hook : { KEEP(patch.o (.text.wlc_txc_upd_hook)) }
-
 	/* All other sections that were not yet placed but referenced by a kept section are collected in the text section */
 	.text : { patch.o (.text .text.* .data .data.* .bss .bss.* .rodata .rodata.*) }
 

@@ -113,7 +113,6 @@ wlc_bmac_recv_helper(struct wlc_hw_info *wlc_hw, unsigned int fifo, sk_buff *hea
     struct bdc_radiotap_header *frame;
     struct wlc_d11rxhdr *wlc_rxhdr;
     sk_buff *p;
-    int mpc = 0;
 
     // process each frame
     while ((p = head)) {
@@ -159,18 +158,6 @@ wlc_bmac_recv_helper(struct wlc_hw_info *wlc_hw, unsigned int fifo, sk_buff *hea
 
         dngl_sendpkt(SDIO_INFO_ADDR, p, SDPCM_DATA_CHANNEL);
     }
-
-    wlc_bmac_mctrl(wlc_hw, 
-        MCTL_PROMISC | 
-        MCTL_KEEPBADFCS | 
-        MCTL_KEEPCONTROL | 
-        MCTL_BCNS_PROMISC, 
-        MCTL_PROMISC | 
-        //MCTL_KEEPBADFCS | 
-        MCTL_KEEPCONTROL | 
-        MCTL_BCNS_PROMISC);
-
-    wlc_iovar_op(wlc_hw->wlc, "mpc", 0, 0, &mpc, 4, 1, 0);
 }
 
 int
@@ -558,37 +545,6 @@ sdio_handler(void *sdio, sk_buff *p) {
     } else {
         return sdio_header_parsing_from_sk_buff(sdio, p);
     }
-}
-
-void *
-wlc_iovar_change_handler_hook(void *wlc, int a2, int cmd, char *a4, unsigned int a6, int a7, int a8, int a9, int wlcif)
-{   
-    //void *ret = wlc_iovar_change_handler(wlc, a2, cmd, a4, a6, a7, a8, a9, wlcif);
-    if(cmd == 237) {
-        channel_change_flag = 1;
-        //printf("wlc_iovar_change_handler_hook_in_c!\n");
-    }
-    return wlc_iovar_change_handler(wlc, a2, cmd, a4, a6, a7, a8, a9, wlcif);
-    //return ret;
-}
-
-void *
-wlc_txc_upd_hook(void *wlcif) {
-    if(channel_change_flag == 1) {
-        printf("switch channel detected, reset MAC CTRL flags!\n");
-        struct wlc_hw_info *wlc_hw = (struct wlc_hw_info *) WLC_INFO_HW_ADDR;
-        wlc_bmac_mctrl(wlc_hw, 
-            MCTL_PROMISC | 
-            MCTL_KEEPBADFCS | 
-            MCTL_KEEPCONTROL | 
-            MCTL_BCNS_PROMISC, 
-            MCTL_PROMISC | 
-            //MCTL_KEEPBADFCS | 
-            MCTL_KEEPCONTROL | 
-            MCTL_BCNS_PROMISC);
-        channel_change_flag = 0;
-    }
-    return wlc_txc_upd(wlcif);
 }
 
 /**

@@ -63,13 +63,6 @@ patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin",
 	GenericPatch4(0x1AB82C, 0x41d60000), # mask
 	GenericPatch4(0x1AB828, 0x41d20000), # value
 
-        ExternalArmPatch(getSectionAddr(".text.wlc_iovar_change_handler_hook"), "wlc_iovar_change_handler_hook.bin"), 
-        GenericPatch4(0x1F3480, getSectionAddr(".text.wlc_iovar_change_handler_hook") + 1), 
-        #BPatch(0x19B25C, getSectionAddr(".text.wlc_iovar_change_handler_hook")),
-
-        ExternalArmPatch(getSectionAddr(".text.wlc_txc_upd_hook"), "wlc_txc_upd_hook.bin"),
-        BLPatch(0x18BCBC, getSectionAddr(".text.wlc_txc_upd_hook")),
-
 	# This line replaces the firmware version string that is printed to the console on startup to identify which firmware is loaded by the driver
 	StringPatch(0x1FD31B, (os.getcwd().split('/')[-1] + " (" + time.strftime("%d.%m.%Y %H:%M:%S") + ")\n")[:52]), # 53 character string
 	])
