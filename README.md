@@ -2,7 +2,7 @@
 
 ## What is NexMon?
 
-NexMon enables the monitor mode of the bcm4339 Wi-Fi chip on the Nexus 5.
+NexMon is a firmware patching framework for the BCM4339 WiFi firmware of Nexus 5 smartphones. It's main intension was to enable monitor mode and frame injection, which is already working quite well. Nevertheless, we also publish many example patches that allow to dive into firmware reverse engineering and firmware patching. Especially, the ability to write firmware patches in C makes it easy to use, also for beginenrs.
 
 ## WARNING
 
@@ -16,8 +16,7 @@ Our software may damage your hardware and may void your hardware’s warranty! Y
 ## Requirements
 
 * Nexus 5 with bcm4339 chipset
-* ~~The phone needs to be rooted with [Chainfire's SuperSU v2.66 (system-less)](http://forum.xda-developers.com/showpost.php?p=64161125&postcount=3)~~
-* You bootloader needs to be unlocked (no root required)
+* Your bootloader needs to be unlocked (no root required)
 * Android 6.0 or 6.0.1
 * Android Tools (adb + fastboot)
 
@@ -68,6 +67,5 @@ Mobile Networks, WiSec 2016, July 2016.
 
 ## Contact
 
-* <mschulz@seemoo.tu-darmstadt.de>
-* <dwegemer@seemoo.tu-darmstadt.de>
-* <mhollick@seemoo.tu-darmstadt.de>
+* [Matthias Schulz](https://seemoo.tu-darmstadt.de/mschulz) <mschulz@seemoo.tu-darmstadt.de>
+* Daniel Wegemer <dwegemer@seemoo.tu-darmstadt.de>

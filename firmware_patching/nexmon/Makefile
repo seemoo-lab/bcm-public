@@ -1,5 +1,5 @@
 CC=../../buildtools/arm-eabi-4.7/bin/arm-eabi-
-FUNCTIONS = wlc_bmac_recv_hook dma_attach_hook sdio_handler
+FUNCTIONS = wlc_bmac_recv_hook dma_attach_hook sdio_handler wlc_iovar_change_handler_hook wlc_txc_upd_hook
 FUNCTIONS_BIN = $(FUNCTIONS:=.bin)
 
 all: bcmdhd/bcmdhd.ko fw_bcmdhd.bin fw_bcmdhd.complete.elf
