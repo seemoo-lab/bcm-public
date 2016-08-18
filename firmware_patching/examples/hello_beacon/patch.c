@@ -115,9 +115,9 @@ wlc_radio_upd_hook_in_c(void)
 	// set the scb's bsscfg entry
 	wlc_scb_set_bsscfg(scb, bsscfg);
 
-	wlc_bmac_suspend_mac_and_wait_wrapper(wlc);
-	wlc_set_chanspec(wlc, 0x1904);
-	wlc_enable_mac(wlc);
+	//wlc_bmac_suspend_mac_and_wait_wrapper(wlc);
+	//wlc_set_chanspec(wlc, 0x1904);
+	//wlc_enable_mac(wlc);
 
 	// send the frame with the lowest possible rate
 	//wlc_sendctl(wlc, p, wlc->active_queue, scb, 1, 0x81020001, 0);
@@ -139,7 +139,6 @@ wlc_valid_chanspec_ext_hook_in_c(void *wlc_cm, unsigned short chanspec, int dual
 	int ret = wlc_valid_chanspec_ext_orig(wlc_cm, chanspec, dualband);
 
 	if ((chanspec == 0x1904) && dualband == 1) {
-		//printf("%04x %08x %d\n", chanspec, lr, ret);
 		ret = 1;
 	}
 
