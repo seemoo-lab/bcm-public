@@ -46,7 +46,6 @@ from the **root** directory
 
 ## Currently, the following example projects exist:
 
-* d11_example: Interaction with the D11 core
 * debugger_example: Using the ARM Debugging interface
 * hello_world_example: Prints hello world to the chips console
 * hello_beacon_example: send a single beacon frame on firmware start 
