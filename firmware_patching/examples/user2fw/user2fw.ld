@@ -5,5 +5,5 @@ SECTIONS
 	.bss : { user2fw.o (.bss .bss.*) }
 	.rodata : { user2fw.o (.rodata .rodata.*) }
 
-	INCLUDE ../wrapper/wrapper.ld
+	INCLUDE ../../wrapper/wrapper.ld
 }

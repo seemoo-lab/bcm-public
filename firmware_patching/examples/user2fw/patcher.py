@@ -1,11 +1,11 @@
 #!/usr/bin/env python2
 
 import sys
-sys.path.append('../../buildtools/binary_patcher')
+sys.path.append('../../../buildtools/binary_patcher')
 import binary_patcher
 from binary_patcher import *
 
-FW_FILE = "../../bootimg_src/firmware/fw_bcmdhd.orig.bin"
+FW_FILE = "../../../bootimg_src/firmware/fw_bcmdhd.orig.bin"
 
 patchfile1 = 'user2fw.bin'
 

@@ -1,8 +1,8 @@
-#include "../include/bcm4339.h"
-#include "../include/wrapper.h"
-#include "../include/structs.h"
-#include "../include/helper.h"
-#include "../include/types.h" /* needs to be included before bcmsdpcm.h */
+#include <bcm4339.h>
+#include <wrapper.h>
+#include <structs.h>
+#include <helper.h>
+#include <types.h> /* needs to be included before bcmsdpcm.h */
 
 void*
 sdio_handler(void *sdio, sk_buff *p) {
