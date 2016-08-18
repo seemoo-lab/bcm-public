@@ -8,5 +8,5 @@ SECTIONS
     .text.sdio_handler : { KEEP(wlc_bmac_recv.o (.text.sdio_handler)) }
 	.text : { wlc_bmac_recv.o (.text .text.* .data .data.* .bss .bss.* .rodata .rodata.*) }
 
-	INCLUDE ../wrapper/wrapper.ld
+	INCLUDE ../../wrapper/wrapper.ld
 }

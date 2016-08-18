@@ -1,9 +1,9 @@
-#include "../include/bcm4339.h" /* needs to be imported before wrapper.h to define addresses */
-#include "../include/wrapper.h"
-#include "../include/helper.h"
-#include "../include/structs.h"
-#include "../include/nexmon_filter.h"
-#include "../include/bcmdhd/bcmsdpcm.h"
+#include <bcm4339.h> /* needs to be imported before wrapper.h to define addresses */
+#include <wrapper.h>
+#include <helper.h>
+#include <structs.h>
+#include <nexmon_filter.h>
+#include <bcmdhd/bcmsdpcm.h>
 
 #define DROP_FILTER_CNT_ADDR 0x180040
 uint64_t volatile * const drop_filter_cnt = (uint64_t *) DROP_FILTER_CNT_ADDR;

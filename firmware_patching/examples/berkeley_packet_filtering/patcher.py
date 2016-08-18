@@ -1,8 +1,8 @@
 #!/usr/bin/env python2
 
 import sys
-sys.path.append('../../buildtools/binary_patcher')
-sys.path.append('../../buildtools/elffile')
+sys.path.append('../../../buildtools/binary_patcher')
+sys.path.append('../../../buildtools/elffile')
 
 import binary_patcher
 from binary_patcher import *
@@ -13,7 +13,7 @@ ef = elffile.open(name="wlc_bmac_recv.elf")
 def getSectionAddr(name):
 	return next((header for header in ef.sectionHeaders if header.name == name), None).addr
 
-FW_FILE = "../../bootimg_src/firmware/fw_bcmdhd.orig.bin"
+FW_FILE = "../../../bootimg_src/firmware/fw_bcmdhd.orig.bin"
 
 patchfile0 = 'filter.bin'
 patchfile1 = 'wlc_bmac_recv.bin'
