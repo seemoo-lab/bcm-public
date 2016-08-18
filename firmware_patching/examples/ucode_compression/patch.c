@@ -47,11 +47,11 @@
  *                                                                         *
  **************************************************************************/
 
-#include "../include/bcm4339.h"	// contains addresses specific for BCM4339
-#include "../include/debug.h"	// contains macros to access the debug hardware
-#include "../include/wrapper.h"	// wrapper definitions for functions that already exist in the firmware
-#include "../include/structs.h"	// structures that are used by the code in the firmware
-#include "../include/helper.h"	// useful helper functions
+#include <bcm4339.h>	// contains addresses specific for BCM4339
+#include <debug.h>		// contains macros to access the debug hardware
+#include <wrapper.h>	// wrapper definitions for functions that already exist in the firmware
+#include <structs.h>	// structures that are used by the code in the firmware
+#include <helper.h>		// useful helper functions
 
 /**
  *  Contains tinflate_partial and other functions needed for deflate decompression

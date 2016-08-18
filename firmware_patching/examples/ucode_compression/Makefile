@@ -1,4 +1,4 @@
-CC=../../buildtools/arm-eabi-4.7/bin/arm-eabi-
+CC=../../../buildtools/arm-eabi-4.7/bin/arm-eabi-
 FUNCTIONS = wlc_bmac_write_template_ram_alternative
 FUNCTIONS_BIN = $(FUNCTIONS:=.bin)
 
@@ -7,18 +7,18 @@ all: bcmdhd/bcmdhd.ko fw_bcmdhd.bin fw_bcmdhd.complete.elf
 include ucode_compression_code.mk
 
 bcmdhd/bcmdhd.ko: check-nexmon-setup-env
-	make -C ../../kernel/ M=$$PWD/bcmdhd -j2
+	make -C ../../../kernel/ M=$$PWD/bcmdhd -j2
 
 fw_bcmdhd.bin: patcher.py patch.elf text.bin $(FUNCTIONS_BIN)
 	./patcher.py
 
-patch.o: patch.c ../include/*.h ucode-compressed.c
-	$(CC)gcc -Wall -Werror -O2 -nostdlib -nostartfiles -ffreestanding -mthumb -march=armv7-r -ffunction-sections -fdata-sections -c $< -o $@
+patch.o: patch.c ../../include/*.h ucode-compressed.c
+	$(CC)gcc -Wall -Werror -O2 -nostdlib -nostartfiles -ffreestanding -mthumb -march=armv7-r -ffunction-sections -fdata-sections -I../../include -c $< -o $@
 
-../wrapper/wrapper.o: ../include/wrapper.h
-	make -C ../wrapper
+../../wrapper/wrapper.o: FORCE
+	make -C ../../wrapper
 
-patch.elf: patch.ld patch.o ../wrapper/wrapper.o ucode_compression_code.ld
+patch.elf: patch.ld patch.o ../../wrapper/wrapper.o ucode_compression_code.ld
 	$(CC)ld -T $< --entry=dma_txfast_hook -o $@ --gc-sections --print-gc-sections -M
 
 $(FUNCTIONS_BIN): patch.elf
@@ -27,8 +27,8 @@ $(FUNCTIONS_BIN): patch.elf
 text.bin: patch.elf
 	$(CC)objcopy -O binary -j .text $< $@
 
-fw_bcmdhd.complete.bin : fw_bcmdhd.bin ../../bootimg_src/firmware/rom.bin
-	dd if=../../bootimg_src/firmware/rom.bin of=$@ bs=1
+fw_bcmdhd.complete.bin : fw_bcmdhd.bin ../../../bootimg_src/firmware/rom.bin
+	dd if=../../../bootimg_src/firmware/rom.bin of=$@ bs=1
 	dd if=fw_bcmdhd.bin of=$@ bs=1 seek=1572864
 
 fw_bcmdhd.complete.elf : fw_bcmdhd.complete.bin
@@ -42,6 +42,6 @@ endif
 
 clean:
 	rm -f fw_bcmdhd.bin fw_bcmdhd.complete.bin fw_bcmdhd.complete.elf patch.o patch.elf text.bin $(FUNCTIONS_BIN) ucode-compressed.bin ucode.bin ucode-compressed.c
-	make -C ../../kernel/ M=$$PWD/bcmdhd clean
+	make -C ../../../kernel/ M=$$PWD/bcmdhd clean
 
 FORCE:
