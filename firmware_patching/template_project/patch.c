@@ -35,7 +35,7 @@
  * other publication which includes a bibliography must include a citation *
  * to the author's publication "M. Schulz, D. Wegemer and M. Hollick.      *
  * NexMon: A Cookbook for Firmware Modifications on Smartphones to Enable  *
- * Monitor Mode.".                                                         *
+ * Monitor Mode, CoRR, vol. abs/1601.07077, December 2015.".               *
  *                                                                         *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS *
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF              *
@@ -44,14 +44,14 @@
  * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,    *
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE       *
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                  *
- *                                                                         *                                                       *
+ *                                                                         *
  **************************************************************************/
 
-#include "../include/bcm4339.h"	// contains addresses specific for BCM4339
-#include "../include/debug.h"	// contains macros to access the debug hardware
-#include "../include/wrapper.h"	// wrapper definitions for functions that already exist in the firmware
-#include "../include/structs.h"	// structures that are used by the code in the firmware
-#include "../include/helper.h"	// useful helper functions
+#include <bcm4339.h>	// contains addresses specific for BCM4339
+#include <debug.h>		// contains macros to access the debug hardware
+#include <wrapper.h>	// wrapper definitions for functions that already exist in the firmware
+#include <structs.h>	// structures that are used by the code in the firmware
+#include <helper.h>		// useful helper functions
 
 /**
  *	Just inserted to produce an error while linking, when we try to overwrite memory used by the original firmware

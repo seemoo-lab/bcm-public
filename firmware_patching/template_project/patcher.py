@@ -13,7 +13,10 @@ ef = elffile.open(name="patch.elf")
 
 # This function gives us the address of a function in our patch.elf file It helps to identify where functions where automatically placed by the linker
 def getSectionAddr(name):
-	return next((header for header in ef.sectionHeaders if header.name == name), None).addr
+	try:
+		return next((header for header in ef.sectionHeaders if header.name == name), None).addr
+	except:
+		return 0
 
 patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin", 
     "fw_bcmdhd.bin", [
