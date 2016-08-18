@@ -1,6 +1,0 @@
-.*
-!/.gitignore
-Module.symvers
-bcmdhd.ko
-bcmdhd.mod.c
-modules.order
