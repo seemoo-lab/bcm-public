@@ -77,16 +77,13 @@ bcmdhd: kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko
 $(FWPATCH): FORCE
 	cd firmware_patching/$(FWPATCH) && make
 
-kernel/drivers/net/wireless/nexmon/nexmon.ko: FORCE check-nexmon-setup-env
-	cd kernel && make modules -j2
-
 su: su.img
 	adb push su.img /sdcard/
 	adb shell "su -c 'mv /sdcard/su.img /data/su.img'"
 	adb push SuperSU.apk /sdcard/
 	adb shell "su -c 'mv /sdcard/SuperSU.apk /data/SuperSU.apk'"
 
-boot.img: Makefile mkboot bootimg_src kernel/arch/arm/boot/zImage-dtb $(FWPATCH) kernel/drivers/net/wireless/nexmon/nexmon.ko
+boot.img: Makefile mkboot bootimg_src kernel/arch/arm/boot/zImage-dtb $(FWPATCH)
 	rm -Rf bootimg_tmp
 	mkdir bootimg_tmp
 	cd bootimg_tmp && \
@@ -102,7 +99,6 @@ boot.img: Makefile mkboot bootimg_src kernel/arch/arm/boot/zImage-dtb $(FWPATCH)
 	   && printf "\n\nservice su_daemon /nexmon/bin/su --daemon\n    oneshot\n    class late_start\n    user root\n" >> init.rc
 	mkdir bootimg_tmp/ramdisk/nexmon
 	cp firmware_patching/$(FWPATCH)/bcmdhd/bcmdhd.ko bootimg_tmp/ramdisk/nexmon/
-	cp kernel/drivers/net/wireless/nexmon/nexmon.ko bootimg_tmp/ramdisk/nexmon/
 	mkdir bootimg_tmp/ramdisk/nexmon/firmware
 	cp firmware_patching/$(FWPATCH)/fw_bcmdhd.bin bootimg_tmp/ramdisk/nexmon/firmware/fw_bcmdhd.bin
 	cp bootimg_src/firmware/bcmdhd.cal bootimg_tmp/ramdisk/nexmon/firmware/bcmdhd.cal
@@ -139,10 +135,14 @@ boot: boot.img
 	adb reboot bootloader
 	fastboot boot boot.img
 
+reboot: FORCE
+	adb reboot bootloader
+	fastboot boot boot.img	
+
 reloadfirmware: $(FWPATCH)
 	adb push firmware_patching/$(FWPATCH)/fw_bcmdhd.bin /sdcard/
 	adb push firmware_patching/$(FWPATCH)/bcmdhd/bcmdhd.ko /sdcard/
-	adb shell "su -c 'ifconfig wlan0 down; rmmod bcmdhd; rmmod nexmon; insmod /sdcard/bcmdhd.ko firmware_path=/sdcard/fw_bcmdhd.bin dhd_msg_level=$(MSGLEVEL)'"
+	adb shell "su -c 'ifconfig wlan0 down; rmmod bcmdhd; insmod /sdcard/bcmdhd.ko firmware_path=/sdcard/fw_bcmdhd.bin dhd_msg_level=$(MSGLEVEL)'"
 
 setupnetwork:
 	adb shell "su -c 'ifconfig wlan0 down && ifconfig wlan0 up && wpa_supplicant -Dnl80211 -iwlan0 -c/data/misc/wifi/wpa_supplicant.conf -I/system/etc/wifi/wpa_supplicant_overlay.conf &'"

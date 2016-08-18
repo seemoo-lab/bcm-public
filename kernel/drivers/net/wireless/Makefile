@@ -61,10 +61,6 @@ obj-$(CONFIG_MWIFIEX)	+= mwifiex/
 
 obj-$(CONFIG_BCMDHD)	+= bcmdhd/
 
-obj-$(CONFIG_NEXMON)    += nexmon/
-
-obj-$(CONFIG_NEXDHD)	+= nexdhd/
-
 obj-$(CONFIG_BRCMFMAC)	+= brcm80211/
 obj-$(CONFIG_BRCMSMAC)	+= brcm80211/
 
