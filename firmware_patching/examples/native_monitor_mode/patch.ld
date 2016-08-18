@@ -10,5 +10,5 @@ SECTIONS
 	/* All other sections that were not yet placed but referenced by a kept section are collected in the text section */
 	.text : { patch.o (.text .text.* .data .data.* .bss .bss.* .rodata .rodata.*) }
 
-	INCLUDE ../wrapper/wrapper.ld
+	INCLUDE ../../wrapper/wrapper.ld
 }
