@@ -3,8 +3,8 @@
 import os
 import sys
 import time
-sys.path.append('../../buildtools/binary_patcher')
-sys.path.append('../../buildtools/elffile')
+sys.path.append('../../../buildtools/binary_patcher')
+sys.path.append('../../../buildtools/elffile')
 import binary_patcher
 from binary_patcher import *
 import elffile
@@ -15,14 +15,14 @@ ef = elffile.open(name="patch.elf")
 def getSectionAddr(name):
 	return next((header for header in ef.sectionHeaders if header.name == name), None).addr
 
-patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin", 
+patch_firmware("../../../bootimg_src/firmware/fw_bcmdhd.orig.bin", 
     "fw_bcmdhd.bin", [
 	# The text section is always required and contains code that is called by patches and hooks but not directly placed to predefined memory locations
 	ExternalArmPatch(getSectionAddr(".text"), "text.bin"),
 
-        # hook for wlc_d11hdrs()
-        ExternalArmPatch(getSectionAddr(".text.wlc_d11hdrs_hook"), "wlc_d11hdrs_hook.bin"),
-        BLPatch(0x18D27C, getSectionAddr(".text.wlc_d11hdrs_hook")),
+	# hook for wlc_d11hdrs()
+	ExternalArmPatch(getSectionAddr(".text.wlc_d11hdrs_hook"), "wlc_d11hdrs_hook.bin"),
+	BLPatch(0x18D27C, getSectionAddr(".text.wlc_d11hdrs_hook")),
 
 
 	# ExternalArmPatch instructions copy the contents of a binary file to an address in the firmware
