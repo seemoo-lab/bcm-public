@@ -60,7 +60,7 @@ Feel free to read and reference our papers on the development of this project
 
 * M. Schulz, D. Wegemer and M. Hollick. [NexMon: A Cookbook for Firmware 
 Modifications on Smartphones to Enable Monitor Mode]
-(http://arxiv.org/abs/1601.07077) , CoRR, vol. abs/1601.07077, December 2015. 
+(http://arxiv.org/abs/1601.07077), CoRR, vol. abs/1601.07077, December 2015. 
 [bibtex](http://dblp.uni-trier.de/rec/bibtex/journals/corr/SchulzWH16)
 * M. Schulz, D. Wegemer, M. Hollick. [DEMO: Using NexMon, the C-based WiFi 
 firmware modification framework](https://dl.acm.org/citation.cfm?id=2942419), 
