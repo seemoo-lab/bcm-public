@@ -1,11 +1,11 @@
-#include "../include/bcm4339.h"
-#include "../include/debug.h"
-#include "../include/wrapper.h"
-#include "../include/structs.h"
-#include "../include/helper.h"
-#include "../include/types.h" /* needs to be included before bcmsdpcm.h */
-#include "../include/bcmdhd/bcmsdpcm.h"
-#include "../include/bcmdhd/bcmcdc.h"
+#include <bcm4339.h>
+#include <debug.h>
+#include <wrapper.h>
+#include <structs.h>
+#include <helper.h>
+#include <types.h> /* needs to be included before bcmsdpcm.h */
+#include <bcmdhd/bcmsdpcm.h>
+#include <bcmdhd/bcmcdc.h>
 
 unsigned char bdc_ethernet_ipv6_udp_header_array[] = {
   0x20, 0x00, 0x00, 0x00,				/* BDC Header */
