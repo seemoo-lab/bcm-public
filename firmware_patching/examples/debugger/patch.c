@@ -1,11 +1,60 @@
-#include "../../include/bcm4339.h"
-#include "../../include/debug.h"
-#include "../../include/wrapper.h"
-#include "../../include/structs.h"
-#include "../../include/helper.h"
-#include "../../include/types.h" /* needs to be included before bcmsdpcm.h */
-#include "../../include/bcmdhd/bcmsdpcm.h"
-#include "../../include/bcmdhd/bcmcdc.h"
+/***************************************************************************
+ *                                                                         *
+ *          ###########   ###########   ##########    ##########           *
+ *         ############  ############  ############  ############          *
+ *         ##            ##            ##   ##   ##  ##        ##          *
+ *         ##            ##            ##   ##   ##  ##        ##          *
+ *         ###########   ####  ######  ##   ##   ##  ##    ######          *
+ *          ###########  ####  #       ##   ##   ##  ##    #    #          *
+ *                   ##  ##    ######  ##   ##   ##  ##    #    #          *
+ *                   ##  ##    #       ##   ##   ##  ##    #    #          *
+ *         ############  ##### ######  ##   ##   ##  ##### ######          *
+ *         ###########    ###########  ##   ##   ##   ##########           *
+ *                                                                         *
+ *            S E C U R E   M O B I L E   N E T W O R K I N G              *
+ *                                                                         *
+ * Warning:                                                                *
+ *                                                                         *
+ * Our software may damage your hardware and may void your hardware’s      *
+ * warranty! You use our tools at your own risk and responsibility!        *
+ *                                                                         *
+ * License:                                                                *
+ * Copyright (c) 2015 NexMon Team                                          *
+ *                                                                         *
+ * Permission is hereby granted, free of charge, to any person obtaining   *
+ * a copy of this software and associated documentation files (the         *
+ * "Software"), to deal in the Software without restriction, including     *
+ * without limitation the rights to use, copy, modify, merge, publish,     *
+ * distribute copies of the Software, and to permit persons to whom the    *
+ * Software is furnished to do so, subject to the following conditions:    *
+ *                                                                         *
+ * The above copyright notice and this permission notice shall be included *
+ * in all copies or substantial portions of the Software.                  *
+ *                                                                         *
+ * Any use of the Software which results in an academic publication or     *
+ * other publication which includes a bibliography must include a citation *
+ * to the author's publication "M. Schulz, D. Wegemer and M. Hollick.      *
+ * NexMon: A Cookbook for Firmware Modifications on Smartphones to Enable  *
+ * Monitor Mode.".                                                         *
+ *                                                                         *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS *
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF              *
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  *
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY    *
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,    *
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE       *
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                  *
+ *                                                                         *
+ **************************************************************************/
+
+#include <bcm4339.h>		// contains addresses specific for BCM4339
+#include <debug.h>			// contains macros to access the debug hardware
+#include <wrapper.h>		// wrapper definitions for functions that already exist in the firmware
+#include <structs.h>		// structures that are used by the code in the firmware
+#include <helper.h>			// useful helper functions
+#include <types.h>			// needs to be included before bcmsdpcm.h
+#include <bcmdhd/bcmsdpcm.h>
+#include <bcmdhd/bcmcdc.h>
 
 /**
  *	Saves one-hot encoded which breakpoint was hit
@@ -198,7 +247,9 @@ handle_data_abort_exception(struct trace *trace)
 }
 
 /**
- *	Sets the stack pointer of the abort mode to be at the end of the current stack area, a part that is likely not used during regular program execution
+ *	Sets the stack pointer of the abort mode to be at the end of the 
+ *	current stack area, a part that is likely not used during regular 
+ *	program execution
  */
 void __attribute__((optimize("O0")))
 set_abort_stack_pointer(void)
