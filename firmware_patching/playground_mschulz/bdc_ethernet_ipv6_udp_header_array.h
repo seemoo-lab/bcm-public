@@ -1,2 +1,0 @@
-extern unsigned char bdc_ethernet_ipv6_udp_header_array[];
-extern unsigned int bdc_ethernet_ipv6_udp_header_length;
