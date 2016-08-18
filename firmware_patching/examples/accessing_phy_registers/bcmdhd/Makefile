@@ -20,9 +20,9 @@ DHDCFLAGS = -Wall -Wstrict-prototypes -Dlinux -DBCMDRIVER               \
 	-DDHD_DONOT_FORWARD_BCMEVENT_AS_NETWORK_PKT -DRXFRAME_THREAD	        \
 	-DSUPPORT_PM2_ONLY -DWLTDLS     \
 	-DMIRACAST_AMPDU_SIZE=8		\
-	-I../firmware_patching/accessing_phy_registers_example/bcmdhd	\
-	-I../firmware_patching/accessing_phy_registers_example/bcmdhd/include   \
-	-I../firmware_patching/accessing_phy_registers_example/bcmdhd/common/include \
+	-I../firmware_patching/examples/accessing_phy_registers/bcmdhd	\
+	-I../firmware_patching/examples/accessing_phy_registers/bcmdhd/include   \
+	-I../firmware_patching/examples/accessing_phy_registers/bcmdhd/common/include \
 
 DHDOFILES = aiutils.o bcmsdh_sdmmc_linux.o dhd_linux.o siutils.o bcmutils.o   \
 	dhd_linux_sched.o dhd_pno.o dhd_sdio.o bcmwifi_channels.o bcmevent.o hndpmu.o   \

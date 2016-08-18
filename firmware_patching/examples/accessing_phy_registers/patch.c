@@ -47,20 +47,21 @@
  *                                                                         *                                                       *
  **************************************************************************/
 
-#include "../include/bcm4339.h"	// contains addresses specific for BCM4339
-#include "../include/debug.h"	// contains macros to access the debug hardware
-#include "../include/wrapper.h"	// wrapper definitions for functions that already exist in the firmware
-#include "../include/structs.h"	// structures that are used by the code in the firmware
-#include "../include/helper.h"	// useful helper functions
+#include <bcm4339.h>	// contains addresses specific for BCM4339
+#include <debug.h>		// contains macros to access the debug hardware
+#include <wrapper.h>	// wrapper definitions for functions that already exist in the firmware
+#include <structs.h>	// structures that are used by the code in the firmware
+#include <helper.h>		// useful helper functions
 
 void
 wlc_radio_upd_hook_in_c(void)
 {
 	volatile short *addr = (volatile short *) 0x180013FC;
 	volatile short *data = (volatile short *) 0x180013FE;
+	int val = read_radio_reg((void *) 0x1e48e0, 0x01);
 
 	*addr = 0x90;
-	printf("%04x\n", *data);
+	printf("%04x %08x\n", *data, val);
 }
 
 __attribute__((naked)) void
