@@ -47,13 +47,13 @@
  *                                                                         *                                                       *
  **************************************************************************/
 
-#include "../include/bcm4339.h"	// contains addresses specific for BCM4339
-#include "../include/debug.h"	// contains macros to access the debug hardware
-#include "../include/wrapper.h"	// wrapper definitions for functions that already exist in the firmware
-#include "../include/structs.h"	// structures that are used by the code in the firmware
-#include "../include/helper.h"	// useful helper functions
-#include "../include/bcmdhd/bcmsdpcm.h"
-#include "../include/bcmdhd/bcmcdc.h"
+#include <bcm4339.h>	// contains addresses specific for BCM4339
+#include <debug.h>		// contains macros to access the debug hardware
+#include <wrapper.h>	// wrapper definitions for functions that already exist in the firmware
+#include <structs.h>	// structures that are used by the code in the firmware
+#include <helper.h>		// useful helper functions
+#include <bcmdhd/bcmsdpcm.h>
+#include <bcmdhd/bcmcdc.h>
 
 unsigned char bdc_ethernet_ipv6_udp_header_array[] = {
   0x20, 0x00, 0x00, 0x00,				/* BDC Header */
