@@ -130,6 +130,8 @@ extern void wlc_bmac_mctrl(void *wlc_hw, int mask, int val); // 0x4F080
 extern short wlc_bmac_read_objmem(void *wlc_hw, unsigned int offset, int sel); // 0x4DB68
 extern int wlc_bmac_read_shm(void *wlc_hw, unsigned int offset); // 0x4F79C
 extern void wlc_bmac_read_tsf(void *wlc_hw, unsigned int *tsf_l_ptr, unsigned int *tsf_h_ptr); // 0x1AAD84
+extern int wlc_bmac_recv(void *wlc_hw, unsigned int fifo, int bound, int *processed_frame_cnt); // 0x1AAD98
+extern int wlc_bmac_recv_plus4(void *wlc_hw, unsigned int fifo, int bound, int *processed_frame_cnt); // 0x1AAD9C
 extern void wlc_bmac_suspend_mac_and_wait_wrapper(void *wlc); // 0x3B0BC
 extern void wlc_bmac_suspend_mac_and_wait(void *wlc_hw); // 0x4FC88
 extern void *wlc_bmac_write_objmem(void *wlc_hw, unsigned int offset, short v, int sel); // 0x4DCC8

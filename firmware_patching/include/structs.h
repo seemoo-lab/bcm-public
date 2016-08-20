@@ -1184,7 +1184,7 @@ struct d11regs {
     unsigned short psm_macintstatus_h;  /* SPR_MAC_IRQHI                    0x486 */
     unsigned short psm_macintmask_l;    /* SPR_MAC_IRQMASKLO                0x488 */
     unsigned short psm_macintmask_h;    /* SPR_MAC_IRQMASKHI                0x48A */
-    unsigned short PAD;                 /* SPR_PSM_0x0c                     0x48C */
+    unsigned short psm_0x0c;            /* SPR_PSM_0x0c                     0x48C */
     unsigned short psm_maccommand;      /* SPR_MAC_CMD                      0x48E */
     unsigned short psm_brc;             /* SPR_BRC                          0x490 */
     unsigned short psm_phy_hdr_param;   /* SPR_PHY_HDR_Parameter            0x492 */
@@ -1219,12 +1219,12 @@ struct d11regs {
     unsigned short psm_base_4;          /* SPR_BASE4 - Offset Register 4    0x4C8 */
     unsigned short psm_base_5;          /* SPR_BASE5 - Offset Register 5    0x4CA */
     unsigned short psm_base_6;          /* SPR_BASE6 - Do not use (broken)  0x4CC */
-    unsigned short psm_pc_reg_0;        /* SPR_PSM_0x4e                     0x4CE */
-    unsigned short psm_pc_reg_1;        /* SPR_PC0 - Link Register 0        0x4D0 */
-    unsigned short psm_pc_reg_2;        /* SPR_PC1 - Link Register 1        0x4D2 */
-    unsigned short psm_pc_reg_3;        /* SPR_PC2 - Link Register 2        0x4D4 */
-    unsigned short PAD;                 /* SPR_PC2 - Link Register 6        0x4D6 */
-    unsigned short PAD;                 /* SPR_PSM_COND - PSM external condition bits 0x4D8 */
+    unsigned short psm_ihr_err;         /* SPR_PSM_0x4e                     0x4CE */
+    unsigned short psm_pc_reg_0;        /* SPR_PC0 - Link Register 0        0x4D0 */
+    unsigned short psm_pc_reg_1;        /* SPR_PC1 - Link Register 1        0x4D2 */
+    unsigned short psm_pc_reg_2;        /* SPR_PC2 - Link Register 2        0x4D4 */
+    unsigned short psm_pc_reg_3;        /* SPR_PC2 - Link Register 6        0x4D6 */
+    unsigned short psm_brc_1;           /* SPR_PSM_COND - PSM external condition bits 0x4D8 */
     unsigned short PAD;                 /* SPR_PSM_0x5a ... 0x7e            0x4DA */
     unsigned short PAD;                 /* SPR_PSM_0x5c                     0x4DC */
     unsigned short PAD;                 /* SPR_PSM_0x5e                     0x4DE */
