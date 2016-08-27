@@ -135,6 +135,11 @@ boot: boot.img
 	adb reboot bootloader
 	fastboot boot boot.img
 
+flash: boot.img
+	adb reboot bootloader
+	fastboot flash boot boot.img
+	fastboot reboot
+
 reboot: FORCE
 	adb reboot bootloader
 	fastboot boot boot.img	
