@@ -44,8 +44,9 @@ patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin",
 	# 0xBF00 can be used to place a NOP instruction
 	# GenericPatch2(<address to replace word>, <two byte value>),
 
-	# Overwrite the existing wlc_bmac_recv function with our hook
-	ExternalArmPatch(getSectionAddr(".text.wlc_bmac_recv_hook"), "wlc_bmac_recv_hook.bin"),
+	# Hook the call to wl_monitor in the wlc_monitor function
+	ExternalArmPatch(getSectionAddr(".text.wl_monitor_hook"), "wl_monitor_hook.bin"),
+	BLPatch(0x18DA30, getSectionAddr(".text.wl_monitor_hook")),
 
 	# Add the dma_attach_hook function to the firmware
 	ExternalArmPatch(getSectionAddr(".text.dma_attach_hook"), "dma_attach_hook.bin"),
@@ -56,10 +57,6 @@ patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin",
 	ExternalArmPatch(getSectionAddr(".text.handle_sdio_xmit_request_hook"), "handle_sdio_xmit_request_hook.bin"),
 	BPatch(0x182AAA, getSectionAddr(".text.handle_sdio_xmit_request_hook")),
 	GenericPatch4(0x180BCC, getSectionAddr(".text.handle_sdio_xmit_request_hook") + 1),
-
-	# Patch parameters of call to wlc_bmac_mctrl() in wlc_coreinit()
-	#GenericPatch4(0x1AB82C, 0x41d60000), # mask
-	#GenericPatch4(0x1AB828, 0x41d20000), # value
 
 	# This line replaces the firmware version string that is printed to the console on startup to identify which firmware is loaded by the driver
 	StringPatch(0x1FD31B, (os.getcwd().split('/')[-1] + " (" + time.strftime("%d.%m.%Y %H:%M:%S") + ")\n")[:52]), # 53 character string

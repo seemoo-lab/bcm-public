@@ -10,11 +10,13 @@ SECTIONS
 	.text.dummy_1AAEB4 0x1AAEB4: { KEEP(patch.o (.text.dummy_1AAEB4)) }
 
 	/* we overwrite the existing wlc_bmac_recv function with our hook */
-	.text.wlc_bmac_recv_hook 0x1AAD98: { KEEP(patch.o (.text.wlc_bmac_recv_hook)) }
+	/* .text.wlc_bmac_recv_hook 0x1AAD98: { KEEP(patch.o (.text.wlc_bmac_recv_hook)) } */
 
 	/* this dma_attach_hook resets the rxextheadroom parameter to increase the header size to store the bdc and radiotap headers */
 	.text.dma_attach_hook 0x180020: { KEEP(patch.o (.text.dma_attach_hook)) }
 
+	.text.wl_monitor_hook : { KEEP(patch.o (.text.wl_monitor_hook)) }
+    
     .text.handle_sdio_xmit_request_hook : { KEEP(patch.o (.text.handle_sdio_xmit_request_hook)) }
 
 	/* All other sections that were not yet placed but referenced by a kept section are collected in the text section */

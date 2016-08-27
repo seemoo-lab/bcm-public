@@ -76,6 +76,7 @@ send_to_chip()
 	char errbuf[PCAP_ERRBUF_SIZE];
 	struct pcap_pkthdr header;
 	struct bpf_program fp;
+	int iftype = 0;
 
 	struct nexmon_ctrl_frame *ctrl_frame = (struct nexmon_ctrl_frame *) &frame[14];
 
@@ -85,6 +86,18 @@ send_to_chip()
 		printf("ERR: %s\n", errbuf);
 		return;
 	}
+
+	iftype = pcap_datalink(pcap);
+	switch (iftype) {
+		case 1:		// DLT_EN10MB; LINKTYPE_ETHERNET=1 
+			//pcap_compile(pcap, &fp, "ether host ", 0, 0);
+		case 127:	// DLT_IEEE802_11_RADIO; LINKTYPE_IEEE802_11_RADIO=127 
+			//pcap_compile(pcap, &fp, "proto 136", 0, 0);
+		default:
+			printf("interface type not supported\n");
+			exit(1);
+	}
+	//pcap_setfilter(pcap, &fp);
 
 	if (set_monitor) {
 		ctrl_frame->cmd = NEXMON_CTRL_SET_MONITOR;

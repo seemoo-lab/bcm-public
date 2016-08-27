@@ -118,6 +118,7 @@ skb_pull(sk_buff *p, unsigned int len) {
     return p->data;
 }
 
+/*
 void
 wlc_bmac_recv_helper(struct wlc_hw_info *wlc_hw, unsigned int fifo, sk_buff *head, struct tsf *tsf)
 {
@@ -207,6 +208,37 @@ wlc_bmac_recv_hook(struct wlc_hw_info *wlc_hw, unsigned int fifo, int bound, int
     *processed_frame_cnt += n;
 
     return n >= bound_limit;
+}
+*/
+
+void
+wl_monitor_hook(struct wl_info *wl, void *sts, struct sk_buff *p)
+{
+	struct sk_buff *p_new = pkt_buf_get_skb(OSL_INFO_ADDR, p->len + sizeof(struct bdc_radiotap_header));
+	struct bdc_radiotap_header *frame = (struct bdc_radiotap_header *) p_new->data;
+
+	memset(p_new->data, 0, sizeof(struct bdc_radiotap_header));
+
+	frame->bdc.flags = 0x20;
+	frame->bdc.priority = 0;
+	frame->bdc.flags2 = 0;
+	frame->bdc.dataOffset = 0;
+
+	frame->radiotap.it_version = 0;
+	frame->radiotap.it_pad = 0;
+	frame->radiotap.it_len = sizeof(struct ieee80211_radiotap_header);
+	frame->radiotap.it_present = 
+	      (1<<IEEE80211_RADIOTAP_TSFT)
+	    | (1<<IEEE80211_RADIOTAP_FLAGS)
+	    | (1<<IEEE80211_RADIOTAP_CHANNEL)
+	    | (1<<IEEE80211_RADIOTAP_DBM_ANTSIGNAL)
+	//  | (1<<IEEE80211_RADIOTAP_VHT)
+	    | (1<<IEEE80211_RADIOTAP_VENDOR_NAMESPACE);
+
+	memcpy(p_new->data + sizeof(struct bdc_radiotap_header), p->data + 6, p->len - 6);
+	p_new->len -= 6;
+
+	dngl_sendpkt(SDIO_INFO_ADDR, p_new, SDPCM_DATA_CHANNEL);
 }
 
 
@@ -583,16 +615,15 @@ void *
 handle_sdio_xmit_request_hook(void *sdio_hw, struct sk_buff *p)
 {
 	struct wlc_info *wlc = (struct wlc_info *) WLC_INFO_ADDR;
-	int *data = (int *) p->data;
-	// handle nexmon control frame
+
 	if (!strncmp(p->data + 4, "NEXMONNEXMON", 12)) {
-		printf("nexmon control frame %08x\n", data[1]);
+		// handle nexmon control frame
 		return handle_nexmon_ctrl(wlc, p);
 	} else if (wlc->monitor) {
-		printf("monitor mode frame %08x\n", data[1]);
+		// check if in monitor mode, if yes, inject frame
 		return inject_frame(wlc, p);
 	} else {
-		printf("other frame %08x\n", data[1]);
+		// otherwise, handle frame normally
 		return handle_sdio_xmit_request(sdio_hw, p);
 	}
 }
