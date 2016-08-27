@@ -86,6 +86,7 @@ extern int function_with_huge_jump_table(void *wlc, int a2, int cmd, int a4, int
 extern int fw_wf_chspec_ctlchan(unsigned short chanspec); // 0x136FC
 
 extern int handle_ioctl_cmd(void *wlc, int cmd, void *buf, int len); // 0x2BDBC
+extern void *handle_sdio_xmit_request(void *sdio_hw, void *p); // 0x183798
 
 extern void *malloc(unsigned int size, char x); // 0x1814F4
 extern int memcpy(void *dst, void *src, int len); // 0x181418
@@ -185,7 +186,5 @@ extern void *wl_add_if(void *wl, int wlcif, int unit, int wds_or_bss); // 0x26F5
 extern void *wl_alloc_if(void *wl, int iftype, int unit, int wlc_if); // 0x271B0
 extern int wl_init(void *wl); // 0x2716C
 extern int wl_reset(void *wl); // 0x27138
-
-extern void *handle_sdio_xmit_request(void *sdio_hw, void *p); // 0x183798
 
 #endif /*WRAPPER_H*/

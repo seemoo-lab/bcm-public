@@ -47,13 +47,13 @@
  *                                                                         *
  **************************************************************************/
 
-#include "../include/bcm4339.h"	// contains addresses specific for BCM4339
-#include "../include/debug.h"	// contains macros to access the debug hardware
-#include "../include/wrapper.h"	// wrapper definitions for functions that already exist in the firmware
-#include "../include/structs.h"	// structures that are used by the code in the firmware
-#include "../include/helper.h"	// useful helper functions
-#include "../include/bcmdhd/bcmsdpcm.h"
-#include "../include/bcmdhd/bcmcdc.h"
+#include <bcm4339.h>		// contains addresses specific for BCM4339
+#include <debug.h>			// contains macros to access the debug hardware
+#include <wrapper.h>		// wrapper definitions for functions that already exist in the firmware
+#include <structs.h>		// structures that are used by the code in the firmware
+#include <helper.h>			// useful helper functions
+#include <bcmdhd/bcmsdpcm.h>
+#include <bcmdhd/bcmcdc.h>
 #include "bcmdhd/include/bcmwifi_channels.h"
 #include "ieee80211_radiotap.h"
 #include "radiotap.h"
@@ -83,7 +83,7 @@ int channel_change_flag = 0;
 
  /**
  *  This hook is used to change parameters on calls to dma_attach. to increse the 
- *  rxextheadroom size to have enough place in the sk_buff of a received frame to 
+ *  rxextheadroom size to have enough space in the sk_buff of a received frame to 
  *  append bdc and radiotap headers
  */
 struct dma_info*
@@ -103,6 +103,17 @@ skb_push(sk_buff *p, unsigned int len)
 
     if (p->data < p->head)
         printf("%s: failed", __FUNCTION__);
+
+    return p->data;
+}
+
+/**
+ *  remove data to the start of a buffer
+ */
+void *
+skb_pull(sk_buff *p, unsigned int len) {
+    p->data += len;
+    p->len -= len;
 
     return p->data;
 }
@@ -198,15 +209,6 @@ wlc_bmac_recv_hook(struct wlc_hw_info *wlc_hw, unsigned int fifo, int bound, int
     return n >= bound_limit;
 }
 
-
-
-void *
-skb_pull(sk_buff *p, unsigned int len) {
-    p->data += len;
-    p->len -= len;
-
-    return p->data;
-}
 
 /* see: https://github.com/spotify/linux/blob/master/net/wireless/radiotap.c */
 
@@ -454,97 +456,145 @@ int ieee80211_radiotap_iterator_next(
 	return -2;
 }
 
-void*
-sdio_handler(void *sdio, sk_buff *p) {
-    //do the same as in the original function to get the channel:
-    int chan = *((int *)(p->data + 1)) & 0xf;
+void *
+inject_frame(struct wlc_info *wlc, struct sk_buff *p)
+{
     int rtap_len = 0;
     uint16* chanspec = 0;
     uint16 band = 0;
     int data_rate = 0;
     void *scb;
 
-    //needed for sending:
-    struct wlc_info *wlc = WLC_INFO_ADDR;
+    // needed for sending:
     void *bsscfg = 0;
 
-    //Radiotap parsing:
+    // Radiotap parsing:
     struct ieee80211_radiotap_iterator iterator;
     struct ieee80211_radiotap_header *rtap_header;
 
-    //do this to get the data offset:
-    int offset = 0;
-    if(*((int *)(sdio + 0x220))) {
-        offset = *((int *)(p->data + 3)) - 20;
-    } else {
-        offset = *((int *)(p->data + 3)) - 12;
-    }
+	// remove bdc header
+	skb_pull(p, 4);
 
-    if(chan && chan == 2) {
+	// parse radiotap header
+	rtap_len = *((char *)(p->data + 2));
+	rtap_header = (struct ieee80211_radiotap_header *) p->data;
+	int ret = ieee80211_radiotap_iterator_init(&iterator, rtap_header, rtap_len);
+	if(ret) {
+		printf("rtap_init error\n");
+	} else {
+		//printf("rtap_init ok, rtap_len: %d\n", rtap_len);
+	}
+	while(!ret) {
+		ret = ieee80211_radiotap_iterator_next(&iterator);
+		if(ret) {
+			continue;
+		}
+		switch(iterator.this_arg_index) {
+			case IEEE80211_RADIOTAP_RATE:
+				//printf("Data Rate: %dMbps\n", (*iterator.this_arg) / 2);
+				data_rate = (*iterator.this_arg);
+				break;
+		    case IEEE80211_RADIOTAP_CHANNEL:
+				//printf("Channel (freq): %d\n", iterator.this_arg[0] | (iterator.this_arg[1] << 8) );
+				break;
+		    default:
+				//printf("default: %d\n", iterator.this_arg_index);
+				break;
+	    }
+	}
 
-        //see sdio_header_parsing_from_sk_buff()
-        p->data = p->data + 8 + offset;
-        p->len = p->len - 8 - offset;
+	// remove radiotap header
+	skb_pull(p, rtap_len);
 
-        //remove bdc header
-        skb_pull(p, 4);
+	bsscfg = wlc_bsscfg_find_by_wlcif(wlc, 0);
+	//printf("bsscfg @ 0x%x\n", bsscfg);
+	//not _really_ needed but maybe needed for sending on 5ghz
+	chanspec = (uint16 *)(*((int *)(bsscfg + 0x30C)) + 0x32);
+	//printf("chanspec in FW1 @ 0x%x: 0x%x\n", chanspec, *chanspec);
+	band = (*chanspec & 0xC000) - 0xC000;
+	// get station control block (scb) for given mac address
+	// band seems to be just 1 on 5Ghz and 0 on 2.4Ghz
+	scb = __wlc_scb_lookup(wlc, bsscfg, p->data, band <= 0);
+	//scb = sub_1CECBC(*(int **)(*((int *)(wlc + 0x140))), bsscfg, p, p->data);
+	//printf("SCB: 0x%x, band: %d\n", scb, band <= 0);
+	// set the scb's bsscfg entry
+	wlc_scb_set_bsscfg(scb, bsscfg);
+	// 6th parameter: data rate in 0.5MBit units; 
+	// 2,4,11,22 => 802.11b
+	// 12,18,24,36,48,72,96,108 => 802.11g
+	// higher values (e.g. 130 for 802.11n) resulted in a 'XPHY ERR'
+	wlc_sendctl(wlc, p, wlc->active_queue, scb, 1, data_rate, 0);
 
-        //parse radiotap header
-        rtap_len = *((char *)(p->data + 2));
-        rtap_header = (struct ieee80211_radiotap_header *) p->data;
-        int ret = ieee80211_radiotap_iterator_init(&iterator, rtap_header, rtap_len);
-        if(ret) {
-            printf("rtap_init error\n");
-        } else {
-            printf("rtap_init ok, rtap_len: %d\n", rtap_len);
-        }
-        while(!ret) {
-            //returns != 0 on error
-            ret = ieee80211_radiotap_iterator_next(&iterator);
-            if(ret) {
-                continue;
-            }
-            switch(iterator.this_arg_index) {
-                case IEEE80211_RADIOTAP_RATE:
-                    printf("Data Rate: %dMbps\n", (*iterator.this_arg) / 2);
-                    data_rate = (*iterator.this_arg);
-                    break;
-                case IEEE80211_RADIOTAP_CHANNEL:
-                    printf("Channel (freq): %d\n", iterator.this_arg[0] | (iterator.this_arg[1] << 8) );
-                    break;
-                default:
-                    printf("default: %d\n", iterator.this_arg_index);
-                    break;
-            }
-        }
+	return 0;
+}
 
-        //remove radiotap header
-        skb_pull(p, rtap_len);
-        
-        bsscfg = wlc_bsscfg_find_by_wlcif(wlc, 0);
-        printf("bsscfg @ 0x%x\n", bsscfg);
-        //not _really_ needed but maybe needed for sending on 5ghz
-        chanspec = (uint16 *)(*((int *)(bsscfg + 0x30C)) + 0x32);
-        printf("chanspec in FW1 @ 0x%x: 0x%x\n", chanspec, *chanspec);
-        band = (*chanspec & 0xC000) - 0xC000;
-        // get station control block (scb) for given mac address
-        // band seems to be just 1 on 5Ghz and 0 on 2.4Ghz
-        scb = __wlc_scb_lookup(wlc, bsscfg, p->data, band <= 0);
-        //scb = sub_1CECBC(*(int **)(*((int *)(wlc + 0x140))), bsscfg, p, p->data);
-        printf("SCB: 0x%x, band: %d\n", scb, band <= 0);
-        // set the scb's bsscfg entry
-        wlc_scb_set_bsscfg(scb, bsscfg);
-        // 6th parameter: data rate in 0.5MBit units; 
-        // 2,4,11,22 => 802.11b
-        // 12,18,24,36,48,72,96,108 => 802.11g
-        // higher values (e.g. 130 for 802.11n) resulted in a 'XPHY ERR'
-        int ret2 = wlc_sendctl(wlc, p, *(int **)((*((int *)(bsscfg + 0xC))) + 0xC), scb, 1, data_rate, 0);
-        printf("wlc_sendctl() ret: %d\n", ret2);
+#define NEXMON_CTRL_SET_MONITOR 0
+#define NEXMON_CTRL_GET_MONITOR 1
+#define NEXMON_CTRL_SET_PROMISC 2
+#define NEXMON_CTRL_GET_PROMISC 3
 
-        return 0;
-    } else {
-        return sdio_header_parsing_from_sk_buff(sdio, p);
-    }
+// some useful ioctls
+#define WLC_GET_PROMISC				9
+#define WLC_SET_PROMISC				10
+#define WLC_GET_MONITOR				107
+#define WLC_SET_MONITOR				108
+
+
+struct nexmon_ctrl_frame {
+	unsigned char cmd;
+	unsigned char value;
+} __attribute__((packed));
+
+void *
+handle_nexmon_ctrl(struct wlc_info* wlc, struct sk_buff *p)
+{
+	struct nexmon_ctrl_frame *frm;
+	unsigned int value = 0;
+	
+	// remove bdc header and nexmon control header: "NEXMONNEXMON" 0xff 0xff
+	skb_pull(p, 4 + 14);
+
+	frm = p->data;
+	value = frm->value;
+
+	switch(frm->cmd) {
+		case NEXMON_CTRL_SET_MONITOR:
+			printf("set monitor %d\n", frm->value);
+			wlc_ioctl(wlc, WLC_SET_MONITOR, &value, 4, (void *) 0x1e8d7c);
+			break;
+		case NEXMON_CTRL_GET_MONITOR:
+			printf("get monitor\n");
+			break;
+		case NEXMON_CTRL_SET_PROMISC:
+			printf("set promisc %d\n", frm->value);
+			wlc_ioctl(wlc, WLC_SET_PROMISC, &value, 4, (void *) 0x1e8d7c);
+			break;
+		case NEXMON_CTRL_GET_PROMISC:
+			printf("get promisc\n");
+			break;
+		default:
+			break;
+	}
+
+	return pkt_buf_free_skb(OSL_INFO_ADDR, p, 0);
+}
+
+void *
+handle_sdio_xmit_request_hook(void *sdio_hw, struct sk_buff *p)
+{
+	struct wlc_info *wlc = (struct wlc_info *) WLC_INFO_ADDR;
+	int *data = (int *) p->data;
+	// handle nexmon control frame
+	if (!strncmp(p->data + 4, "NEXMONNEXMON", 12)) {
+		printf("nexmon control frame %08x\n", data[1]);
+		return handle_nexmon_ctrl(wlc, p);
+	} else if (wlc->monitor) {
+		printf("monitor mode frame %08x\n", data[1]);
+		return inject_frame(wlc, p);
+	} else {
+		printf("other frame %08x\n", data[1]);
+		return handle_sdio_xmit_request(sdio_hw, p);
+	}
 }
 
 /**

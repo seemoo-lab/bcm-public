@@ -265,10 +265,10 @@ struct wlc_info {
     int PAD;                            /* 0x1EC */
     int PAD;                            /* 0x1F0 */
     int PAD;                            /* 0x1F4 */
-    int PAD;                            /* 0x1F8 */
-    int PAD;                            /* 0x1FC */
-    int PAD;                            /* 0x200 */
-    int PAD;                            /* 0x204 */
+    int monitor;                        /* 0x1F8 */
+    int bcnmisc_ibss;                   /* 0x1FC */
+    int bcnmisc_scan;                   /* 0x200 */
+    int bcnmisc_monitor;                /* 0x204 */
     int PAD;                            /* 0x208 */
     int PAD;                            /* 0x20C */
     int PAD;                            /* 0x210 */

@@ -112,11 +112,8 @@ s32 dhd_cfg80211_clean_p2p_info(struct wl_priv *wl)
 static s32 wl_dongle_up(struct net_device *ndev, u32 up)
 {
 	s32 err = 0;
-	u32 mon = 1;
 
 	err = wldev_ioctl(ndev, WLC_UP, &up, sizeof(up), true);
-	err = wldev_ioctl(ndev, WLC_SET_MONITOR, &mon, sizeof(mon), true);
-	err = wldev_ioctl(ndev, WLC_SET_PROMISC, &mon, sizeof(mon), true);
 	if (unlikely(err)) {
 		WL_ERR(("WLC_UP error (%d)\n", err));
 	}

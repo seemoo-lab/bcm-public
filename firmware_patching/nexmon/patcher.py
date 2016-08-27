@@ -44,24 +44,22 @@ patch_firmware("../../bootimg_src/firmware/fw_bcmdhd.orig.bin",
 	# 0xBF00 can be used to place a NOP instruction
 	# GenericPatch2(<address to replace word>, <two byte value>),
 
-	# overwrite sdio_handler calls
-	BLPatch(0x182C60, getSectionAddr(".text.sdio_handler")),
-	GenericPatch4(0x180BB4, getSectionAddr(".text.sdio_handler")),
-
 	# Overwrite the existing wlc_bmac_recv function with our hook
 	ExternalArmPatch(getSectionAddr(".text.wlc_bmac_recv_hook"), "wlc_bmac_recv_hook.bin"),
 
 	# Add the dma_attach_hook function to the firmware
 	ExternalArmPatch(getSectionAddr(".text.dma_attach_hook"), "dma_attach_hook.bin"),
 
-	ExternalArmPatch(getSectionAddr(".text.sdio_handler"), "sdio_handler.bin"),
-
 	# Hook the first call to wlc_bmac_attach_dmapio to increase the rx extra header size
 	BLPatch(0x1F4FCE, getSectionAddr(".text.dma_attach_hook")),
 
+	ExternalArmPatch(getSectionAddr(".text.handle_sdio_xmit_request_hook"), "handle_sdio_xmit_request_hook.bin"),
+	BPatch(0x182AAA, getSectionAddr(".text.handle_sdio_xmit_request_hook")),
+	GenericPatch4(0x180BCC, getSectionAddr(".text.handle_sdio_xmit_request_hook") + 1),
+
 	# Patch parameters of call to wlc_bmac_mctrl() in wlc_coreinit()
-	GenericPatch4(0x1AB82C, 0x41d60000), # mask
-	GenericPatch4(0x1AB828, 0x41d20000), # value
+	#GenericPatch4(0x1AB82C, 0x41d60000), # mask
+	#GenericPatch4(0x1AB828, 0x41d20000), # value
 
 	# This line replaces the firmware version string that is printed to the console on startup to identify which firmware is loaded by the driver
 	StringPatch(0x1FD31B, (os.getcwd().split('/')[-1] + " (" + time.strftime("%d.%m.%Y %H:%M:%S") + ")\n")[:52]), # 53 character string

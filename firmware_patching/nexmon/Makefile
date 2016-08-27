@@ -1,5 +1,5 @@
 CC=../../buildtools/arm-eabi-4.7/bin/arm-eabi-
-FUNCTIONS = wlc_bmac_recv_hook dma_attach_hook sdio_handler
+FUNCTIONS = wlc_bmac_recv_hook dma_attach_hook handle_sdio_xmit_request_hook
 FUNCTIONS_BIN = $(FUNCTIONS:=.bin)
 
 all: bcmdhd/bcmdhd.ko fw_bcmdhd.bin fw_bcmdhd.complete.elf
@@ -13,7 +13,7 @@ fw_bcmdhd.bin: patcher.py patch.elf text.bin $(FUNCTIONS_BIN)
 	./patcher.py
 
 patch.o: patch.c ../include/*.h ucode-compressed.c
-	$(CC)gcc -Wall -Werror -O2 -nostdlib -nostartfiles -ffreestanding -mthumb -march=armv7-r -ffunction-sections -fdata-sections -c $< -o $@
+	$(CC)gcc -Wall -Werror -O2 -nostdlib -nostartfiles -ffreestanding -mthumb -march=armv7-r -ffunction-sections -fdata-sections -I../include -c $< -o $@
 
 ../wrapper/wrapper.o: ../include/wrapper.h
 	make -C ../wrapper
