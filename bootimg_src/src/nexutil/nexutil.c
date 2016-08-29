@@ -91,11 +91,14 @@ send_to_chip()
 	switch (iftype) {
 		case 1:		// DLT_EN10MB; LINKTYPE_ETHERNET=1 
 			//pcap_compile(pcap, &fp, "ether host ", 0, 0);
+            break;
 		case 127:	// DLT_IEEE802_11_RADIO; LINKTYPE_IEEE802_11_RADIO=127 
 			//pcap_compile(pcap, &fp, "proto 136", 0, 0);
+            break;
 		default:
 			printf("interface type not supported\n");
 			exit(1);
+            break;
 	}
 	//pcap_setfilter(pcap, &fp);
 
