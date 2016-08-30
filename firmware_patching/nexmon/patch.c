@@ -79,8 +79,6 @@ struct bdc_radiotap_header {
     struct ieee80211_radiotap_header radiotap;
 } __attribute__((packed));
 
-int channel_change_flag = 0;
-
  /**
  *  This hook is used to change parameters on calls to dma_attach. to increse the 
  *  rxextheadroom size to have enough space in the sk_buff of a received frame to 
@@ -119,13 +117,13 @@ skb_pull(sk_buff *p, unsigned int len) {
 }
 
 void
-wl_monitor_hook(struct wl_info *wl, void *sts, struct sk_buff *p)
+wl_monitor_hook(struct wl_info *wl, struct wl_rxsts *sts, struct sk_buff *p)
 {
     struct sk_buff *p_new = pkt_buf_get_skb(OSL_INFO_ADDR, p->len + sizeof(struct bdc_radiotap_header));
     struct bdc_radiotap_header *frame = (struct bdc_radiotap_header *) p_new->data;
     //struct wlc_d11rxhdr *wlc_rxhdr = (struct wlc_d11rxhdr *) p->data;
     struct tsf tsf;
-
+    
     // get the TSF REG reading
     wlc_bmac_read_tsf(wl->wlc_hw, &tsf.tsf_l, &tsf.tsf_h);
 
@@ -141,10 +139,13 @@ wl_monitor_hook(struct wl_info *wl, void *sts, struct sk_buff *p)
     frame->radiotap.it_len = sizeof(struct ieee80211_radiotap_header);
     frame->radiotap.it_present = 
           (1<<IEEE80211_RADIOTAP_TSFT) 
-        | (1<<IEEE80211_RADIOTAP_FLAGS);
+        | (1<<IEEE80211_RADIOTAP_FLAGS)
+        | (1<<IEEE80211_RADIOTAP_CHANNEL);
     frame->radiotap.tsf.tsf_l = tsf.tsf_l;
     frame->radiotap.tsf.tsf_h = tsf.tsf_h;
     frame->radiotap.flags = IEEE80211_RADIOTAP_F_FCS;
+    frame->radiotap.chan_freq = wlc_phy_channel2freq(CHSPEC_CHANNEL(sts->chanspec));
+    frame->radiotap.chan_flags = 0;
 
     memcpy(p_new->data + sizeof(struct bdc_radiotap_header), p->data + 6, p->len - 6);
     p_new->len -= 6;

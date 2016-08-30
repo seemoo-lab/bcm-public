@@ -10,6 +10,15 @@
 #define	PAD		_XSTR(__LINE__)
 #endif
 
+struct wl_rxsts {
+    uint8 PAD[8];
+    uint16 chanspec;
+    uint16 datarate;
+    uint8 PAD1[12];
+    uint16 unkn1; /* ??? */
+    int16 unkn2; /* increases over time */
+} __attribute__((packed));
+
 struct osl_info {
 	unsigned int pktalloced;
 	int PAD[1];
