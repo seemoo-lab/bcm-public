@@ -140,12 +140,14 @@ wl_monitor_hook(struct wl_info *wl, struct wl_rxsts *sts, struct sk_buff *p)
     frame->radiotap.it_present = 
           (1<<IEEE80211_RADIOTAP_TSFT) 
         | (1<<IEEE80211_RADIOTAP_FLAGS)
-        | (1<<IEEE80211_RADIOTAP_CHANNEL);
+        | (1<<IEEE80211_RADIOTAP_CHANNEL)
+        | (1<<IEEE80211_RADIOTAP_DBM_ANTSIGNAL);
     frame->radiotap.tsf.tsf_l = tsf.tsf_l;
     frame->radiotap.tsf.tsf_h = tsf.tsf_h;
     frame->radiotap.flags = IEEE80211_RADIOTAP_F_FCS;
     frame->radiotap.chan_freq = wlc_phy_channel2freq(CHSPEC_CHANNEL(sts->chanspec));
     frame->radiotap.chan_flags = 0;
+    frame->radiotap.dbm_antsignal = sts->rssi;
 
     memcpy(p_new->data + sizeof(struct bdc_radiotap_header), p->data + 6, p->len - 6);
     p_new->len -= 6;
