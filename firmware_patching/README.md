@@ -22,6 +22,12 @@ directories. The patches generally consist of ...
     it can be executed. The commands given in the README files
     generally have to be run in the repositories root directory.
 
+## Preprequirements:
+In the **root** directory run:
+```
+source setup_env.sh
+```
+
 ## Generate a new project:
 
 To generate a new firmware patching project, you can simply run
@@ -40,7 +46,7 @@ original template files.
 
 For example to compile the `hello_world_example`, you can simply run
 ```
-make reloadfirmware FWPATCH=hello_world_example
+make reloadfirmware FWPATCH=examples/hello_world
 ```
 from the **root** directory
 
