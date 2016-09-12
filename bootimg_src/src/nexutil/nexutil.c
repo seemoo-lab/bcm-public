@@ -98,6 +98,7 @@ send_to_chip()
 		default:
 			printf("interface type not supported\n");
 			exit(1);
+            break;
 	}
 	//pcap_setfilter(pcap, &fp);
 
