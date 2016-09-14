@@ -49,7 +49,7 @@
 
 #include <bcm4339.h>        // contains addresses specific for BCM4339
 #include <debug.h>          // contains macros to access the debug hardware
-#include <wrapper.h>        // wrapper definitions for functions that already exist in the firmware
+#include "wrapper.h"        // wrapper definitions for functions that already exist in the firmware
 #include <structs.h>        // structures that are used by the code in the firmware
 #include <helper.h>         // useful helper functions
 #include <bcmdhd/bcmsdpcm.h>
@@ -58,6 +58,28 @@
 #include "ieee80211_radiotap.h"
 #include "radiotap.h"
 #include "d11.h"
+
+#define AT(addr) __attribute__((at(addr)))
+
+#define BLPatch(addr, func) \
+    __attribute__((naked, at(#addr))) void \
+    bl_ ## addr(void) { asm("bl " #func "\n"); }
+
+#define BPatch(addr, func) \
+    __attribute__((naked, at(#addr))) void \
+    b_ ## addr(void) { asm("b " #func "\n"); }
+
+#define GenericPatch4(addr, val) \
+    __attribute__((at(#addr))) const unsigned int gp4_ ## addr = (unsigned int) (val);
+
+#define GenericPatch2(addr, val) \
+    __attribute__((at(#addr))) unsigned short gp2_ ## addr = (unsigned short) (val);
+
+#define GenericPatch1(addr, val) \
+    __attribute__((at(#addr))) unsigned char gp1_ ## addr = (unsigned char) (val);
+
+#define Dummy(addr) \
+    void dummy_ ## addr(void) { ; }
 
 /**
  *  Contains tinflate_partial and other functions needed for deflate decompression
@@ -540,20 +562,23 @@ handle_sdio_xmit_request_hook(void *sdio_hw, struct sk_buff *p)
     }
 }
 
-/**
- *  Just inserted to produce an error while linking, when we try to overwrite memory used by the original firmware
- */
-void 
-dummy_180800(void)
-{
-    ;
-}
+// BLPatch(0x1f4f08, getSectionAddr(".text.wlc_ucode_write_compressed")),
+//BLPatch(0x1f4f08, wlc_ucode_write_compressed);
+// BLPatch(0x18DA30, getSectionAddr(".text.wl_monitor_hook")),
+BLPatch(0x18DA30, wl_monitor_hook);
+// BLPatch(0x1F4FCE, getSectionAddr(".text.dma_attach_hook")),
+BLPatch(0x1F4FCE, dma_attach_hook);
+// BPatch(0x182AAA, getSectionAddr(".text.handle_sdio_xmit_request_hook")),
+BPatch(0x182AAA, handle_sdio_xmit_request_hook);
+// GenericPatch4(0x180BCC, getSectionAddr(".text.handle_sdio_xmit_request_hook") + 1),
+GenericPatch4(0x180BCC, handle_sdio_xmit_request_hook + 1);
 
 /**
  *  Just inserted to produce an error while linking, when we try to overwrite memory used by the original firmware
  */
-void 
-dummy_1AAEB4(void)
-{
-    ;
-}
+Dummy(0x180800);
+
+/**
+ *  Just inserted to produce an error while linking, when we try to overwrite memory used by the original firmware
+ */
+Dummy(0x1AAEB4);
