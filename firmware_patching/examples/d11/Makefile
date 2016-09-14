@@ -47,11 +47,12 @@
 #*                                                                         *
 #**************************************************************************/
 
-B43DASM=../../buildtools/b43/disassembler/b43-dasm
-B43ASM=../../buildtools/b43/assembler/b43-asm
-B43BEAUTIFIER=../../buildtools/b43/debug/b43-beautifier
-B43DEFS=../../buildtools/b43/debug/include/
-BCMDHDFWPATH=../../bootimg_src/firmware/fw_bcmdhd.orig.bin
+B43DASM=../../../buildtools/b43/disassembler/b43-dasm
+B43ASM=../../../buildtools/b43/assembler/b43-asm
+B43BEAUTIFIER=../../../buildtools/b43/debug/b43-beautifier
+IVALDUMP=../../../buildtools/b43/disassembler/brcm80211-ivaldump
+B43DEFS=../../../buildtools/b43/debug/include/
+BCMDHDFWPATH=../../../bootimg_src/firmware/fw_bcmdhd.orig.bin
 
 ucode.bin: $(BCMDHDFWPATH) Makefile
 	dd if=$< of=$@ bs=1 skip=$$((0x1fd820-0x180000)) count=$$((0xb2e0))
@@ -124,5 +125,11 @@ ucode-commented.asm: ucode-beautified.asm Makefile
 ucode-patched.bin: ucode-patched.asm
 	$(B43ASM) $< $@ --format raw-le32
 
+initvals.bin: $(BCMDHDFWPATH) Makefile
+	dd if=$< of=$@ bs=1 skip=$$((0x1D403C-0x180000)) count=$$((0x1360))
+
+initvals.asm: initvals.bin
+	$(IVALDUMP) $< > $@
+
 clean:
-	rm -f ucode.bin ucode-patched.bin ucode.asm ucode-commented.asm ucode-beautified.asm
+	rm -f ucode.bin ucode-patched.bin ucode.asm ucode-commented.asm ucode-beautified.asm initvals.bin initvals.asm

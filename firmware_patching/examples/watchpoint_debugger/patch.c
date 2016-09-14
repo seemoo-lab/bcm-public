@@ -133,7 +133,7 @@ set_debug_registers(void)
 	dbg_enable_monitor_mode_debugging();
 	
 	// Program watchpoint to match the address we want to monitor
-	dbg_set_watchpoint_for_addr_match(0, 0x1FB082);
+	dbg_set_watchpoint_for_addr_match(0, 0x23b8de);
 }
 
 __attribute__((naked)) void

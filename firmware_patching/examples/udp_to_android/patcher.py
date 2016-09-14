@@ -44,7 +44,7 @@ patch_firmware("../../../bootimg_src/firmware/fw_bcmdhd.orig.bin",
 	ExternalArmPatch(getSectionAddr(".text.wlc_ioctl_hook"), "wlc_ioctl_hook.bin"),
 
 	# Replace the first command in the wlc_ioctl function with a branch to our hook
-	BPatch(getSectionAddr(".text.wlc_ioctl"), getSectionAddr(".text.wlc_ioctl_hook")),
+	BPatch(getSectionAddr(".text.dummy.wlc_ioctl"), getSectionAddr(".text.wlc_ioctl_hook")),
 
 	# This line replaces the firmware version string that is printed to the console on startup to identify which firmware is loaded by the driver
 	StringPatch(0x1FD31B, (os.getcwd().split('/')[-1] + " (" + time.strftime("%d.%m.%Y %H:%M:%S") + ")\n")[:52]), # 53 character string
