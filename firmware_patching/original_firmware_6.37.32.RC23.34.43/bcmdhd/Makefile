@@ -20,8 +20,9 @@ DHDCFLAGS = -Wall -Wstrict-prototypes -Dlinux -DBCMDRIVER               \
 	-DDHD_DONOT_FORWARD_BCMEVENT_AS_NETWORK_PKT -DRXFRAME_THREAD	        \
 	-DSUPPORT_PM2_ONLY -DWLTDLS     \
 	-DMIRACAST_AMPDU_SIZE=8		\
-	-Idrivers/net/wireless/bcmdhd	-Idrivers/net/wireless/bcmdhd/include   \
-	-Idrivers/net/wireless/bcmdhd/common/include
+	-I../firmware_patching/original_firmware_6.37.32.RC23.34.43/bcmdhd	\
+	-I../firmware_patching/original_firmware_6.37.32.RC23.34.43/bcmdhd/include   \
+	-I../firmware_patching/original_firmware_6.37.32.RC23.34.43/bcmdhd/common/include \
 
 DHDOFILES = aiutils.o bcmsdh_sdmmc_linux.o dhd_linux.o siutils.o bcmutils.o   \
 	dhd_linux_sched.o dhd_pno.o dhd_sdio.o bcmwifi_channels.o bcmevent.o hndpmu.o   \
