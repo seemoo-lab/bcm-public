@@ -45,6 +45,9 @@ handle_nexmon_place_at_attribute(tree *node, tree name, tree args, int flags, bo
 	//printf("attr_name: %s\n", attr_name);
 
 	//printf("align: %d\n", DECL_COMMON_CHECK (*node)->decl_common.align);
+	if (DECL_COMMON_CHECK (*node)->decl_common.align == 32 && (addr & 1))
+		DECL_COMMON_CHECK (*node)->decl_common.align = 8;
+
 	if (DECL_COMMON_CHECK (*node)->decl_common.align == 32 && (addr & 2))
 		DECL_COMMON_CHECK (*node)->decl_common.align = 16;
 	//printf("align: %d\n", DECL_COMMON_CHECK (*node)->decl_common.align);
@@ -104,7 +107,18 @@ plugin_init(struct plugin_name_args *info, struct plugin_gcc_version *ver)
 	unlink(makefile);
 
 	ld_fp = fopen(ldfile, "a");
+
+	if (!ld_fp) {
+		fprintf(stderr, "gcc_nexmon_plugin: Linker file not writeable! (error)\n");
+		return -1;
+	}
+
 	make_fp = fopen(makefile, "a");
+
+	if (!make_fp) {
+		fprintf(stderr, "gcc_nexmon_plugin: Make file not writeable! (error)\n");
+		return -1;
+	}
 
 	fprintf(make_fp, "%s: patch.elf FORCE\n", fwfile);
 

@@ -39,6 +39,11 @@ ifndef NEXMON_SETUP_ENV
 	$(error run 'source setup_env.sh' first)
 endif
 
+install-firmware: fw_bcmdhd.bin
+	adb shell 'su -c mount -o rw,remount /system' && \
+	adb push $< /sdcard/ && \
+	adb shell 'su -c cp /sdcard/fw_bcmdhd.bin /vendor/firmware/fw_bcmdhd.bin'
+
 clean-firmware: FORCE
 	rm -f fw_bcmdhd.bin fw_bcmdhd.complete.bin fw_bcmdhd.complete.elf patch.o patch.elf ucode-compressed.c ucode-compressed.bin *.generated.* wrapper.o
 

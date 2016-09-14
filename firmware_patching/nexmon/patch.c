@@ -78,6 +78,9 @@
 #define GenericPatch1(addr, val) \
     __attribute__((at(#addr))) unsigned char gp1_ ## addr = (unsigned char) (val);
 
+#define StringPatch(addr, val) \
+    __attribute__((naked,at(#addr))) void str_ ## addr(void) { asm(".ascii \"" val "\"\n.byte 0x00"); }
+
 #define Dummy(addr) \
     void dummy_ ## addr(void) { ; }
 
@@ -572,6 +575,8 @@ BLPatch(0x1F4FCE, dma_attach_hook);
 BPatch(0x182AAA, handle_sdio_xmit_request_hook);
 // GenericPatch4(0x180BCC, getSectionAddr(".text.handle_sdio_xmit_request_hook") + 1),
 GenericPatch4(0x180BCC, handle_sdio_xmit_request_hook + 1);
+// StringPatch(0x1FD31B, (os.getcwd().split('/')[-1] + " (" + time.strftime("%d.%m.%Y %H:%M:%S") + ")\n")[:52]), # 53 character string
+StringPatch(0x1FD31B, "nexmon (" __DATE__ " " __TIME__ ")\n");
 
 /**
  *  Just inserted to produce an error while linking, when we try to overwrite memory used by the original firmware
