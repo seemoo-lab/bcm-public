@@ -1,5 +1,15 @@
 /***************************************************************************
  *                                                                         *
+ *          ###########   ###########   ##########    ##########           *
+ *         ############  ############  ############  ############          *
+ *         ##            ##            ##   ##   ##  ##        ##          *
+ *         ##            ##            ##   ##   ##  ##        ##          *
+ *         ###########   ####  ######  ##   ##   ##  ##    ######          *
+ *          ###########  ####  #       ##   ##   ##  ##    #    #          *
+ *                   ##  ##    ######  ##   ##   ##  ##    #    #          *
+ *                   ##  ##    #       ##   ##   ##  ##    #    #          *
+ *         ############  ##### ######  ##   ##   ##  ##### ######          *
+ *         ###########    ###########  ##   ##   ##   ##########           *
  *                                                                         *
  *            S E C U R E   M O B I L E   N E T W O R K I N G              *
  *                                                                         *
@@ -42,6 +52,7 @@
 #ifndef WRAPPER_C
 #define WRAPPER_C
 
+#include <firmware_version.h>
 #include <structs.h>
 
 #ifndef WRAPPER_H
@@ -58,7 +69,7 @@
 
 ////////////////////////////////////////////////////////////////////////////
 // ROM FUNCTIONS
- ////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
 AT("0xFE44") int ai_setcoreidx(void *sii, unsigned int coreidx) RETURN_DUMMY
 
 AT("0x1B8C4") int bus_binddev_rom(void *sdiodev, void *d11dev) RETURN_DUMMY
@@ -67,7 +78,7 @@ AT("0x16284") int dma64_txunframed(void *di, void *data, unsigned int len, char 
 AT("0x15694") void *dma_attach(void *osh, char *name, void* sih, unsigned int dmaregstx, unsigned int dmaregsrx, unsigned int ntxd, unsigned int nrxd, unsigned int rxbufsize, int rxextheadroom, unsigned int nrxpost, unsigned int rxoffset, void *msg_level) RETURN_DUMMY
 AT("0x8c69c") void *dma_rx(void *di) RETURN_DUMMY
 AT("0x8c6cc") void *dma_rxfill(void *di) RETURN_DUMMY
-AT("0x8C49C") void *dngl_sendpkt_wrapper(void *sdio, void *p, int chan) RETURN_DUMMY
+AT("0x8C49C") void *dngl_sendpkt(void *sdio, void *p, int chan) RETURN_DUMMY
 
 AT("0x166B4") void enable_interrupts_and_wait(void) VOID_DUMMY
 
@@ -75,13 +86,13 @@ AT("0x16620") void free(void *p) VOID_DUMMY
 AT("0x136FC") int fw_wf_chspec_ctlchan(unsigned short chanspec) RETURN_DUMMY
 
 AT("0x2BDBC") int handle_ioctl_cmd(void *wlc, int cmd, void *buf, int len) RETURN_DUMMY
-AT("0x8C51C") void *handle_sdio_xmit_request_wrapper(void *sdio_hw, void *p) RETURN_DUMMY
+AT("0x8C51C") void *handle_sdio_xmit_request(void *sdio_hw, void *p) RETURN_DUMMY
 
-AT("0x8C3DC") int memcpy_wrapper(void *dst, void *src, int len) RETURN_DUMMY
+AT("0x8C3DC") int memcpy(void *dst, void *src, int len) RETURN_DUMMY
 AT("0x1269C") void *memset(void *dst, int value, int len) RETURN_DUMMY
 
-AT("0x8C70C") void *pkt_buf_get_skb_wrapper(void *osh, unsigned int len) RETURN_DUMMY
-AT("0x8C71C") void *pkt_buf_free_skb_wrapper(void *osh, void *p, int send) RETURN_DUMMY
+AT("0x8C70C") void *pkt_buf_get_skb(void *osh, unsigned int len) RETURN_DUMMY
+AT("0x8C71C") void *pkt_buf_free_skb(void *osh, void *p, int send) RETURN_DUMMY
 AT("0x126f0") int printf(const char *format, ...) RETURN_DUMMY
 
 AT("0x1d474") unsigned int si_getcuridx(void *sii) RETURN_DUMMY
@@ -99,15 +110,15 @@ AT("0x4DB68") short wlc_bmac_read_objmem(void *wlc_hw, unsigned int offset, int 
 AT("0x4F79C") int wlc_bmac_read_shm(void *wlc_hw, unsigned int offset) RETURN_DUMMY
 AT("0x3B0BC") void wlc_bmac_suspend_mac_and_wait_wrapper(void *wlc) VOID_DUMMY
 AT("0x4FC88") void wlc_bmac_suspend_mac_and_wait(void *wlc_hw) VOID_DUMMY
-AT("0x8CB9C") void wlc_bmac_read_tsf_wrapper(void *wlc_hw, unsigned int *tsf_l_ptr, unsigned int *tsf_h_ptr) VOID_DUMMY
+AT("0x8CB9C") void wlc_bmac_read_tsf(void *wlc_hw, unsigned int *tsf_l_ptr, unsigned int *tsf_h_ptr) VOID_DUMMY
 AT("0x4DCC8") void *wlc_bmac_write_objmem(void *wlc_hw, unsigned int offset, short v, int sel) RETURN_DUMMY
 AT("0x504B0") void wlc_bmac_write_template_ram(void *wlc_hw, int offset, int len, void *buf) VOID_DUMMY
-AT("0x8C3DC") void *wlc_bsscfg_find_by_wlcif_wrapper(void *wlc, int wlcif) RETURN_DUMMY
+AT("0x8CBFC") void *wlc_bsscfg_find_by_wlcif(void *wlc, int wlcif) RETURN_DUMMY
 AT("0x32A90") void *wlc_compute_plcp(void *wlc, unsigned int rspec, short length, short type_subtype_frame_ctl_field, char *plcp) RETURN_DUMMY
 AT("0x3352C") void *wlc_enable_mac(void *wlc) RETURN_DUMMY
 AT("0x4DF60") void wlc_mctrl_write(void *wlc_hw) VOID_DUMMY
 AT("0x35aa0") int wlc_prec_enq_head(void *wlc, void *q, void *pkt, int prec, char head) RETURN_DUMMY
-AT("0x8CD4C") void *__wlc_scb_lookup_wrapper(void *wlc, void *bsscfg, char *ea, int bandunit) RETURN_DUMMY
+AT("0x8CD4C") void *__wlc_scb_lookup(void *wlc, void *bsscfg, char *ea, int bandunit) RETURN_DUMMY
 AT("0x76900") void *wlc_scb_set_bsscfg(void *scb, void *bsscfg) RETURN_DUMMY
 AT("0x38BB0") int wlc_sendctl(void *wlc, void *p, void *qi, void *scb, unsigned int fifo, unsigned int rate_override, char enq_only) RETURN_DUMMY
 AT("0x399FC") void wlc_set_chanspec(void *wlc, unsigned short chanspec) VOID_DUMMY
@@ -126,20 +137,20 @@ AT("0x1837F8") int bus_binddev(void *sdio_hw, void *sdiodev, void *d11dev) RETUR
 
 AT("0x1844B2") void *dma_txfast(void *di, void *p, int commit) RETURN_DUMMY
 AT("0x1844B6") void *dma_txfast_plus_4(void *di, void *p, int commit) RETURN_DUMMY
-AT("0x182750") void *dngl_sendpkt(void *sdio, void *p, int chan) RETURN_DUMMY
+AT("0x182750") void *dngl_sendpkt_ram(void *sdio, void *p, int chan) RETURN_DUMMY
 
 AT("0x181E48") void *dump_stack_print_dbg_stuff_intr_handler(void) RETURN_DUMMY
 
 AT("0x19B25C") int function_with_huge_jump_table(void *wlc, int a2, int cmd, int a4, int a5, unsigned int a6, int a7, int a8, int a9, int a10) RETURN_DUMMY
 
-AT("0x183798") void *handle_sdio_xmit_request(void *sdio_hw, void *p) RETURN_DUMMY
+AT("0x183798") void *handle_sdio_xmit_request_ram(void *sdio_hw, void *p) RETURN_DUMMY
 
 AT("0x1814F4") void *malloc(unsigned int size, char x) RETURN_DUMMY
-AT("0x181418") int memcpy(void *dst, void *src, int len) RETURN_DUMMY
+AT("0x181418") int memcpy_ram(void *dst, void *src, int len) RETURN_DUMMY
 
 AT("0x1FD78C") int path_to_load_ucode(int devid, void *osh, void *regs, int bustype, void *sdh) RETURN_DUMMY
-AT("0x184F14") void *pkt_buf_get_skb(void *osh, unsigned int len) RETURN_DUMMY
-AT("0x184F64") void *pkt_buf_free_skb(void *osh, void *p, int send) RETURN_DUMMY
+AT("0x184F14") void *pkt_buf_get_skb_ram(void *osh, unsigned int len) RETURN_DUMMY
+AT("0x184F64") void *pkt_buf_free_skb_ram(void *osh, void *p, int send) RETURN_DUMMY
 
 AT("0x1C3CE8") int read_radio_reg(void *pi, short addr) RETURN_DUMMY
 
@@ -162,22 +173,41 @@ AT("0x18256C") int towards_dma_txfast(void *sdio, void *p, int chan) RETURN_DUMM
 
 //extern int wf_chspec_malformed(unsigned short chanspec) RETURN_DUMMY // 0x13778
 AT("0x1AB840") void wlc_bmac_init(void *wlc_hw, unsigned int chanspec, unsigned int mute) VOID_DUMMY
-AT("0x1AAD84") void wlc_bmac_read_tsf(void *wlc_hw, unsigned int *tsf_l_ptr, unsigned int *tsf_h_ptr) VOID_DUMMY
+AT("0x1AAD84") void wlc_bmac_read_tsf_ram(void *wlc_hw, unsigned int *tsf_l_ptr, unsigned int *tsf_h_ptr) VOID_DUMMY
 AT("0x1AAD98") int wlc_bmac_recv(void *wlc_hw, unsigned int fifo, int bound, int *processed_frame_cnt) RETURN_DUMMY
 AT("0x1AAD9C") int wlc_bmac_recv_plus4(void *wlc_hw, unsigned int fifo, int bound, int *processed_frame_cnt) RETURN_DUMMY
-AT("0x1AC166") void *wlc_bsscfg_find_by_wlcif(void *wlc, int wlcif) RETURN_DUMMY
+AT("0x1AC166") void *wlc_bsscfg_find_by_wlcif_ram(void *wlc, int wlcif) RETURN_DUMMY
 AT("0x1AE2BC") void *wlc_channel_set_chanspec(void *wlc_cm, unsigned short chanspec, int local_constraint_qdbm) RETURN_DUMMY
 AT("0x1AE2C0") void *wlc_channel_set_chanspec_plus4(void *wlc_cm, unsigned short chanspec, int local_constraint_qdbm) RETURN_DUMMY
 AT("0x1AB66C") void wlc_coreinit(void *wlc_hw) VOID_DUMMY
 AT("0x18C4C8") int wlc_d11hdrs(void *wlc, void *p, void *scb, int short_preamble, unsigned int frag, unsigned int nfrag, unsigned int queue, int next_frag_len, int key, int rspec_override) RETURN_DUMMY
 AT("0x199874") int wlc_init(void *wlc) RETURN_DUMMY
+
+#if NEXMON_FW_VERSION == FW_VER_6_37_32_RC23_34_43_r639704
+AT("0x19560C") int wlc_ioctl(void *wlc, int cmd, void *arg, int len, void *wlc_if) RETURN_DUMMY
+#else
 AT("0x19551C") int wlc_ioctl(void *wlc, int cmd, void *arg, int len, void *wlc_if) RETURN_DUMMY
+#endif
+
 AT("0x19B25C") int wlc_iovar_change_handler(void *wlc, int a2, int cmd, char *a4, unsigned int a6, int a7, int a8, int a9, int wlcif) RETURN_DUMMY
 AT("0x19B260") int wlc_iovar_change_handler_plus4(void *wlc, int a2, int cmd, char *a4, unsigned int a6, int a7, int a8, int a9, int wlcif) RETURN_DUMMY
 AT("0x18BB6C") int wlc_iovar_op(void *wlc, char *varname, void *params, int p_len, void *arg, int len, char set, void *wlcif) RETURN_DUMMY
+
+#if NEXMON_FW_VERSION == FW_VER_6_37_32_RC23_34_43_r639704
+AT("0x18D738") void *wlc_monitor(void *wlc, void * wrxh, void *p, int wlc_if) RETURN_DUMMY
+#else
+AT("0x18D648") void *wlc_monitor(void *wlc, void * wrxh, void *p, int wlc_if) RETURN_DUMMY
+#endif
+
 AT("0x1C456E") void wlc_phyreg_enter(void *pi) VOID_DUMMY
 AT("0x1C4588") void wlc_phyreg_exit(void *pi) VOID_DUMMY
+
+#if NEXMON_FW_VERSION == FW_VER_6_37_32_RC23_34_43_r639704
+AT("0x1C4D8C") int wlc_phy_channel2freq(unsigned int channel) RETURN_DUMMY
+#else
 AT("0x1C4B40") int wlc_phy_channel2freq(unsigned int channel) RETURN_DUMMY
+#endif
+
 AT("0x1C4B36") int wlc_phy_chanspec_get(void *ppi) RETURN_DUMMY
 AT("0x1B39FE") int wlc_phy_chan2freq_nphy_plus6(void *pi, int a2, int a3, int a4) RETURN_DUMMY
 AT("0x1C553C") void wlc_phy_rssi_compute(void *pih, void *ctx) VOID_DUMMY
@@ -189,8 +219,8 @@ AT("0x191654") int wlc_prep_pdu(void *wlc, void *p, int *fifo) RETURN_DUMMY
 AT("0x191B00") void wlc_prep_sdu(void *wlc, void *p, int *counter, int *fifo) VOID_DUMMY
 AT("0x19123C") void wlc_radio_upd(void *wlc) VOID_DUMMY
 AT("0x1C9DBE") void *wlc_scbfindband(void *wlc, void *bsscfg, char *ea, int bandunit) RETURN_DUMMY
-AT("0x1CA496") void *__wlc_scb_lookup(void *wlc, void *bsscfg, char *ea, int bandunit) RETURN_DUMMY
 AT("0x1CA4CE") void *wlc_scb_lookup(void *wlc, void *bsscfg, char *ea) RETURN_DUMMY
+AT("0x1CA496") void *__wlc_scb_lookup_ram(void *wlc, void *bsscfg, char *ea, int bandunit) RETURN_DUMMY
 AT("0x197A18") int wlc_sendpkt(void *wlc, void *p, int wlcif) RETURN_DUMMY
 AT("0x1926B8") void wlc_send_q(void *wlc, void *qi) VOID_DUMMY
 AT("0x193348") void *wlc_sendnulldata(void *wlc, void *bsscfg, unsigned int *ea, int datarate_maybe, int p_field_26, int prio) RETURN_DUMMY

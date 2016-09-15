@@ -47,11 +47,11 @@
  *                                                                         *
  **************************************************************************/
 
-#include <bcm4339.h>        // contains addresses specific for BCM4339
-#include <debug.h>          // contains macros to access the debug hardware
-#include "wrapper.h"        // wrapper definitions for functions that already exist in the firmware
-#include <structs.h>        // structures that are used by the code in the firmware
-#include <helper.h>         // useful helper functions
+#include <firmware_version.h>   // definition of firmware version macros
+#include <debug.h>              // contains macros to access the debug hardware
+#include <wrapper.h>            // wrapper definitions for functions that already exist in the firmware
+#include <structs.h>            // structures that are used by the code in the firmware
+#include <helper.h>             // useful helper functions
 #include <bcmdhd/bcmsdpcm.h>
 #include <bcmdhd/bcmcdc.h>
 #include "bcmdhd/include/bcmwifi_channels.h"
@@ -144,11 +144,13 @@ skb_pull(sk_buff *p, unsigned int len) {
 void
 wl_monitor_hook(struct wl_info *wl, struct wl_rxsts *sts, struct sk_buff *p)
 {
-    struct sk_buff *p_new = pkt_buf_get_skb(OSL_INFO_ADDR, p->len + sizeof(struct bdc_radiotap_header));
+    struct osl_info *osh = wl->wlc->osh;
+    void *sdio_info = *(*((void ***) 0x180e60) + 7);
+    struct sk_buff *p_new = pkt_buf_get_skb(osh, p->len + sizeof(struct bdc_radiotap_header));
     struct bdc_radiotap_header *frame = (struct bdc_radiotap_header *) p_new->data;
     //struct wlc_d11rxhdr *wlc_rxhdr = (struct wlc_d11rxhdr *) p->data;
     struct tsf tsf;
-    
+
     // get the TSF REG reading
     wlc_bmac_read_tsf(wl->wlc_hw, &tsf.tsf_l, &tsf.tsf_h);
 
@@ -177,7 +179,7 @@ wl_monitor_hook(struct wl_info *wl, struct wl_rxsts *sts, struct sk_buff *p)
     memcpy(p_new->data + sizeof(struct bdc_radiotap_header), p->data + 6, p->len - 6);
     p_new->len -= 6;
 
-    dngl_sendpkt(SDIO_INFO_ADDR, p_new, SDPCM_DATA_CHANNEL);
+    dngl_sendpkt(sdio_info, p_new, SDPCM_DATA_CHANNEL);
 }
 
 
@@ -479,7 +481,6 @@ inject_frame(struct wlc_info *wlc, struct sk_buff *p)
     skb_pull(p, rtap_len);
 
     bsscfg = wlc_bsscfg_find_by_wlcif(wlc, 0);
-    printf("bsscfg @ 0x%x\n", bsscfg);
     //not _really_ needed but maybe needed for sending on 5ghz
     chanspec = (uint16 *)(*((int *)(bsscfg + 0x30C)) + 0x32);
     //printf("chanspec in FW1 @ 0x%x: 0x%x\n", chanspec, *chanspec);
@@ -517,6 +518,7 @@ struct nexmon_ctrl_frame {
 void *
 handle_nexmon_ctrl(struct wlc_info* wlc, struct sk_buff *p)
 {
+    struct osl_info* osh = wlc->osh;
     struct nexmon_ctrl_frame *frm;
     unsigned int value = 0;
     
@@ -529,14 +531,14 @@ handle_nexmon_ctrl(struct wlc_info* wlc, struct sk_buff *p)
     switch(frm->cmd) {
         case NEXMON_CTRL_SET_MONITOR:
             printf("set monitor %d\n", frm->value);
-            wlc_ioctl(wlc, WLC_SET_MONITOR, &value, 4, WLC_INFO_ADDR);
+            wlc_ioctl(wlc, WLC_SET_MONITOR, &value, 4, wlc);
             break;
         case NEXMON_CTRL_GET_MONITOR:
             printf("get monitor\n");
             break;
         case NEXMON_CTRL_SET_PROMISC:
             printf("set promisc %d\n", frm->value);
-            wlc_ioctl(wlc, WLC_SET_PROMISC, &value, 4, WLC_INFO_ADDR);
+            wlc_ioctl(wlc, WLC_SET_PROMISC, &value, 4, wlc);
             break;
         case NEXMON_CTRL_GET_PROMISC:
             printf("get promisc\n");
@@ -545,13 +547,14 @@ handle_nexmon_ctrl(struct wlc_info* wlc, struct sk_buff *p)
             break;
     }
 
-    return pkt_buf_free_skb(OSL_INFO_ADDR, p, 0);
+    return pkt_buf_free_skb(osh, p, 0);
 }
 
 void *
 handle_sdio_xmit_request_hook(void *sdio_hw, struct sk_buff *p)
 {
-    struct wlc_info *wlc = (struct wlc_info *) WLC_INFO_ADDR;
+    struct wl_info *wl = *(*((struct wl_info ***) sdio_hw + 15) + 6);
+    struct wlc_info *wlc = wl->wlc;
 
     if (!strncmp(p->data + 4, "NEXMONNEXMON", 12)) {
         // handle nexmon control frame
@@ -565,18 +568,34 @@ handle_sdio_xmit_request_hook(void *sdio_hw, struct sk_buff *p)
     }
 }
 
-// BLPatch(0x1f4f08, getSectionAddr(".text.wlc_ucode_write_compressed")),
 //BLPatch(0x1f4f08, wlc_ucode_write_compressed);
-// BLPatch(0x18DA30, getSectionAddr(".text.wl_monitor_hook")),
+
+// Hook the call to wl_monitor in wlc_monitor
+#if NEXMON_FW_VERSION == FW_VER_6_37_32_RC23_34_43_r639704
+BLPatch(0x18DB20, wl_monitor_hook);
+#else
 BLPatch(0x18DA30, wl_monitor_hook);
-// BLPatch(0x1F4FCE, getSectionAddr(".text.dma_attach_hook")),
+#endif
+
+// Hook the call to dma_attach in wlc_bmac_attach_dmapio
+#if NEXMON_FW_VERSION == FW_VER_6_37_32_RC23_34_43_r639704
+BLPatch(0x1F4FDA, dma_attach_hook);
+#else
 BLPatch(0x1F4FCE, dma_attach_hook);
-// BPatch(0x182AAA, getSectionAddr(".text.handle_sdio_xmit_request_hook")),
+#endif
+
+// Hook the call to handle_sdio_xmit_request_hook in sdio_header_parsing_from_sk_buff
 BPatch(0x182AAA, handle_sdio_xmit_request_hook);
-// GenericPatch4(0x180BCC, getSectionAddr(".text.handle_sdio_xmit_request_hook") + 1),
+
+// Replace the entry in the function pointer table by handle_sdio_xmit_request_hook
 GenericPatch4(0x180BCC, handle_sdio_xmit_request_hook + 1);
-// StringPatch(0x1FD31B, (os.getcwd().split('/')[-1] + " (" + time.strftime("%d.%m.%Y %H:%M:%S") + ")\n")[:52]), # 53 character string
-StringPatch(0x1FD31B, "nexmon (" __DATE__ " " __TIME__ ")\n");
+
+// Patch the "wl%d: Broadcom BCM%04x 802.11 Wireless Controller %s\n" string
+#if NEXMON_FW_VERSION == FW_VER_6_37_32_RC23_34_43_r639704
+StringPatch(0x1FD327, "nexmon (" __DATE__ " " __TIME__ ") %d-%04x base %s\n");
+#else
+StringPatch(0x1FD31B, "nexmon (" __DATE__ " " __TIME__ ") %d-%04x base %s\n");
+#endif
 
 /**
  *  Just inserted to produce an error while linking, when we try to overwrite memory used by the original firmware

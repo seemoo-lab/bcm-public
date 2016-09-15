@@ -1,12 +1,20 @@
 CC=../../buildtools/gcc-arm-none-eabi-5_4-2016q2/bin/arm-none-eabi-
 
-all: wrapper.o
+NEXMON_CHIP=CHIP_VER_BCM4339
+NEXMON_FW_VERSION=FW_VER_6_37_32_RC23_34_40_r581243
 
-wrapper.o: ../include/wrapper.c
+WRAPPER_LD_FILE=wrapper.ld
+WRAPPER_OBJ_FILE=$(NEXMON_FIRMWARE_PATCHING)/wrapper/wrapper.o
+
+all: $(WRAPPER_OBJ_FILE)
+
+$(WRAPPER_OBJ_FILE): ../include/wrapper.c
 	$(CC)gcc \
 		-fplugin=../../buildtools/gcc-nexmon-plugin/nexmon.so \
-		-fplugin-arg-nexmon-objfile=$(NEXMON_FIRMWARE_PATCHING)/wrapper/wrapper.o \
-		-fplugin-arg-nexmon-ldfile=wrapper.ld \
+		-fplugin-arg-nexmon-objfile=$(WRAPPER_OBJ_FILE) \
+		-fplugin-arg-nexmon-ldfile=$(WRAPPER_LD_FILE) \
+		-DNEXMON_CHIP=$(NEXMON_CHIP) \
+		-DNEXMON_FW_VERSION=$(NEXMON_FW_VERSION) \
 		-Wall -Werror -O2 -nostdlib -nostartfiles -ffreestanding -mthumb -march=armv7-r -ffunction-sections -fdata-sections -I../include -c $< -o $@
 
 clean: 
