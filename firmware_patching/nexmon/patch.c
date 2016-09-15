@@ -559,12 +559,13 @@ handle_sdio_xmit_request_hook(void *sdio_hw, struct sk_buff *p)
     if (!strncmp(p->data + 4, "NEXMONNEXMON", 12)) {
         // handle nexmon control frame
         return handle_nexmon_ctrl(wlc, p);
-    } else if (wlc->monitor) {
+    } else if (wlc->monitor && (*(short *) p->data == 0)) {
+        printf("inj: %08x\n", *(int *) p->data);
         // check if in monitor mode, if yes, inject frame
         return inject_frame(wlc, p);
     } else {
         // otherwise, handle frame normally
-        return handle_sdio_xmit_request(sdio_hw, p);
+        return handle_sdio_xmit_request_ram(sdio_hw, p);
     }
 }
 
@@ -592,9 +593,9 @@ GenericPatch4(0x180BCC, handle_sdio_xmit_request_hook + 1);
 
 // Patch the "wl%d: Broadcom BCM%04x 802.11 Wireless Controller %s\n" string
 #if NEXMON_FW_VERSION == FW_VER_6_37_32_RC23_34_43_r639704
-StringPatch(0x1FD327, "nexmon (" __DATE__ " " __TIME__ ") %d-%04x base %s\n");
+StringPatch(0x1FD327, "nexmon (" __DATE__ " " __TIME__ ")\n");
 #else
-StringPatch(0x1FD31B, "nexmon (" __DATE__ " " __TIME__ ") %d-%04x base %s\n");
+StringPatch(0x1FD31B, "nexmon (" __DATE__ " " __TIME__ ")\n");
 #endif
 
 /**
