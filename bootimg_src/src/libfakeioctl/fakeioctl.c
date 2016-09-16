@@ -57,12 +57,11 @@
 #include <stdarg.h>
 #include <dlfcn.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/socket.h>
 #include <linux/if_arp.h>
 #include <linux/sockios.h>
 #include <linux/wireless.h>
-
-#define DPRINTF(format, args...)	fprintf(stderr, format, ## args)
 
 #ifndef RTLD_NEXT
 #define RTLD_NEXT ((void *) -1l)
@@ -74,9 +73,32 @@ typedef int request_t;
 
 typedef void (*sighandler_t)(int);
 
+static int sa_family = 0;
+static char *sa_family_str = NULL;
+
 static void _libfakeioctl_init() __attribute__ ((constructor));
-static void _libfakeioctl_init() {   
-	printf("nexmon ioctl hook active\n");
+static void _libfakeioctl_init() {
+	const char *env_var = getenv("NEXMON_SA_FAMILY");
+	if (env_var != NULL) {
+		if (!strcmp(env_var, "ARPHRD_IEEE80211")) {
+			sa_family = ARPHRD_IEEE80211;
+			sa_family_str = "ARPHRD_IEEE80211";
+		} else {
+			sa_family = ARPHRD_IEEE80211_RADIOTAP;
+			sa_family_str = "ARPHRD_IEEE80211_RADIOTAP";
+		}
+	} else {
+		sa_family = ARPHRD_IEEE80211_RADIOTAP;
+		sa_family_str = "ARPHRD_IEEE80211_RADIOTAP";
+	}
+
+	printf("####################################################\n");
+	printf("## nexmon ioctl hook active\n");
+	printf("## sa_family = %s\n", sa_family_str);
+	printf("## to change sa_family, set NEXMON_SA_FAMILY\n");
+	printf("## environment variable to ARPHRD_IEEE80211\n");
+	printf("####################################################\n");
+
 }
 
 int ioctl (int fd, request_t request, ...){	
@@ -84,6 +106,8 @@ int ioctl (int fd, request_t request, ...){
 	va_list args;
 	void *argp;
 	int ret;
+	struct ifreq* p_ifr;
+	struct iwreq* p_wrq;
 
 	if (! func_ioctl)
 		func_ioctl = (int (*) (int, request_t, void *)) dlsym (REAL_LIBC, "ioctl");
@@ -95,13 +119,11 @@ int ioctl (int fd, request_t request, ...){
 
 	switch (request) {
 		case SIOCGIFHWADDR:
-			printf("SIOCGIFHWADDR\n");
-			struct ifreq* p_ifr = (struct ifreq *) argp;
-			p_ifr->ifr_hwaddr.sa_family = ARPHRD_IEEE80211_RADIOTAP;
+			p_ifr = (struct ifreq *) argp;
+			p_ifr->ifr_hwaddr.sa_family = sa_family;
 			break;
 		case SIOCGIWMODE:
-			printf("SIOCGIWMODE\n");
-			struct iwreq* p_wrq = (struct iwreq*) argp;
+			p_wrq = (struct iwreq*) argp;
 			p_wrq->u.mode = IW_MODE_MONITOR;
 			break;
 	}
