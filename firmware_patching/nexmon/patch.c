@@ -498,70 +498,14 @@ inject_frame(struct wlc_info *wlc, struct sk_buff *p)
     return 0;
 }
 
-#define NEXMON_CTRL_SET_MONITOR 0
-#define NEXMON_CTRL_GET_MONITOR 1
-#define NEXMON_CTRL_SET_PROMISC 2
-#define NEXMON_CTRL_GET_PROMISC 3
-
-// some useful ioctls
-#define WLC_GET_PROMISC             9
-#define WLC_SET_PROMISC             10
-#define WLC_GET_MONITOR             107
-#define WLC_SET_MONITOR             108
-
-
-struct nexmon_ctrl_frame {
-    unsigned char cmd;
-    unsigned char value;
-} __attribute__((packed));
-
-void *
-handle_nexmon_ctrl(struct wlc_info* wlc, struct sk_buff *p)
-{
-    struct osl_info* osh = wlc->osh;
-    struct nexmon_ctrl_frame *frm;
-    unsigned int value = 0;
-    
-    // remove bdc header and nexmon control header: "NEXMONNEXMON" 0xff 0xff
-    skb_pull(p, 4 + 14);
-
-    frm = p->data;
-    value = frm->value;
-
-    switch(frm->cmd) {
-        case NEXMON_CTRL_SET_MONITOR:
-            printf("set monitor %d\n", frm->value);
-            wlc_ioctl(wlc, WLC_SET_MONITOR, &value, 4, wlc);
-            break;
-        case NEXMON_CTRL_GET_MONITOR:
-            printf("get monitor\n");
-            break;
-        case NEXMON_CTRL_SET_PROMISC:
-            printf("set promisc %d\n", frm->value);
-            wlc_ioctl(wlc, WLC_SET_PROMISC, &value, 4, wlc);
-            break;
-        case NEXMON_CTRL_GET_PROMISC:
-            printf("get promisc\n");
-            break;
-        default:
-            break;
-    }
-
-    return pkt_buf_free_skb(osh, p, 0);
-}
-
 void *
 handle_sdio_xmit_request_hook(void *sdio_hw, struct sk_buff *p)
 {
     struct wl_info *wl = *(*((struct wl_info ***) sdio_hw + 15) + 6);
     struct wlc_info *wlc = wl->wlc;
 
-    if (!strncmp(p->data + 4, "NEXMONNEXMON", 12)) {
-        // handle nexmon control frame
-        return handle_nexmon_ctrl(wlc, p);
-    } else if (wlc->monitor && (*(short *) p->data == 0)) {
-        printf("inj: %08x\n", *(int *) p->data);
-        // check if in monitor mode, if yes, inject frame
+    if (wlc->monitor && (*(short *) p->data == 0)) {
+        // check if in monitor mode and if first two bytes in frame correspond to radiotap header, if true, inject frame
         return inject_frame(wlc, p);
     } else {
         // otherwise, handle frame normally
