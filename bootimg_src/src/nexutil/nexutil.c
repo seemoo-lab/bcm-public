@@ -5,13 +5,37 @@
 #include <argp.h>
 #include <string.h>
 #include <byteswap.h>
-#include <pcap.h>
 
-#include <arpa/inet.h>
-#include <netinet/in.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
+
+#include <sys/ioctl.h>
+#include <net/if.h>
+#include <stdbool.h>
+#include <errno.h>
+
+#define WLC_IOCTL_MAGIC     0x14e46c77
+#define DHD_IOCTL_MAGIC     0x00444944
+#define WLC_GET_MAGIC                0
+#define DHD_GET_MAGIC                0
+
+#define WLC_GET_PROMISC             9
+#define WLC_SET_PROMISC             10
+
+#define WLC_GET_MONITOR             107
+#define WLC_SET_MONITOR            108
+
+/* Linux network driver ioctl encoding */
+typedef struct nex_ioctl {
+    uint cmd;   /* common ioctl definition */
+    void *buf;  /* pointer to user buffer */
+    uint len;   /* length of user buffer */
+    bool set;   /* get or set request (optional) */
+    uint used;  /* bytes read or written (optional) */
+    uint needed;    /* bytes needed (optional) */
+    uint driver;    /* to identify target driver */
+} nex_ioctl_t;
 
 unsigned char set_monitor = 0;
 unsigned char set_monitor_value = 0;
@@ -26,129 +50,130 @@ const char *argp_program_bug_address = "<mschulz@seemoo.tu-darmstadt.de>";
 static char doc[] = "nexutil -- a program to control a nexmon firmware for broadcom chips.";
 
 static struct argp_option options[] = {
-	{"set-monitor", 'm', "BOOL", 0, "Set monitor mode"},
-	{"set-promisc", 'p', "BOOL", 0, "Set promiscuous mode"},
-	{ 0 }
+    {"set-monitor", 'm', "BOOL", 0, "Set monitor mode"},
+    {"set-promisc", 'p', "BOOL", 0, "Set promiscuous mode"},
+    {"get-monitor", 'n', 0, 0, "Get monitor mode"},
+    {"get-promisc", 'q', 0, 0, "Get promiscuous mode"},
+    { 0 }
 };
 
 static error_t
 parse_opt(int key, char *arg, struct argp_state *state)
 {
-	switch (key) {
-		case 'm':
-			set_monitor = 1;
-			set_monitor_value = strncmp(arg, "true", 4) ? 0 : 1;
-			break;
+    switch (key) {
+        case 'm':
+            set_monitor = 1;
+            set_monitor_value = strncmp(arg, "true", 4) ? 0 : 1;
+            break;
 
-		case 'p':
-			set_promisc = 1;
-			set_promisc_value = strncmp(arg, "true", 4) ? 0 : 1;
-			break;
-		
-		default:
-			return ARGP_ERR_UNKNOWN;
-	}
+        case 'p':
+            set_promisc = 1;
+            set_promisc_value = strncmp(arg, "true", 4) ? 0 : 1;
+            break;
 
-	return 0;
+        case 'n':
+            get_monitor = 1;
+            break;
+
+        case 'q':
+            get_promisc = 1;
+            break;
+        
+        default:
+            return ARGP_ERR_UNKNOWN;
+    }
+
+    return 0;
 }
 
 static struct argp argp = { options, parse_opt, 0, doc };
 
-// minimum length is 14 bytes
-unsigned char frame[] = {
-	'N', 'E', 'X', 'M', 'O', 'N', 'N', 'E', 'X', 'M', 'O', 'N', 0xFF, 0xFF, 0x00, 0x00
-};
-
-#define NEXMON_CTRL_SET_MONITOR 0
-#define NEXMON_CTRL_GET_MONITOR 1
-#define NEXMON_CTRL_SET_PROMISC 2
-#define NEXMON_CTRL_GET_PROMISC 3
-
-struct nexmon_ctrl_frame {
-	unsigned char cmd;
-	unsigned char value;
-} __attribute__((packed));
-
-void
-send_to_chip()
+static int __nex_driver_io(struct ifreq *ifr, nex_ioctl_t *ioc)
 {
-	pcap_t *pcap;
-	char errbuf[PCAP_ERRBUF_SIZE];
-	struct pcap_pkthdr header;
-	struct bpf_program fp;
-	int iftype = 0;
+    int s;
+    int ret = 0;
 
-	struct nexmon_ctrl_frame *ctrl_frame = (struct nexmon_ctrl_frame *) &frame[14];
+    /* pass ioctl data */
+    ifr->ifr_data = (caddr_t)ioc;
 
-	pcap = pcap_open_live("wlan0", BUFSIZ, 1, 0, errbuf);
+    /* open socket to kernel */
+    if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+        printf("error: socket\n");
 
-	if(!pcap) {
-		printf("ERR: %s\n", errbuf);
-		return;
-	}
+    ret = ioctl(s, SIOCDEVPRIVATE, ifr);
+    if (ret < 0 && errno != EAGAIN)
+        printf("%s: error\n", __FUNCTION__);
 
-	iftype = pcap_datalink(pcap);
-	switch (iftype) {
-		case 1:		// DLT_EN10MB; LINKTYPE_ETHERNET=1 
-			//pcap_compile(pcap, &fp, "ether host ", 0, 0);
-			break;
-		case 127:	// DLT_IEEE802_11_RADIO; LINKTYPE_IEEE802_11_RADIO=127 
-			//pcap_compile(pcap, &fp, "proto 136", 0, 0);
-			break;
-		default:
-			printf("interface type not supported\n");
-			exit(1);
-            break;
-	}
-	//pcap_setfilter(pcap, &fp);
+    /* cleanup */
+    close(s);
+    return ret;
+}
 
-	if (set_monitor) {
-		ctrl_frame->cmd = NEXMON_CTRL_SET_MONITOR;
-		ctrl_frame->value = set_monitor_value;
-		if (pcap_inject(pcap, &frame, sizeof(frame)) == -1) {
-			pcap_perror(pcap,0);
-			pcap_close(pcap);
-			exit(1);
-		}
-	}
+/* This function is called by ioctl_setinformation_fe or ioctl_queryinformation_fe
+ * for executing  remote commands or local commands
+ */
+static int
+nex_ioctl(struct ifreq *ifr, int cmd, void *buf, int len, bool set)
+{
+    nex_ioctl_t ioc;
+    int ret = 0;
 
-	if (get_monitor) {
-		ctrl_frame->cmd = NEXMON_CTRL_GET_MONITOR;
-		ctrl_frame->value = 0;
-		if (pcap_inject(pcap, &frame, sizeof(frame)) == -1) {
-			pcap_perror(pcap,0);
-			pcap_close(pcap);
-			exit(1);
-		}
-	}
+    /* By default try to execute wl commands */
+    int driver_magic = WLC_IOCTL_MAGIC;
+    int get_magic = WLC_GET_MAGIC;
 
-	if (set_promisc) {
-		ctrl_frame->cmd = NEXMON_CTRL_SET_PROMISC;
-		ctrl_frame->value = set_promisc_value;
-		if (pcap_inject(pcap, &frame, sizeof(frame)) == -1) {
-			pcap_perror(pcap,0);
-			pcap_close(pcap);
-			exit(1);
-		}
-	}
+    // For local dhd commands execute dhd
+    //driver_magic = DHD_IOCTL_MAGIC;
+    //get_magic = DHD_GET_MAGIC;
 
-	if (get_promisc) {
-		ctrl_frame->cmd = NEXMON_CTRL_GET_PROMISC;
-		ctrl_frame->value = 0;
-		if (pcap_inject(pcap, &frame, sizeof(frame)) == -1) {
-			pcap_perror(pcap,0);
-			pcap_close(pcap);
-			exit(1);
-		}
-	}
+    /* do it */
+    ioc.cmd = cmd;
+    ioc.buf = buf;
+    ioc.len = len;
+    ioc.set = set;
+    ioc.driver = driver_magic;
+
+    ret = __nex_driver_io(ifr, &ioc);
+    if (ret < 0 && cmd != get_magic)
+        ret = -1;
+    return ret;
 }
 
 int
 main(int argc, char **argv)
 {
-	argp_parse(&argp, argc, argv, 0, 0, 0);
+    struct ifreq ifr;
+    int ret;
+    int buf = 0;
 
-	send_to_chip();
+    argp_parse(&argp, argc, argv, 0, 0, 0);
 
-	exit(EXIT_SUCCESS);
+    memset(&ifr, 0, sizeof(struct ifreq));
+    memcpy(ifr.ifr_name, "wlan0", 5);
+
+    if(set_monitor) {
+        buf = set_monitor_value;
+        ret = nex_ioctl(&ifr, WLC_SET_MONITOR, &buf, 4, true);
+        printf("ret: %d\n", ret);
+    }
+
+    if(set_promisc) {
+        buf = set_promisc_value;
+        ret = nex_ioctl(&ifr, WLC_SET_PROMISC, &buf, 4, true);
+        printf("ret: %d\n", ret);
+    }
+
+    if(get_monitor) {
+        ret = nex_ioctl(&ifr, WLC_GET_MONITOR, &buf, 4, false);
+        printf("ret: %d\n", ret);
+        printf("monitor: %d\n", buf);
+    }
+
+    if(get_promisc) {
+        ret = nex_ioctl(&ifr, WLC_GET_PROMISC, &buf, 4, false);
+        printf("ret: %d\n", ret);
+        printf("promisc: %d\n", buf);
+    }
+
+    return 0;
 }
