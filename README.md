@@ -6,6 +6,10 @@ NexMon is a firmware patching framework for the BCM4339 WiFi firmware of Nexus 5
 
 If you only intend to activate monitor mode on a device using the bcmdhd driver, take a look at the following commit: https://dev.seemoo.tu-darmstadt.de/bcm/bcm-public/commit/ed11c18aa89cd0374a3ce7655337cc0e4d1cdd0a
 
+## News
+
+* You can now follow us on twitter: https://twitter.com/nexmon_dev
+
 ## Related Projects
 * Monitor Mode for the Raspberry Pi 3: **[rpi3.nexmon.org](https://dev.seemoo.tu-darmstadt.de/bcm/bcm-rpi3)**
 
