@@ -8,10 +8,11 @@ If you only intend to activate monitor mode on a device using the bcmdhd driver,
 
 ## News
 
+* We moved to **[GitHub!](https://github.com/seemoo-lab/bcm-public)**
 * You can now follow us on twitter: [@nexmon_dev](https://twitter.com/nexmon_dev)
 
 ## Related Projects
-* Monitor Mode for the Raspberry Pi 3: **[rpi3.nexmon.org](http://rpi3.nexmon.org)**
+* Monitor Mode for the Raspberry Pi 3: [rpi3.nexmon.org](http://rpi3.nexmon.org)
 
 ## WARNING
 
