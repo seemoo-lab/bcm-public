@@ -503,8 +503,9 @@ handle_sdio_xmit_request_hook(void *sdio_hw, struct sk_buff *p)
 {
     struct wl_info *wl = *(*((struct wl_info ***) sdio_hw + 15) + 6);
     struct wlc_info *wlc = wl->wlc;
+    short *data = (short *) p->data;
 
-    if (wlc->monitor && (*(short *) p->data == 0)) {
+    if (wlc->monitor && data[1] == 0) {
         // check if in monitor mode and if first two bytes in frame correspond to radiotap header, if true, inject frame
         return inject_frame(wlc, p);
     } else {
