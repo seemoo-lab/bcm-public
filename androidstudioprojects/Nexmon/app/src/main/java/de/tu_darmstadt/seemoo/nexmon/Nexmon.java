@@ -127,8 +127,8 @@ public class Nexmon extends AppCompatActivity {
         getGuiElements();
         initializeInstallLocationSpinners();
 
-        //linDisclaimerDependent.setVisibility(LinearLayout.GONE);
-
+        linDisclaimerDependent.setVisibility(LinearLayout.GONE);
+        
         requestPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE);
         requestPermission(Manifest.permission.READ_EXTERNAL_STORAGE);
 
@@ -526,7 +526,7 @@ public class Nexmon extends AppCompatActivity {
         Intent intent = new Intent();
         intent.setAction(Intent.ACTION_VIEW);
         intent.addCategory(Intent.CATEGORY_BROWSABLE);
-        intent.setData(Uri.parse("http://nexmon.org"));
+        intent.setData(Uri.parse("https://nexmon.org"));
         startActivity(intent);
     }
 

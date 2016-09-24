@@ -618,7 +618,7 @@
                 android:layout_height="wrap_content"
                 android:autoLink="web"
                 android:paddingBottom="10dp"
-                android:text="Nexmon was developed in the Secure Mobile Networking Lab (SEEMOO) at the Technische Universität Darmstadt (TU Darmstadt) in Germany. All sources are available under http://nexmon.org. You can follow us on Twitter https://twitter.com/nexmon_dev" />
+                android:text="Nexmon was developed in the Secure Mobile Networking Lab (SEEMOO) at the Technische Universität Darmstadt (TU Darmstadt) in Germany. All sources are available under https://nexmon.org. You can follow us on Twitter https://twitter.com/nexmon_dev" />
 
             <LinearLayout
                 android:layout_width="match_parent"
