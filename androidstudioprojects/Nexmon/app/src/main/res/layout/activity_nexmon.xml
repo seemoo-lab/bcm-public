@@ -93,6 +93,14 @@
                     android:textColor="@android:color/tab_indicator_text" />
 
                 <CheckBox
+                    android:id="@+id/chkLibfakeioctl"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="top"
+                    android:text="libfakeioctl: library used with LD_PRELOAD to hook ioctl calls to fake an interface type to indicate a monitor mode interface."
+                    android:textColor="@android:color/tab_indicator_text" />
+
+                <CheckBox
                     android:id="@+id/chkDhdutil"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -117,11 +125,35 @@
                     android:textColor="@android:color/tab_indicator_text" />
 
                 <CheckBox
-                    android:id="@+id/chkLibfakeioctl"
+                    android:id="@+id/chkNetcat"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="top"
-                    android:text="libfakeioctl: library used with LD_PRELOAD to hook ioctl calls to fake an interface type to indicate a monitor mode interface."
+                    android:text="netcat: the swiss army knife for arbitrary TCP and UDP connections."
+                    android:textColor="@android:color/tab_indicator_text" />
+
+                <CheckBox
+                    android:id="@+id/chkIw"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="top"
+                    android:text="iw: wireless device manipulation utility."
+                    android:textColor="@android:color/tab_indicator_text" />
+
+                <CheckBox
+                    android:id="@+id/chkWirelessTools"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="top"
+                    android:text="wireless-tools: iwconfig, iwlist and iwpriv."
+                    android:textColor="@android:color/tab_indicator_text" />
+
+                <CheckBox
+                    android:id="@+id/chkMdk3"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="top"
+                    android:text="mdk3: proof-of-concept tool to exploit common IEEE 802.11 protocol weaknesses."
                     android:textColor="@android:color/tab_indicator_text" />
 
                 <TextView

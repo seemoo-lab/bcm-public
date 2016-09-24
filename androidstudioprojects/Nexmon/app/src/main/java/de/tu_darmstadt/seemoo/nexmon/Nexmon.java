@@ -3,6 +3,7 @@ package de.tu_darmstadt.seemoo.nexmon;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
 import android.net.Uri;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -18,6 +19,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.stericson.RootShell.*;
+import com.stericson.RootShell.exceptions.RootDeniedException;
 import com.stericson.RootShell.execution.Command;
 
 import java.io.File;
@@ -25,6 +27,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.concurrent.TimeoutException;
 
 public class Nexmon extends AppCompatActivity {
     static {
@@ -40,6 +43,10 @@ public class Nexmon extends AppCompatActivity {
     private CheckBox chkTcpdump;
     private CheckBox chkAircrack;
     private CheckBox chkLibfakeioctl;
+    private CheckBox chkNetcat;
+    private CheckBox chkIw;
+    private CheckBox chkWirelessTools;
+    private CheckBox chkMdk3;
     private Spinner spnBinInstallLocation;
     private Spinner spnLibInstallLocation;
     private TextView tvFirmwareVersionOutput;
@@ -76,6 +83,10 @@ public class Nexmon extends AppCompatActivity {
         chkTcpdump = (CheckBox) findViewById(R.id.chkTcpdump);
         chkAircrack = (CheckBox) findViewById(R.id.chkAircrack);
         chkLibfakeioctl = (CheckBox) findViewById(R.id.chkLibfakeioctl);
+        chkNetcat = (CheckBox) findViewById(R.id.chkNetcat);
+        chkIw = (CheckBox) findViewById(R.id.chkIw);
+        chkWirelessTools = (CheckBox) findViewById(R.id.chkWirelessTools);
+        chkMdk3 = (CheckBox) findViewById(R.id.chkMdk3);
         spnBinInstallLocation = (Spinner) findViewById(R.id.spnBinInstallLocation);
         spnLibInstallLocation = (Spinner) findViewById(R.id.spnLibInstallLocation);
         tvFirmwareVersionOutput = (TextView) findViewById(R.id.tvFirmwareVersionOutput);
@@ -136,17 +147,20 @@ public class Nexmon extends AppCompatActivity {
         }
     }
 
-    private String copyRawResource(int id, String targetFilename) throws IOException {
-        String filename;
-        InputStream in = getResources().openRawResource(id);
-        OutputStream out = null;
-        File outFile = new File(getExternalFilesDir(null), targetFilename);
-        filename = outFile.getAbsolutePath();
-        out = new FileOutputStream(outFile);
-        copyFile(in, out);
-        if (in != null) in.close();
-        if (out != null) out.close();
-        return filename;
+    private void extractAssets() throws IOException {
+        AssetManager assetManager = getAssets();
+        String[] files = null;
+        files = assetManager.list("nexmon");
+        if (files != null) for (String filename : files) {
+            InputStream in = null;
+            OutputStream out = null;
+            in = assetManager.open("nexmon/" + filename);
+            File outFile = new File(getExternalFilesDir(null), filename);
+            out = new FileOutputStream(outFile);
+            copyFile(in, out);
+            if (in != null) in.close();
+            if (out != null) out.close();
+        }
     }
 
     public void onClickAgreeToDisclaimer(View v) {
@@ -175,58 +189,95 @@ public class Nexmon extends AppCompatActivity {
         }
     }
 
-    private Command createCopyCommand(String installLocation, String srcFilename, String filename) {
-        return new Command(0, "mount -o remount,rw /system",
-                "cp " + srcFilename + " " + installLocation,
-                "chmod 755 " + installLocation + filename);
+    private void copyExtractedAsset(String installLocation, String filename) throws TimeoutException, RootDeniedException, IOException {
+        RootShell.getShell(true).add(new Command(0, "mount -o remount,rw /system",
+                "cp " + getExternalFilesDir(null) + "/" + filename + " " + installLocation,
+                "chmod 755 " + installLocation + "/" + filename) {
+            @Override
+            public void commandOutput(int id, String line) {
+                Toast.makeText(getApplicationContext(), line, Toast.LENGTH_SHORT).show();
+
+                //MUST call the super method when overriding!
+                super.commandOutput(id, line);
+            }
+        });
     }
 
     public void onClickInstall(View v) {
         String binInstallLocation = spnBinInstallLocation.getSelectedItem().toString();
         String libInstallLocation = spnLibInstallLocation.getSelectedItem().toString();
 
-        if (chkDhdutil.isChecked()) {
-            toast("Installing dhdutil ...");
-            try {
-                String srcFilename = copyRawResource(R.raw.dhdutil, "dhdutil");
-                RootShell.getShell(true).add(createCopyCommand(binInstallLocation, srcFilename, "dhdutil"));
-            } catch (Exception e) {
-                e.printStackTrace();
-                toastLogcatError();
-            }
-        }
+        try {
+            extractAssets();
 
-        if (chkNexutil.isChecked()) {
-            toast("Installing nexutil ...");
-            try {
-                String srcFilename = copyRawResource(R.raw.nexutil, "nexutil");
-                RootShell.getShell(true).add(createCopyCommand(binInstallLocation, srcFilename, "nexutil"));
-            } catch (Exception e) {
-                e.printStackTrace();
-                toastLogcatError();
+            if (chkDhdutil.isChecked()) {
+                toast("Installing dhdutil ...");
+                copyExtractedAsset(binInstallLocation, "dhdutil");
             }
-        }
 
-        if (chkTcpdump.isChecked()) {
-            toast("Installing tcpdump ...");
-            try {
-                String srcFilename = copyRawResource(R.raw.tcpdump, "tcpdump");
-                RootShell.getShell(true).add(createCopyCommand(binInstallLocation, srcFilename, "nexutil"));
-            } catch (Exception e) {
-                e.printStackTrace();
-                toastLogcatError();
+            if (chkNexutil.isChecked()) {
+                toast("Installing nexutil ...");
+                copyExtractedAsset(binInstallLocation, "nexutil");
             }
-        }
 
-        if (chkLibfakeioctl.isChecked()) {
-            toast("Installing libfakeioctl.so ...");
-            try {
-                String srcFilename = copyRawResource(R.raw.libfakeioctl, "libfakeioctl.so");
-                RootShell.getShell(true).add(createCopyCommand(libInstallLocation, srcFilename, "libfakeioctl.so"));
-            } catch (Exception e) {
-                e.printStackTrace();
-                toastLogcatError();
+            if (chkTcpdump.isChecked()) {
+                toast("Installing tcpdump ...");
+                copyExtractedAsset(binInstallLocation, "tcpdump");
             }
+
+            if (chkLibfakeioctl.isChecked()) {
+                toast("Installing tcpdump ...");
+                copyExtractedAsset(libInstallLocation, "libfakeioctl.so");
+            }
+
+            if (chkAircrack.isChecked()) {
+                toast("Installing aircrack-ng suite ...");
+                copyExtractedAsset(binInstallLocation, "airbase-ng");
+                copyExtractedAsset(binInstallLocation, "aircrack-ng");
+                copyExtractedAsset(binInstallLocation, "airdecap-ng");
+                copyExtractedAsset(binInstallLocation, "airdecloak-ng");
+                copyExtractedAsset(binInstallLocation, "aireplay-ng");
+                copyExtractedAsset(binInstallLocation, "airodump-ng");
+                copyExtractedAsset(binInstallLocation, "airolib-ng");
+                copyExtractedAsset(binInstallLocation, "airserv-ng");
+                copyExtractedAsset(binInstallLocation, "airtun-ng");
+                copyExtractedAsset(binInstallLocation, "besside-ng");
+                copyExtractedAsset(binInstallLocation, "buddy-ng");
+                copyExtractedAsset(binInstallLocation, "easside-ng");
+                copyExtractedAsset(binInstallLocation, "ivstools");
+                copyExtractedAsset(binInstallLocation, "kstats");
+                copyExtractedAsset(binInstallLocation, "makeivs-ng");
+                copyExtractedAsset(binInstallLocation, "packetforge-ng");
+                copyExtractedAsset(binInstallLocation, "tkiptun-ng");
+                copyExtractedAsset(binInstallLocation, "wesside-ng");
+                copyExtractedAsset(binInstallLocation, "wpaclean");
+            }
+
+            if (chkNetcat.isChecked()) {
+                toast("Installing netcat ...");
+                copyExtractedAsset(binInstallLocation, "nc");
+            }
+
+            if (chkIw.isChecked()) {
+                toast("Installing iw ...");
+                copyExtractedAsset(binInstallLocation, "iw");
+            }
+
+            if (chkWirelessTools.isChecked()) {
+                toast("Installing wireless-tools ...");
+                copyExtractedAsset(binInstallLocation, "iwconfig");
+                copyExtractedAsset(binInstallLocation, "iwlist");
+                copyExtractedAsset(binInstallLocation, "iwpriv");
+            }
+
+            if (chkMdk3.isChecked()) {
+                toast("Installing mdk3 ...");
+                copyExtractedAsset(binInstallLocation, "mdk3");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            toastLogcatError();
         }
     }
 
@@ -294,17 +345,9 @@ public class Nexmon extends AppCompatActivity {
 
     public void onClickInstallNexmonFirmware(View v) {
         try {
-            String filename = copyRawResource(R.raw.fw_bcmdhd, "fw_bcmdhd.bin");
-            Command command = new Command(0, "mount -o remount,rw /system", "cp " + filename + " /vendor/firmware/fw_bcmdhd.bin") {
-                @Override
-                public void commandOutput(int id, String line) {
-                    Toast.makeText(getApplicationContext(), line, Toast.LENGTH_SHORT).show();
-
-                    //MUST call the super method when overriding!
-                    super.commandOutput(id, line);
-                }
-            };
-            RootShell.getShell(true).add(command);
+            extractAssets();
+            toast("Installing fw_bcmdhd.bin ...");
+            copyExtractedAsset("/vendor/firmware/", "fw_bcmdhd.bin");
         } catch (Exception e) {
             e.printStackTrace();
             toastLogcatError();
