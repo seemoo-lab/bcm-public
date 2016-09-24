@@ -154,24 +154,24 @@ main(int argc, char **argv)
     if(set_monitor) {
         buf = set_monitor_value;
         ret = nex_ioctl(&ifr, WLC_SET_MONITOR, &buf, 4, true);
-        printf("ret: %d\n", ret);
+        //printf("ret: %d\n", ret);
     }
 
     if(set_promisc) {
         buf = set_promisc_value;
         ret = nex_ioctl(&ifr, WLC_SET_PROMISC, &buf, 4, true);
-        printf("ret: %d\n", ret);
+        //printf("ret: %d\n", ret);
     }
 
     if(get_monitor) {
         ret = nex_ioctl(&ifr, WLC_GET_MONITOR, &buf, 4, false);
-        printf("ret: %d\n", ret);
+        //printf("ret: %d\n", ret);
         printf("monitor: %d\n", buf);
     }
 
     if(get_promisc) {
         ret = nex_ioctl(&ifr, WLC_GET_PROMISC, &buf, 4, false);
-        printf("ret: %d\n", ret);
+        //printf("ret: %d\n", ret);
         printf("promisc: %d\n", buf);
     }
 

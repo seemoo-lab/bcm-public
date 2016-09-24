@@ -1,7 +1,7 @@
 all: ../../bin/iw
 
 ../../bin/iw: libs/armeabi/iw
-	cp libs/armeabi/iw ../../bin
+	cp $< $@
 
 libs/armeabi/iw: Android.mk
 #ifneq ("$(wildcard $(../../../../android/android-ndk-r10e/ndk-build))","")
