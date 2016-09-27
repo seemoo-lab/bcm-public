@@ -348,6 +348,17 @@ public class Nexmon extends AppCompatActivity {
             extractAssets();
             toast("Installing fw_bcmdhd.bin ...");
             copyExtractedAsset("/vendor/firmware/", "fw_bcmdhd.bin");
+
+            Command command = new Command(0, "ifconfig wlan0 down") {
+                @Override
+                public void commandOutput(int id, String line) {
+                    Toast.makeText(getApplicationContext(), line, Toast.LENGTH_SHORT).show();
+
+                    //MUST call the super method when overriding!
+                    super.commandOutput(id, line);
+                }
+            };
+            RootShell.getShell(true).add(command);
         } catch (Exception e) {
             e.printStackTrace();
             toastLogcatError();
@@ -505,7 +516,8 @@ public class Nexmon extends AppCompatActivity {
             Command command = new Command(0, "LD_PRELOAD=libfakeioctl.so aireplay-ng --test wlan0") {
                 @Override
                 public void commandOutput(int id, String line) {
-                    tvAircrackFrameInjectionOutput.append(line + "\n");
+                    if(line.length() != 0)
+                        tvAircrackFrameInjectionOutput.append(line + "\n");
 
                     //MUST call the super method when overriding!
                     super.commandOutput(id, line);

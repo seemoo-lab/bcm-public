@@ -65,17 +65,6 @@ struct bdc_radiotap_header {
     struct ieee80211_radiotap_header radiotap;
 } __attribute__((packed));
 
- /**
- *  This hook is used to change parameters on calls to dma_attach. to increse the 
- *  rxextheadroom size to have enough space in the sk_buff of a received frame to 
- *  append bdc and radiotap headers
- */
-struct dma_info*
-dma_attach_hook(void *osh, char *name, void* sih, unsigned int dmaregstx, unsigned int dmaregsrx, unsigned int ntxd, unsigned int nrxd, unsigned int rxbufsize, int rxextheadroom, unsigned int nrxpost, unsigned int rxoffset, void *msg_level)
-{
-    return dma_attach(osh, name, sih, dmaregstx, dmaregsrx, ntxd, nrxd, rxbufsize, 512, nrxpost, rxoffset, msg_level);
-}
-
 /**
  *  add data to the start of a buffer
  */
@@ -165,13 +154,15 @@ inject_frame(struct wlc_info *wlc, struct sk_buff *p)
     // parse radiotap header
     rtap_len = *((char *)(p->data + 2));
     rtap_header = (struct ieee80211_radiotap_header *) p->data;
+    
     int ret = ieee80211_radiotap_iterator_init(&iterator, rtap_header, rtap_len);
+    
     if(ret) {
+        pkt_buf_free_skb(wlc->osh, p, 0);
         printf("rtap_init error\n");
         return 0;
-    } else {
-        //printf("rtap_init ok, rtap_len: %d\n", rtap_len);
     }
+
     while(!ret) {
         ret = ieee80211_radiotap_iterator_next(&iterator);
         if(ret) {
@@ -218,8 +209,8 @@ handle_sdio_xmit_request_hook(void *sdio_hw, struct sk_buff *p)
     struct wl_info *wl = *(*((struct wl_info ***) sdio_hw + 15) + 6);
     struct wlc_info *wlc = wl->wlc;
 
-    if (wlc->monitor && p != 0 && p->data != 0 && ((short *) p->data)[1] == 0) {
-        // check if in monitor mode and if first two bytes in frame correspond to radiotap header, if true, inject frame
+    if (wlc->monitor && p != 0 && p->data != 0 && ((short *) p->data)[2] == 0) {
+        // check if in monitor mode and if first two bytes in the frame correspond to a radiotap header, if true, inject frame
         return inject_frame(wlc, p);
     } else {
         // otherwise, handle frame normally
@@ -246,13 +237,6 @@ BLPatch(wlc_ucode_write_compressed, wlc_ucode_write_compressed);
 __attribute__((at("0x18DA30", "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243)))
 __attribute__((at("0x18DB20", "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
 BLPatch(wl_monitor_hook, wl_monitor_hook);
-
-/*
-// Hook the call to dma_attach in wlc_bmac_attach_dmapio
-__attribute__((at("0x1F4FCE", "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243)))
-__attribute__((at("0x1F4FDA", "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
-BLPatch(dma_attach_hook, dma_attach_hook);
-*/
 
 // Hook the call to handle_sdio_xmit_request_hook in sdio_header_parsing_from_sk_buff
 __attribute__((at("0x182AAA", "", CHIP_VER_BCM4339, FW_VER_ALL)))
