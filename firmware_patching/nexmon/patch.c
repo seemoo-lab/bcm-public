@@ -220,10 +220,8 @@ handle_sdio_xmit_request_hook(void *sdio_hw, struct sk_buff *p)
 
     if (wlc->monitor && p != 0 && p->data != 0 && ((short *) p->data)[1] == 0) {
         // check if in monitor mode and if first two bytes in frame correspond to radiotap header, if true, inject frame
-        //printf("a\n");
         return inject_frame(wlc, p);
     } else {
-        //printf("b\n");
         // otherwise, handle frame normally
         return handle_sdio_xmit_request_ram(sdio_hw, p);
     }
@@ -249,10 +247,12 @@ __attribute__((at("0x18DA30", "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r5
 __attribute__((at("0x18DB20", "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
 BLPatch(wl_monitor_hook, wl_monitor_hook);
 
+/*
 // Hook the call to dma_attach in wlc_bmac_attach_dmapio
 __attribute__((at("0x1F4FCE", "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243)))
 __attribute__((at("0x1F4FDA", "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
 BLPatch(dma_attach_hook, dma_attach_hook);
+*/
 
 // Hook the call to handle_sdio_xmit_request_hook in sdio_header_parsing_from_sk_buff
 __attribute__((at("0x182AAA", "", CHIP_VER_BCM4339, FW_VER_ALL)))
