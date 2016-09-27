@@ -228,7 +228,10 @@ handle_sdio_xmit_request_hook(void *sdio_hw, struct sk_buff *p)
     }
 }
 
-//BLPatch(0x1f4f08, wlc_ucode_write_compressed);
+// Hook the call to wlc_ucode_write in wlc_ucode_download
+__attribute__((at("0x1F4F08", "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243)))
+__attribute__((at("0x1F4F14", "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
+BLPatch(wlc_ucode_write_compressed, wlc_ucode_write_compressed);
 
 // Hook the call to wl_monitor in wlc_monitor
 __attribute__((at("0x18DA30", "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243)))
@@ -256,11 +259,11 @@ StringPatch(version_string, "nexmon (" __DATE__ " " __TIME__ ")\n");
 /**
  *  Just inserted to produce an error while linking, when we try to overwrite memory used by the original firmware
  */
-__attribute__((at("0x180800", "dummy", CHIP_VER_BCM4339, FW_VER_ALL)))
+__attribute__((at("0x180800", "dummy_keep", CHIP_VER_BCM4339, FW_VER_ALL)))
 Dummy(0x180800);
 
 /**
  *  Just inserted to produce an error while linking, when we try to overwrite memory used by the original firmware
  */
-__attribute__((at("0x1AAEB4", "dummy", CHIP_VER_BCM4339, FW_VER_ALL)))
+__attribute__((at("0x1AAEB4", "dummy_keep", CHIP_VER_BCM4339, FW_VER_ALL)))
 Dummy(0x1AAEB4);
