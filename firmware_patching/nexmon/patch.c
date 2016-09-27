@@ -217,15 +217,26 @@ handle_sdio_xmit_request_hook(void *sdio_hw, struct sk_buff *p)
 {
     struct wl_info *wl = *(*((struct wl_info ***) sdio_hw + 15) + 6);
     struct wlc_info *wlc = wl->wlc;
-    short *data = (short *) p->data;
 
-    if (wlc->monitor && data[1] == 0) {
+    if (wlc->monitor && p != 0 && p->data != 0 && ((short *) p->data)[1] == 0) {
         // check if in monitor mode and if first two bytes in frame correspond to radiotap header, if true, inject frame
+        //printf("a\n");
         return inject_frame(wlc, p);
     } else {
+        //printf("b\n");
         // otherwise, handle frame normally
         return handle_sdio_xmit_request_ram(sdio_hw, p);
     }
+}
+
+int
+wlc_ioctl_hook(void *wlc, int cmd, void *arg, int len, void *wlc_if)
+{
+//    if (cmd != 262 && cmd != 263) {
+//        printf("ioctl: %d\n", cmd);    
+//    }
+    
+    return wlc_ioctl(wlc, cmd, arg, len, wlc_if);
 }
 
 // Hook the call to wlc_ucode_write in wlc_ucode_download
@@ -250,6 +261,11 @@ BPatch(handle_sdio_xmit_request_hook, handle_sdio_xmit_request_hook);
 // Replace the entry in the function pointer table by handle_sdio_xmit_request_hook
 __attribute__((at("0x180BCC", "", CHIP_VER_BCM4339, FW_VER_ALL)))
 GenericPatch4(handle_sdio_xmit_request_hook, handle_sdio_xmit_request_hook + 1);
+
+// Replace address of wlc_ioctl in wlc_attach
+__attribute__((at("0x1F347C", "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243)))
+__attribute__((at("0x1F3488", "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
+GenericPatch4(wlc_ioctl, wlc_ioctl_hook + 1);
 
 // Patch the "wl%d: Broadcom BCM%04x 802.11 Wireless Controller %s\n" string
 __attribute__((at("0x1FD31B", "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243)))

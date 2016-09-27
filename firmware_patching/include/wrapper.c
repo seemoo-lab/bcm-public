@@ -344,6 +344,7 @@ function_with_huge_jump_table(void *wlc, int a2, int cmd, int a4, int a5, unsign
 RETURN_DUMMY
 
 AT(CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243, "0x183798") 
+AT(CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704, "0x183798")
 void *
 handle_sdio_xmit_request_ram(void *sdio_hw, void *p) 
 RETURN_DUMMY
@@ -504,8 +505,8 @@ int
 wlc_init(void *wlc) 
 RETURN_DUMMY
 
-AT(CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704, "0x19560C")
 AT(CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243, "0x19551C") 
+AT(CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704, "0x19560C")
 int 
 wlc_ioctl(void *wlc, int cmd, void *arg, int len, void *wlc_if) 
 RETURN_DUMMY
@@ -525,8 +526,8 @@ int
 wlc_iovar_op(void *wlc, char *varname, void *params, int p_len, void *arg, int len, char set, void *wlcif) 
 RETURN_DUMMY
 
-AT(CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704, "0x18D738")
 AT(CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243, "0x18D648")
+AT(CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704, "0x18D738")
 void *
 wlc_monitor(void *wlc, void * wrxh, void *p, int wlc_if) 
 RETURN_DUMMY
