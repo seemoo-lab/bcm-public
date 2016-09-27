@@ -17,26 +17,57 @@ include ucode_compression_code.mk
 bcmdhd/bcmdhd.ko: check-nexmon-setup-env
 	make -C ../../kernel/ M=$$PWD/bcmdhd -j2
 
-patch.o: patch.c ../include/*.h ucode-compressed.c
+patch.o: patch.c ../include/*.h
 	$(CC)gcc \
 		-fplugin=../../buildtools/gcc-nexmon-plugin/nexmon.so \
-		-fplugin-arg-nexmon-objfile=patch.o \
-		-fplugin-arg-nexmon-ldfile=patch.generated.ld \
-		-fplugin-arg-nexmon-makefile=patch.generated.mk \
+		-fplugin-arg-nexmon-objfile=$@ \
+		-fplugin-arg-nexmon-ldfile=$(basename $@).generated.ld \
+		-fplugin-arg-nexmon-makefile=$(basename $@).generated.mk \
+		-fplugin-arg-nexmon-chipver=`printf "#include \"../include/firmware_version.h\"\n%s\n" $(NEXMON_CHIP) | $(CC)gcc -E -x c - | tail -n 1` \
+		-fplugin-arg-nexmon-fwver=`printf "#include \"../include/firmware_version.h\"\n%s\n" $(NEXMON_FW_VERSION) | $(CC)gcc -E -x c - | tail -n 1` \
+		-DNEXMON_CHIP=$(NEXMON_CHIP) \
+		-DNEXMON_FW_VERSION=$(NEXMON_FW_VERSION) \
+		-Wall -Werror -O2 -nostdlib -nostartfiles -ffreestanding -mthumb -march=armv7-r -ffunction-sections -fdata-sections -I../include -c $< -o $@
+
+radiotap.o: radiotap.c
+	$(CC)gcc \
+		-fplugin=../../buildtools/gcc-nexmon-plugin/nexmon.so \
+		-fplugin-arg-nexmon-objfile=$@ \
+		-fplugin-arg-nexmon-ldfile=$(basename $@).generated.ld \
+		-fplugin-arg-nexmon-makefile=$(basename $@).generated.mk \
+		-fplugin-arg-nexmon-chipver=`printf "#include \"../include/firmware_version.h\"\n%s\n" $(NEXMON_CHIP) | $(CC)gcc -E -x c - | tail -n 1` \
+		-fplugin-arg-nexmon-fwver=`printf "#include \"../include/firmware_version.h\"\n%s\n" $(NEXMON_FW_VERSION) | $(CC)gcc -E -x c - | tail -n 1` \
+		-DNEXMON_CHIP=$(NEXMON_CHIP) \
+		-DNEXMON_FW_VERSION=$(NEXMON_FW_VERSION) \
+		-Wall -Werror -O2 -nostdlib -nostartfiles -ffreestanding -mthumb -march=armv7-r -ffunction-sections -fdata-sections -I../include -c $< -o $@
+
+ucode_compression_code.o: ucode_compression_code.c ucode-compressed.c
+	$(CC)gcc \
+		-fplugin=../../buildtools/gcc-nexmon-plugin/nexmon.so \
+		-fplugin-arg-nexmon-objfile=$@ \
+		-fplugin-arg-nexmon-ldfile=$(basename $@).generated.ld \
+		-fplugin-arg-nexmon-makefile=$(basename $@).generated.mk \
+		-fplugin-arg-nexmon-chipver=`printf "#include \"../include/firmware_version.h\"\n%s\n" $(NEXMON_CHIP) | $(CC)gcc -E -x c - | tail -n 1` \
+		-fplugin-arg-nexmon-fwver=`printf "#include \"../include/firmware_version.h\"\n%s\n" $(NEXMON_FW_VERSION) | $(CC)gcc -E -x c - | tail -n 1` \
 		-DNEXMON_CHIP=$(NEXMON_CHIP) \
 		-DNEXMON_FW_VERSION=$(NEXMON_FW_VERSION) \
 		-Wall -Werror -O2 -nostdlib -nostartfiles -ffreestanding -mthumb -march=armv7-r -ffunction-sections -fdata-sections -I../include -c $< -o $@
 
 wrapper.o: ../include/wrapper.c
-	make -C ../wrapper NEXMON_CHIP=$(NEXMON_CHIP) NEXMON_FW_VERSION=$(NEXMON_FW_VERSION) WRAPPER_LD_FILE=$(NEXMON_FIRMWARE_PATCHING)/nexmon/wrapper.ld WRAPPER_OBJ_FILE=$(NEXMON_FIRMWARE_PATCHING)/nexmon/wrapper.o
+	make -C ../wrapper \
+		NEXMON_CHIP=$(NEXMON_CHIP) \
+		NEXMON_FW_VERSION=$(NEXMON_FW_VERSION) \
+		WRAPPER_LD_FILE=$(NEXMON_FIRMWARE_PATCHING)/nexmon/$(basename $@).generated.ld \
+		WRAPPER_OBJ_FILE=$(NEXMON_FIRMWARE_PATCHING)/nexmon/$@
 
-patch.elf: patch.ld patch.o wrapper.o ucode_compression_code.ld
+patch.elf: patch.ld patch.o wrapper.o radiotap.o ucode_compression_code.o ucode_compression_code.ld
 	$(CC)ld -T $< -o $@ --gc-sections --print-gc-sections -M
 
 fw_bcmdhd.bin: patch.elf $(ORIG_FW)
 	cp $(ORIG_FW) $@
 	$(CC)objcopy -O binary -j .text $< section.generated.bin && dd if=section.generated.bin of=$@ bs=1 conv=notrunc seek=$$((0x180020 - 0x180000))
 	make -f patch.generated.mk
+	make -f radiotap.generated.mk
 
 fw_bcmdhd.complete.bin : fw_bcmdhd.bin ../../bootimg_src/firmware/rom.bin
 	dd if=../../bootimg_src/firmware/rom.bin of=$@ bs=1
@@ -57,7 +88,7 @@ install-firmware: fw_bcmdhd.bin
 	adb shell 'su -c "cp /sdcard/fw_bcmdhd.bin /vendor/firmware/fw_bcmdhd.bin"'
 
 clean-firmware: FORCE
-	rm -f fw_bcmdhd.bin fw_bcmdhd.complete.bin fw_bcmdhd.complete.elf patch.o patch.elf ucode-compressed.c ucode-compressed.bin *.generated.* wrapper.o wrapper.ld
+	rm -f fw_bcmdhd.bin fw_bcmdhd.complete.bin fw_bcmdhd.complete.elf *.o patch.elf ucode-compressed.c ucode-compressed.bin *.generated.* wrapper.ld
 
 clean: clean-firmware
 	make -C ../../kernel/ M=$$PWD/bcmdhd clean

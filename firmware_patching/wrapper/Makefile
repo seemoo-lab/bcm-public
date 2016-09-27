@@ -13,6 +13,8 @@ $(WRAPPER_OBJ_FILE): ../include/wrapper.c
 		-fplugin=../../buildtools/gcc-nexmon-plugin/nexmon.so \
 		-fplugin-arg-nexmon-objfile=$(WRAPPER_OBJ_FILE) \
 		-fplugin-arg-nexmon-ldfile=$(WRAPPER_LD_FILE) \
+		-fplugin-arg-nexmon-chipver=`printf "#include \"../include/firmware_version.h\"\n%s\n" $(NEXMON_CHIP) | $(CC)gcc -E -x c - | tail -n 1` \
+		-fplugin-arg-nexmon-fwver=`printf "#include \"../include/firmware_version.h\"\n%s\n" $(NEXMON_FW_VERSION) | $(CC)gcc -E -x c - | tail -n 1` \
 		-DNEXMON_CHIP=$(NEXMON_CHIP) \
 		-DNEXMON_FW_VERSION=$(NEXMON_FW_VERSION) \
 		-Wall -Werror -O2 -nostdlib -nostartfiles -ffreestanding -mthumb -march=armv7-r -ffunction-sections -fdata-sections -I../include -c $< -o $@

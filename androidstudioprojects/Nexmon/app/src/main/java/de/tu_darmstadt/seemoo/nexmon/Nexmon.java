@@ -128,7 +128,7 @@ public class Nexmon extends AppCompatActivity {
         initializeInstallLocationSpinners();
 
         linDisclaimerDependent.setVisibility(LinearLayout.GONE);
-        
+
         requestPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE);
         requestPermission(Manifest.permission.READ_EXTERNAL_STORAGE);
 

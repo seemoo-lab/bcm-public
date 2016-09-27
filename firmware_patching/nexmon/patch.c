@@ -52,52 +52,13 @@
 #include <wrapper.h>            // wrapper definitions for functions that already exist in the firmware
 #include <structs.h>            // structures that are used by the code in the firmware
 #include <helper.h>             // useful helper functions
+#include <patcher.h>            // macros used to craete patches such as BLPatch, BPatch, ...
 #include <bcmdhd/bcmsdpcm.h>
 #include <bcmdhd/bcmcdc.h>
 #include "bcmdhd/include/bcmwifi_channels.h"
 #include "ieee80211_radiotap.h"
 #include "radiotap.h"
 #include "d11.h"
-
-#define AT(addr) __attribute__((at(addr)))
-
-#define BLPatch(addr, func) \
-    __attribute__((naked, at(#addr))) void \
-    bl_ ## addr(void) { asm("bl " #func "\n"); }
-
-#define BPatch(addr, func) \
-    __attribute__((naked, at(#addr))) void \
-    b_ ## addr(void) { asm("b " #func "\n"); }
-
-#define GenericPatch4(addr, val) \
-    __attribute__((at(#addr))) const unsigned int gp4_ ## addr = (unsigned int) (val);
-
-#define GenericPatch2(addr, val) \
-    __attribute__((at(#addr))) unsigned short gp2_ ## addr = (unsigned short) (val);
-
-#define GenericPatch1(addr, val) \
-    __attribute__((at(#addr))) unsigned char gp1_ ## addr = (unsigned char) (val);
-
-#define StringPatch(addr, val) \
-    __attribute__((naked,at(#addr))) void str_ ## addr(void) { asm(".ascii \"" val "\"\n.byte 0x00"); }
-
-#define Dummy(addr) \
-    void dummy_ ## addr(void) { ; }
-
-/**
- *  Contains tinflate_partial and other functions needed for deflate decompression
- */
-#include "ucode_compression_code.c"
-
-inline uint16_t
-get_unaligned_le16(uint8 *p) {
-    return p[0] | p[1] << 8;
-}
-
-inline uint32_t
-get_unaligned_le32(uint8 *p) {
-    return p[0] | p[1] << 8 | p[2] << 16 | p[3] << 24;
-}
 
 struct bdc_radiotap_header {
     struct bdc_header bdc;
@@ -131,7 +92,7 @@ skb_push(sk_buff *p, unsigned int len)
 }
 
 /**
- *  remove data to the start of a buffer
+ *  remove data from the start of a buffer
  */
 void *
 skb_pull(sk_buff *p, unsigned int len) {
@@ -180,253 +141,6 @@ wl_monitor_hook(struct wl_info *wl, struct wl_rxsts *sts, struct sk_buff *p)
     p_new->len -= 6;
 
     dngl_sendpkt(sdio_info, p_new, SDPCM_DATA_CHANNEL);
-}
-
-
-/* see: https://github.com/spotify/linux/blob/master/net/wireless/radiotap.c */
-
-/**
- * ieee80211_radiotap_iterator_init - radiotap parser iterator initialization
- * @iterator: radiotap_iterator to initialize
- * @radiotap_header: radiotap header to parse
- * @max_length: total length we can parse into (eg, whole packet length)
- *
- * Returns: 0 or a negative error code if there is a problem.
- *
- * This function initializes an opaque iterator struct which can then
- * be passed to ieee80211_radiotap_iterator_next() to visit every radiotap
- * argument which is present in the header.  It knows about extended
- * present headers and handles them.
- *
- * How to use:
- * call __ieee80211_radiotap_iterator_init() to init a semi-opaque iterator
- * struct ieee80211_radiotap_iterator (no need to init the struct beforehand)
- * checking for a good 0 return code.  Then loop calling
- * __ieee80211_radiotap_iterator_next()... it returns either 0,
- * -ENOENT if there are no more args to parse, or -1 if there is a problem.
- * The iterator's @this_arg member points to the start of the argument
- * associated with the current argument index that is present, which can be
- * found in the iterator's @this_arg_index member.  This arg index corresponds
- * to the IEEE80211_RADIOTAP_... defines.
- *
- * Radiotap header length:
- * You can find the CPU-endian total radiotap header length in
- * iterator->max_length after executing ieee80211_radiotap_iterator_init()
- * successfully.
- *
- * Alignment Gotcha:
- * You must take care when dereferencing iterator.this_arg
- * for multibyte types... the pointer is not aligned.  Use
- * get_unaligned((type *)iterator.this_arg) to dereference
- * iterator.this_arg for type "type" safely on all arches.
- *
- * Example code:
- * See Documentation/networking/radiotap-headers.txt
- */
-
-int ieee80211_radiotap_iterator_init(
-    struct ieee80211_radiotap_iterator *iterator,
-    struct ieee80211_radiotap_header *radiotap_header,
-    int max_length)
-{
-    /* Linux only supports version 0 radiotap format */
-    if (radiotap_header->it_version)
-        return -1;
-
-    /* sanity check for allowed length and radiotap length field */
-    if (max_length < get_unaligned_le16((uint8 *) &radiotap_header->it_len))
-        return -1;
-
-    iterator->rtheader = radiotap_header;
-    iterator->max_length = get_unaligned_le16((uint8 *) &radiotap_header->it_len);
-    iterator->arg_index = 0;
-    iterator->bitmap_shifter = get_unaligned_le32((uint8 *) &radiotap_header->it_present);
-    //The original radiotap header (without sub-header) consists of 8 byte
-    iterator->arg = (uint8 *)radiotap_header + sizeof(uint8) * 8;
-    iterator->this_arg = 0;
-
-    /* find payload start allowing for extended bitmap(s) */
-
-    if (iterator->bitmap_shifter & (1<<IEEE80211_RADIOTAP_EXT)) {
-        while (get_unaligned_le32(iterator->arg) & (1<<IEEE80211_RADIOTAP_EXT)) {
-            iterator->arg += sizeof(uint32);
-
-            /*
-             * check for insanity where the present bitmaps
-             * keep claiming to extend up to or even beyond the
-             * stated radiotap header length
-             */
-
-            if (((unsigned long)iterator->arg - (unsigned long)iterator->rtheader) > iterator->max_length)
-                return -1;
-        }
-
-        iterator->arg += sizeof(uint32);
-
-        /*
-         * no need to check again for blowing past stated radiotap
-         * header length, because ieee80211_radiotap_iterator_next
-         * checks it before it is dereferenced
-         */
-    }
-
-    /* we are all initialized happily */
-
-    return 0;
-}
-
-/* see: https://github.com/spotify/linux/blob/master/net/wireless/radiotap.c */
-
-/**
- * ieee80211_radiotap_iterator_next - return next radiotap parser iterator arg
- * @iterator: radiotap_iterator to move to next arg (if any)
- *
- * Returns: 0 if there is an argument to handle,
- * -ENOENT if there are no more args or -1
- * if there is something else wrong.
- *
- * This function provides the next radiotap arg index (IEEE80211_RADIOTAP_*)
- * in @this_arg_index and sets @this_arg to point to the
- * payload for the field.  It takes care of alignment handling and extended
- * present fields.  @this_arg can be changed by the caller (eg,
- * incremented to move inside a compound argument like
- * IEEE80211_RADIOTAP_CHANNEL).  The args pointed to are in
- * little-endian format whatever the endianess of your CPU.
- *
- * Alignment Gotcha:
- * You must take care when dereferencing iterator.this_arg
- * for multibyte types... the pointer is not aligned.  Use
- * get_unaligned((type *)iterator.this_arg) to dereference
- * iterator.this_arg for type "type" safely on all arches.
- */
-
-int ieee80211_radiotap_iterator_next(
-    struct ieee80211_radiotap_iterator *iterator)
-{
-
-    /*
-     * small length lookup table for all radiotap types we heard of
-     * starting from b0 in the bitmap, so we can walk the payload
-     * area of the radiotap header
-     *
-     * There is a requirement to pad args, so that args
-     * of a given length must begin at a boundary of that length
-     * -- but note that compound args are allowed (eg, 2 x u16
-     * for IEEE80211_RADIOTAP_CHANNEL) so total arg length is not
-     * a reliable indicator of alignment requirement.
-     *
-     * upper nybble: content alignment for arg
-     * lower nybble: content length for arg
-     */
-
-    uint8 rt_sizes[] = {
-        [IEEE80211_RADIOTAP_TSFT] = 0x88,
-        [IEEE80211_RADIOTAP_FLAGS] = 0x11,
-        [IEEE80211_RADIOTAP_RATE] = 0x11,
-        [IEEE80211_RADIOTAP_CHANNEL] = 0x24,
-        [IEEE80211_RADIOTAP_FHSS] = 0x22,
-        [IEEE80211_RADIOTAP_DBM_ANTSIGNAL] = 0x11,
-        [IEEE80211_RADIOTAP_DBM_ANTNOISE] = 0x11,
-        [IEEE80211_RADIOTAP_LOCK_QUALITY] = 0x22,
-        [IEEE80211_RADIOTAP_TX_ATTENUATION] = 0x22,
-        [IEEE80211_RADIOTAP_DB_TX_ATTENUATION] = 0x22,
-        [IEEE80211_RADIOTAP_DBM_TX_POWER] = 0x11,
-        [IEEE80211_RADIOTAP_ANTENNA] = 0x11,
-        [IEEE80211_RADIOTAP_DB_ANTSIGNAL] = 0x11,
-        [IEEE80211_RADIOTAP_DB_ANTNOISE] = 0x11,
-        [IEEE80211_RADIOTAP_RX_FLAGS] = 0x22,
-        [IEEE80211_RADIOTAP_TX_FLAGS] = 0x22,
-        [IEEE80211_RADIOTAP_RTS_RETRIES] = 0x11,
-        [IEEE80211_RADIOTAP_DATA_RETRIES] = 0x11,
-        /*
-         * add more here as they are defined in
-         * include/net/ieee80211_radiotap.h
-         */
-    };
-
-    /*
-     * for every radiotap entry we can at
-     * least skip (by knowing the length)...
-     */
-
-    while (iterator->arg_index < sizeof(rt_sizes)) {
-        int hit = 0;
-        int pad;
-
-        if (!(iterator->bitmap_shifter & 1))
-            goto next_entry; /* arg not present */
-
-        /*
-         * arg is present, account for alignment padding
-         *  8-bit args can be at any alignment
-         * 16-bit args must start on 16-bit boundary
-         * 32-bit args must start on 32-bit boundary
-         * 64-bit args must start on 64-bit boundary
-         *
-         * note that total arg size can differ from alignment of
-         * elements inside arg, so we use upper nybble of length
-         * table to base alignment on
-         *
-         * also note: these alignments are ** relative to the
-         * start of the radiotap header **.  There is no guarantee
-         * that the radiotap header itself is aligned on any
-         * kind of boundary.
-         *
-         * the above is why get_unaligned() is used to dereference
-         * multibyte elements from the radiotap area
-         */
-
-        pad = (((unsigned long)iterator->arg) -
-            ((unsigned long)iterator->rtheader)) &
-            ((rt_sizes[iterator->arg_index] >> 4) - 1);
-
-        if (pad)
-            iterator->arg +=
-                (rt_sizes[iterator->arg_index] >> 4) - pad;
-
-        /*
-         * this is what we will return to user, but we need to
-         * move on first so next call has something fresh to test
-         */
-        iterator->this_arg_index = iterator->arg_index;
-        iterator->this_arg = iterator->arg;
-        hit = 1;
-
-        /* internally move on the size of this arg */
-        iterator->arg += rt_sizes[iterator->arg_index] & 0x0f;
-
-        /*
-         * check for insanity where we are given a bitmap that
-         * claims to have more arg content than the length of the
-         * radiotap section.  We will normally end up equalling this
-         * max_length on the last arg, never exceeding it.
-         */
-        if (((unsigned long)iterator->arg - (unsigned long)iterator->rtheader) > iterator->max_length)
-            return -1;
-
-    next_entry:
-        iterator->arg_index++;
-        if ((iterator->arg_index & 31) == 0) {
-            /* completed current u32 bitmap */
-            if (iterator->bitmap_shifter & 1) {
-                /* b31 was set, there is more */
-                /* move to next u32 bitmap */
-                iterator->bitmap_shifter =
-                    get_unaligned_le32((uint8 *) iterator->next_bitmap);
-                iterator->next_bitmap++;
-            } else
-                /* no more bitmaps: end */
-                iterator->arg_index = sizeof(rt_sizes);
-        } else /* just try the next bit */
-            iterator->bitmap_shifter >>= 1;
-
-        /* if we found a valid arg earlier, return it now */
-        if (hit)
-            return 0;
-    }
-
-    /* we don't know how to handle any more args, we're done */
-    return -2;
 }
 
 void *
@@ -517,38 +231,36 @@ handle_sdio_xmit_request_hook(void *sdio_hw, struct sk_buff *p)
 //BLPatch(0x1f4f08, wlc_ucode_write_compressed);
 
 // Hook the call to wl_monitor in wlc_monitor
-#if NEXMON_FW_VERSION == FW_VER_6_37_32_RC23_34_43_r639704
-BLPatch(0x18DB20, wl_monitor_hook);
-#else
-BLPatch(0x18DA30, wl_monitor_hook);
-#endif
+__attribute__((at("0x18DA30", "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243)))
+__attribute__((at("0x18DB20", "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
+BLPatch(wl_monitor_hook, wl_monitor_hook);
 
 // Hook the call to dma_attach in wlc_bmac_attach_dmapio
-#if NEXMON_FW_VERSION == FW_VER_6_37_32_RC23_34_43_r639704
-BLPatch(0x1F4FDA, dma_attach_hook);
-#else
-BLPatch(0x1F4FCE, dma_attach_hook);
-#endif
+__attribute__((at("0x1F4FCE", "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243)))
+__attribute__((at("0x1F4FDA", "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
+BLPatch(dma_attach_hook, dma_attach_hook);
 
 // Hook the call to handle_sdio_xmit_request_hook in sdio_header_parsing_from_sk_buff
-BPatch(0x182AAA, handle_sdio_xmit_request_hook);
+__attribute__((at("0x182AAA", "", CHIP_VER_BCM4339, FW_VER_ALL)))
+BPatch(handle_sdio_xmit_request_hook, handle_sdio_xmit_request_hook);
 
 // Replace the entry in the function pointer table by handle_sdio_xmit_request_hook
-GenericPatch4(0x180BCC, handle_sdio_xmit_request_hook + 1);
+__attribute__((at("0x180BCC", "", CHIP_VER_BCM4339, FW_VER_ALL)))
+GenericPatch4(handle_sdio_xmit_request_hook, handle_sdio_xmit_request_hook + 1);
 
 // Patch the "wl%d: Broadcom BCM%04x 802.11 Wireless Controller %s\n" string
-#if NEXMON_FW_VERSION == FW_VER_6_37_32_RC23_34_43_r639704
-StringPatch(0x1FD327, "nexmon (" __DATE__ " " __TIME__ ")\n");
-#else
-StringPatch(0x1FD31B, "nexmon (" __DATE__ " " __TIME__ ")\n");
-#endif
+__attribute__((at("0x1FD31B", "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243)))
+__attribute__((at("0x1FD327", "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
+StringPatch(version_string, "nexmon (" __DATE__ " " __TIME__ ")\n");
 
 /**
  *  Just inserted to produce an error while linking, when we try to overwrite memory used by the original firmware
  */
+__attribute__((at("0x180800", "dummy", CHIP_VER_BCM4339, FW_VER_ALL)))
 Dummy(0x180800);
 
 /**
  *  Just inserted to produce an error while linking, when we try to overwrite memory used by the original firmware
  */
+__attribute__((at("0x1AAEB4", "dummy", CHIP_VER_BCM4339, FW_VER_ALL)))
 Dummy(0x1AAEB4);

@@ -12,13 +12,16 @@ static const char *fwfile = "fw_bcmdhd.bin";
 static const char *ldfile = "/dev/null";
 static const char *makefile = "/dev/null";
 static unsigned int ramstart = 0x180000;
+static unsigned int chipver = 0;
+static unsigned int fwver = 0;
+
 static FILE *ld_fp, *make_fp;
 
 static struct attribute_spec user_attr =
 {
 	.name = "at",
 	.min_length = 1,
-	.max_length = 2,
+	.max_length = 4,
 	.decl_required = true,
 	.type_required = false,
 	.function_type_required = false,
@@ -29,15 +32,31 @@ static struct attribute_spec user_attr =
 static tree
 handle_nexmon_place_at_attribute(tree *node, tree name, tree args, int flags, bool *no_add_attr)
 {
-	tree itr;
+	//tree itr; 
+	tree tmp_tree;
 
 	const char *decl_name = IDENTIFIER_POINTER(DECL_NAME(*node));
 	//const char *attr_name = IDENTIFIER_POINTER(name);
 	//const char *param1_str = TREE_STRING_POINTER(TREE_VALUE(args));
 	unsigned int addr = (unsigned int) strtol(TREE_STRING_POINTER(TREE_VALUE(args)), NULL, 0);
 	bool is_dummy = false;
-	if(TREE_CHAIN(args) != NULL_TREE) {
-		is_dummy = !strcmp(TREE_STRING_POINTER(TREE_VALUE(TREE_CHAIN(args))), "dummy");
+	bool is_keep = false;
+	unsigned int chipver_local = 0;
+	unsigned int fwver_local = 0;
+	tmp_tree = TREE_CHAIN(args);
+	if(tmp_tree != NULL_TREE) {
+		is_dummy = !strcmp(TREE_STRING_POINTER(TREE_VALUE(tmp_tree)), "dummy");
+		is_keep = !strcmp(TREE_STRING_POINTER(TREE_VALUE(tmp_tree)), "dummy_keep");
+
+		tmp_tree = TREE_CHAIN(tmp_tree);
+		if(tmp_tree != NULL_TREE) {
+			chipver_local = TREE_INT_CST_LOW(TREE_VALUE(tmp_tree));
+
+			tmp_tree = TREE_CHAIN(tmp_tree);
+			if(tmp_tree != NULL_TREE) {
+				fwver_local = TREE_INT_CST_LOW(TREE_VALUE(tmp_tree));
+			}
+		}
 	}
 
 	printf("decl_name: %s\n", decl_name);
@@ -52,17 +71,21 @@ handle_nexmon_place_at_attribute(tree *node, tree name, tree args, int flags, bo
 		DECL_COMMON_CHECK (*node)->decl_common.align = 16;
 	//printf("align: %d\n", DECL_COMMON_CHECK (*node)->decl_common.align);
 
-	for(itr = args; itr != NULL_TREE; itr = TREE_CHAIN(itr)) {
-		printf("arg: %s %08x\n", TREE_STRING_POINTER(TREE_VALUE(itr)), (unsigned int) strtol(TREE_STRING_POINTER(TREE_VALUE(itr)), NULL, 0));
+	//for(itr = args; itr != NULL_TREE; itr = TREE_CHAIN(itr)) {
+	//	printf("arg: %s %08x\n", TREE_STRING_POINTER(TREE_VALUE(itr)), (unsigned int) strtol(TREE_STRING_POINTER(TREE_VALUE(itr)), NULL, 0));
 		//debug_tree(itr);
 		//debug_tree(TREE_VALUE(itr));
-	}
+	//}
 
-	if (is_dummy) {
-		fprintf(ld_fp, ".text.dummy.%s 0x%08x : { %s (.*.%s) }\n", decl_name, addr, objfile, decl_name);
-	} else {
-		fprintf(ld_fp, ".text.%s 0x%08x : { KEEP(%s (.*.%s)) }\n", decl_name, addr, objfile, decl_name);
-		fprintf(make_fp, "\t$(CC)objcopy -O binary -j .text.%s $< section.generated.bin && dd if=section.generated.bin of=$@ bs=1 conv=notrunc seek=$$((0x%08x - 0x%08x))\n", decl_name, addr, ramstart);
+	if ((chipver == 0 || chipver_local == 0 || chipver == chipver_local) && (fwver == 0 || fwver_local == 0 || fwver == fwver_local)) {
+		if (is_dummy) {
+			fprintf(ld_fp, ".text.dummy.%s 0x%08x : { %s (.*.%s) }\n", decl_name, addr, objfile, decl_name);
+		} else if (is_keep) {
+			fprintf(ld_fp, ".text.dummy.%s 0x%08x : { KEEP(%s (.*.%s)) }\n", decl_name, addr, objfile, decl_name);
+		} else {
+			fprintf(ld_fp, ".text.%s 0x%08x : { KEEP(%s (.*.%s)) }\n", decl_name, addr, objfile, decl_name);
+			fprintf(make_fp, "\t$(CC)objcopy -O binary -j .text.%s $< section.generated.bin && dd if=section.generated.bin of=$@ bs=1 conv=notrunc seek=$$((0x%08x - 0x%08x))\n", decl_name, addr, ramstart);
+		}
 	}
 
 	//debug_tree(*node);
@@ -100,6 +123,10 @@ plugin_init(struct plugin_name_args *info, struct plugin_gcc_version *ver)
 			fwfile = info->argv[i].value;
 		} else if (!strcmp(info->argv[i].key, "ramstart")) {
 			ramstart = (unsigned int) strtol(info->argv[i].value, NULL, 0);
+		} else if (!strcmp(info->argv[i].key, "chipver")) {
+			chipver = (unsigned int) strtol(info->argv[i].value, NULL, 0);
+		} else if (!strcmp(info->argv[i].key, "fwver")) {
+			fwver = (unsigned int) strtol(info->argv[i].value, NULL, 0);
 		}
 	}
 
