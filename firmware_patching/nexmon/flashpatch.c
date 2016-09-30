@@ -3,7 +3,7 @@
 
 struct fp_config_struct {
   unsigned char existing[0x948];
-  unsigned int newones[3];
+//  unsigned int newones[3];
 };
 
 struct fp_config_struct fp_config = {
@@ -207,16 +207,17 @@ struct fp_config_struct fp_config = {
   0x30, 0xb9, 0x06, 0x00, 0x04, 0x00, 0x00, 0x00, 0x20, 0x1e, 0x1d, 0x00,
   0xe4, 0x76, 0x02, 0x00, 0x04, 0x00, 0x00, 0x00, 0x28, 0x1e, 0x1d, 0x00
   },
-  {
-    0x126ec, 4, 0x1d1e30
-  }
+//  {
+//    0x126ec, 4, 0x1d1e30
+//  }
 };
 
-__attribute__((at(0x126ec, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
-BPatch(printf, printf_hook);
+//__attribute__((at(0x126ec, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
+//BPatch(printf, printf_hook);
 
+/*
 __attribute__((at(0x1d9ae0, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
-GenericPatch4(fp_data_end, 0x1d1e38);
+GenericPatch4(fp_data_end, 0x1d1e30);
 
 #define FP_CONFIG_BASE fp_config.existing
 #define FP_CONFIG_END (FP_CONFIG_BASE + sizeof(fp_config))
@@ -233,29 +234,11 @@ GenericPatch4(fp_config_base_3, FP_CONFIG_BASE);
 __attribute__((at(0x1ec77c, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
 GenericPatch4(fp_config_base_4, FP_CONFIG_BASE);
 
-/* reclaims space for heap
-__attribute__((at(0x1ec784, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
-GenericPatch4(fp_config_base_5, FP_CONFIG_BASE);
-
-__attribute__((at(0x1ec7a0, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
-GenericPatch4(fp_config_base_6, FP_CONFIG_BASE);
-*/
-
 __attribute__((at(0x1ec7c8, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
 GenericPatch4(fp_config_base_7, FP_CONFIG_BASE);
 
 __attribute__((at(0x1ec8dc, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
 GenericPatch4(fp_config_base_8, FP_CONFIG_BASE);
-
-
-/* seems to reference to data realy comming after the config
-__attribute__((at(0x1816bc, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
-GenericPatch4(fp_config_end_1, fp_config);
-
-__attribute__((at(0x183a5c, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
-GenericPatch4(fp_config_end_2, fp_config);
-*/
-
 
 __attribute__((at(0x1ec60c, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
 GenericPatch4(fp_config_end_3, FP_CONFIG_END);
@@ -274,3 +257,22 @@ GenericPatch4(fp_config_end_7, FP_CONFIG_END);
 
 __attribute__((at(0x1ec8d8, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
 GenericPatch4(fp_config_end_8, FP_CONFIG_END);
+*/
+
+
+
+/* reclaims space for heap
+__attribute__((at(0x1ec784, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
+GenericPatch4(fp_config_base_5, FP_CONFIG_BASE);
+
+__attribute__((at(0x1ec7a0, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
+GenericPatch4(fp_config_base_6, FP_CONFIG_BASE);
+*/
+
+/* seems to reference to data realy comming after the config
+__attribute__((at(0x1816bc, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
+GenericPatch4(fp_config_end_1, fp_config);
+
+__attribute__((at(0x183a5c, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
+GenericPatch4(fp_config_end_2, fp_config);
+*/

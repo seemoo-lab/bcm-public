@@ -2,6 +2,7 @@
 #include <tree.h>
 #include <print-tree.h>
 #include <stdio.h>
+#include <string.h>
 
 static tree handle_nexmon_place_at_attribute(tree *node, tree name, tree args, int flags, bool *no_add_attr);
 
@@ -29,6 +30,8 @@ static struct attribute_spec user_attr =
 	.affects_type_identity = false,
 };
 
+char *str1 = (char *) "";
+
 static tree
 handle_nexmon_place_at_attribute(tree *node, tree name, tree args, int flags, bool *no_add_attr)
 {
@@ -42,12 +45,13 @@ handle_nexmon_place_at_attribute(tree *node, tree name, tree args, int flags, bo
 	unsigned int addr = 0;
 	bool is_dummy = false;
 	bool is_keep = false;
+	bool is_region = false;
 	unsigned int chipver_local = 0;
 	unsigned int fwver_local = 0;
 
 	if (TREE_CODE(TREE_VALUE(args)) == STRING_CST) {
 		region = TREE_STRING_POINTER(TREE_VALUE(args));
-		addr = (unsigned int) strtol(region, NULL, 0);
+		is_region = true;
 	} else if (TREE_CODE(TREE_VALUE(args)) == INTEGER_CST) {
 		addr = TREE_INT_CST_LOW(TREE_VALUE(args));
 	}
@@ -87,16 +91,19 @@ handle_nexmon_place_at_attribute(tree *node, tree name, tree args, int flags, bo
 	//}
 
 	if ((chipver == 0 || chipver_local == 0 || chipver == chipver_local) && (fwver == 0 || fwver_local == 0 || fwver == fwver_local)) {
-		if (is_dummy) {
+		if (is_region) {
+			asprintf(&str1, "%s.text.%s : { KEEP(%s (.*.%s)) } >%s\n", str1, region, objfile, decl_name, region);
+			//fprintf(ld_fp, ".text.%s : { KEEP(%s (.*.%s)) } >%s\n", region, objfile, decl_name, region);
+		} else if (is_dummy) {
 			fprintf(ld_fp, ".text.dummy.%s 0x%08x : { %s (.*.%s) }\n", decl_name, addr, objfile, decl_name);
 		} else if (is_keep) {
 			fprintf(ld_fp, ".text.dummy.%s 0x%08x : { KEEP(%s (.*.%s)) }\n", decl_name, addr, objfile, decl_name);
 		} else {
 			fprintf(ld_fp, ".text.%s 0x%08x : { KEEP(%s (.*.%s)) }\n", decl_name, addr, objfile, decl_name);
 			if (addr < 0x180000) {
-				fprintf(make_fp, "\t$(CC)objcopy -O binary -j .text.%s $< section.generated.bin && dd if=section.generated.bin of=$@ bs=1 conv=notrunc seek=$$((0x%08x - 0x%08x))\n", decl_name, 0x1d1e30, ramstart);
+				fprintf(make_fp, "\t$(CC)objcopy -O binary -j .text.%s $< section.generated.bin && dd if=section.generated.bin of=$@ bs=1 conv=notrunc seek=$$((0x%08x))\n", decl_name, 0x1d1e30 - ramstart);
 			} else {
-				fprintf(make_fp, "\t$(CC)objcopy -O binary -j .text.%s $< section.generated.bin && dd if=section.generated.bin of=$@ bs=1 conv=notrunc seek=$$((0x%08x - 0x%08x))\n", decl_name, addr, ramstart);
+				fprintf(make_fp, "\t$(CC)objcopy -O binary -j .text.%s $< section.generated.bin && dd if=section.generated.bin of=$@ bs=1 conv=notrunc seek=$$((0x%08x))\n", decl_name, addr - ramstart);
 			}
 		}
 	}
@@ -116,6 +123,7 @@ static void
 handle_plugin_finish(void *event_data, void *data)
 {
 	fprintf(make_fp, "\nFORCE:\n");
+	fprintf(ld_fp, "%s", str1);
 
 	fclose(ld_fp);
 	fclose(make_fp);

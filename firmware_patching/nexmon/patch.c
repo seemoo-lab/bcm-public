@@ -198,7 +198,8 @@ inject_frame(struct wlc_info *wlc, struct sk_buff *p)
     // 6th parameter: data rate in 0.5MBit units; 
     // 2,4,11,22 => 802.11b
     // 12,18,24,36,48,72,96,108 => 802.11g
-    wlc_sendctl(wlc, p, wlc->active_queue, scb, 1, data_rate, 0);
+    ret = wlc_sendctl(wlc, p, wlc->active_queue, scb, 1, data_rate, 0);
+    printf("inj %d\n", ret);
 
     return 0;
 }
@@ -325,20 +326,28 @@ struct wlc_bss_list {
     struct wlc_bss_info *ptrs[64];
 };
 
+/*
+//__attribute__((at("patch", "", CHIP_VER_BCM4339, FW_VER_ALL)))
 void
-test(void) {
+kaka(void) {
     printf("x\n");
 }
 
-__attribute__((naked)) void
+//__attribute__((at("patch", "", CHIP_VER_BCM4339, FW_VER_ALL)))
+__attribute__((naked))
+void
 printf_hook(const char * format, ...) {
   asm(
     "push {r0-r3,lr}\n"
-    "bl test\n"
+    "bl kaka\n"
     "pop {r0-r3,lr}\n"
     "b printf\n"
     );
 }
+
+void
+printf_hook(const char * format, ...);
+*/
 
 void
 wlc_custom_scan_complete_hook(struct wlc_info *wlc, int status, void *cfg)
@@ -348,13 +357,14 @@ wlc_custom_scan_complete_hook(struct wlc_info *wlc, int status, void *cfg)
 
     wlc_custom_scan_complete(wlc, status, cfg);
 
-    printf_hook("%s %d %d %d\n", __FUNCTION__, status, scan_results->count, custom_scan_results->count);
-    printf_hook("   %08x %08x\n", (int) scan_results->ptrs[0], (int) scan_results->ptrs[1]);
-    printf_hook("   %08x %08x\n", (int) custom_scan_results->ptrs[0], (int) custom_scan_results->ptrs[1]);
-    printf_hook("   %08x %08x\n", (int) wlc->scan_results, (int) wlc->custom_scan_results);
-    printf_hook("   %08x %08x\n", *(int *) wlc->scan_results, *(int *) wlc->custom_scan_results);
+    printf("%s %d %d %d\n", __FUNCTION__, status, scan_results->count, custom_scan_results->count);
+    printf("   %08x %08x\n", (int) scan_results->ptrs[0], (int) scan_results->ptrs[1]);
+    printf("   %08x %08x\n", (int) custom_scan_results->ptrs[0], (int) custom_scan_results->ptrs[1]);
+    printf("   %08x %08x\n", (int) wlc->scan_results, (int) wlc->custom_scan_results);
+    printf("   %08x %08x\n", *(int *) wlc->scan_results, *(int *) wlc->custom_scan_results);
 }
 
+/*
 // Replace address of wlc_custom_scan_complete in wlc_custom_scan
 __attribute__((at(0x19164C, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243)))
 __attribute__((at(0x19173C, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
@@ -368,6 +378,11 @@ __attribute__((at(0x1C9884, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581
 __attribute__((at(0x1C9AD0, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
 HookPatch4(wlc_scan, wlc_scan_hook, "push {r4-r11,lr}");
 
+// Replace address of wlc_ioctl in wlc_attach
+__attribute__((at(0x1F347C, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243)))
+__attribute__((at(0x1F3488, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
+GenericPatch4(wlc_ioctl, wlc_ioctl_hook + 1);
+*/
 // Hook the call to wlc_ucode_write in wlc_ucode_download
 __attribute__((at(0x1F4F08, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243)))
 __attribute__((at(0x1F4F14, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
@@ -385,11 +400,6 @@ BPatch(handle_sdio_xmit_request_hook, handle_sdio_xmit_request_hook);
 // Replace the entry in the function pointer table by handle_sdio_xmit_request_hook
 __attribute__((at(0x180BCC, "", CHIP_VER_BCM4339, FW_VER_ALL)))
 GenericPatch4(handle_sdio_xmit_request_hook, handle_sdio_xmit_request_hook + 1);
-
-// Replace address of wlc_ioctl in wlc_attach
-__attribute__((at(0x1F347C, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243)))
-__attribute__((at(0x1F3488, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
-GenericPatch4(wlc_ioctl, wlc_ioctl_hook + 1);
 
 // Patch the "wl%d: Broadcom BCM%04x 802.11 Wireless Controller %s\n" string
 __attribute__((at(0x1FD31B, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243)))

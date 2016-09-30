@@ -56,7 +56,7 @@ patch.elf: patch.ld patch.o wrapper.o $(OBJS)
 
 fw_bcmdhd.bin: patch.elf $(ORIG_FW)
 	cp $(ORIG_FW) $@
-	$(CC)objcopy -O binary -j .text $< section.generated.bin && dd if=section.generated.bin of=$@ bs=1 conv=notrunc seek=$$((0x180020 - 0x180000))
+	$(CC)objcopy -O binary -j .text.patch $< section.generated.bin && dd if=section.generated.bin of=$@ bs=1 conv=notrunc seek=$$((0x180020 - 0x180000))
 	$(CC)objcopy -O binary -j .text.ucode $< section.generated.bin && dd if=section.generated.bin of=$@ bs=1 conv=notrunc seek=$$((0x1FD82C - 0x180000)) # 0x1FD820 on .40 firmware
 	make -f patch.generated.mk
 	make -f radiotap.generated.mk
