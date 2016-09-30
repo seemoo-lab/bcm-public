@@ -359,9 +359,9 @@ struct wlc_info {
     int PAD;                            /* 0X330 */
     int PAD;                            /* 0X334 */
     int PAD;                            /* 0X338 */
-    int PAD;                            /* 0X33C */
+    void *scan_results;                            /* 0X33C */
     int PAD;                            /* 0X340 */
-    int PAD;                            /* 0X344 */
+    void *custom_scan_results;                            /* 0X344 */
     int PAD;                            /* 0X348 */
     int PAD;                            /* 0X34C */
     int PAD;                            /* 0X350 */

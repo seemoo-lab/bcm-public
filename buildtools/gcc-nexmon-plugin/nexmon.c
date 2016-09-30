@@ -38,11 +38,20 @@ handle_nexmon_place_at_attribute(tree *node, tree name, tree args, int flags, bo
 	const char *decl_name = IDENTIFIER_POINTER(DECL_NAME(*node));
 	//const char *attr_name = IDENTIFIER_POINTER(name);
 	//const char *param1_str = TREE_STRING_POINTER(TREE_VALUE(args));
-	unsigned int addr = (unsigned int) strtol(TREE_STRING_POINTER(TREE_VALUE(args)), NULL, 0);
+	const char *region = NULL;
+	unsigned int addr = 0;
 	bool is_dummy = false;
 	bool is_keep = false;
 	unsigned int chipver_local = 0;
 	unsigned int fwver_local = 0;
+
+	if (TREE_CODE(TREE_VALUE(args)) == STRING_CST) {
+		region = TREE_STRING_POINTER(TREE_VALUE(args));
+		addr = (unsigned int) strtol(region, NULL, 0);
+	} else if (TREE_CODE(TREE_VALUE(args)) == INTEGER_CST) {
+		addr = TREE_INT_CST_LOW(TREE_VALUE(args));
+	}
+
 	tmp_tree = TREE_CHAIN(args);
 	if(tmp_tree != NULL_TREE) {
 		is_dummy = !strcmp(TREE_STRING_POINTER(TREE_VALUE(tmp_tree)), "dummy");
@@ -84,7 +93,11 @@ handle_nexmon_place_at_attribute(tree *node, tree name, tree args, int flags, bo
 			fprintf(ld_fp, ".text.dummy.%s 0x%08x : { KEEP(%s (.*.%s)) }\n", decl_name, addr, objfile, decl_name);
 		} else {
 			fprintf(ld_fp, ".text.%s 0x%08x : { KEEP(%s (.*.%s)) }\n", decl_name, addr, objfile, decl_name);
-			fprintf(make_fp, "\t$(CC)objcopy -O binary -j .text.%s $< section.generated.bin && dd if=section.generated.bin of=$@ bs=1 conv=notrunc seek=$$((0x%08x - 0x%08x))\n", decl_name, addr, ramstart);
+			if (addr < 0x180000) {
+				fprintf(make_fp, "\t$(CC)objcopy -O binary -j .text.%s $< section.generated.bin && dd if=section.generated.bin of=$@ bs=1 conv=notrunc seek=$$((0x%08x - 0x%08x))\n", decl_name, 0x1d1e30, ramstart);
+			} else {
+				fprintf(make_fp, "\t$(CC)objcopy -O binary -j .text.%s $< section.generated.bin && dd if=section.generated.bin of=$@ bs=1 conv=notrunc seek=$$((0x%08x - 0x%08x))\n", decl_name, addr, ramstart);
+			}
 		}
 	}
 

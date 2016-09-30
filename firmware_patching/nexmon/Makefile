@@ -32,6 +32,18 @@ bcmdhd/bcmdhd.ko: check-nexmon-setup-env
 		-DNEXMON_FW_VERSION=$(NEXMON_FW_VERSION) \
 		-Wall -Werror -O2 -nostdlib -nostartfiles -ffreestanding -mthumb -march=armv7-r -ffunction-sections -fdata-sections -I../include -c $< -o $@
 
+%.out: %.c ../include/*.h
+	$(CC)gcc \
+		-fplugin=../../buildtools/gcc-nexmon-plugin/nexmon.so \
+		-fplugin-arg-nexmon-objfile=$@ \
+		-fplugin-arg-nexmon-ldfile=$(basename $@).generated.ld \
+		-fplugin-arg-nexmon-makefile=$(basename $@).generated.mk \
+		-fplugin-arg-nexmon-chipver=`printf "#include \"../include/firmware_version.h\"\n%s\n" $(NEXMON_CHIP) | $(CC)gcc -E -x c - | tail -n 1` \
+		-fplugin-arg-nexmon-fwver=`printf "#include \"../include/firmware_version.h\"\n%s\n" $(NEXMON_FW_VERSION) | $(CC)gcc -E -x c - | tail -n 1` \
+		-DNEXMON_CHIP=$(NEXMON_CHIP) \
+		-DNEXMON_FW_VERSION=$(NEXMON_FW_VERSION) \
+		-E -Wall -Werror -O2 -nostdlib -nostartfiles -ffreestanding -mthumb -march=armv7-r -ffunction-sections -fdata-sections -I../include -c $< -o $@
+
 wrapper.o: ../include/wrapper.c
 	make -C ../wrapper \
 		NEXMON_CHIP=$(NEXMON_CHIP) \
@@ -48,6 +60,7 @@ fw_bcmdhd.bin: patch.elf $(ORIG_FW)
 	$(CC)objcopy -O binary -j .text.ucode $< section.generated.bin && dd if=section.generated.bin of=$@ bs=1 conv=notrunc seek=$$((0x1FD82C - 0x180000)) # 0x1FD820 on .40 firmware
 	make -f patch.generated.mk
 	make -f radiotap.generated.mk
+	make -f flashpatch.generated.mk
 
 fw_bcmdhd.complete.bin : fw_bcmdhd.bin ../../bootimg_src/firmware/rom.bin
 	dd if=../../bootimg_src/firmware/rom.bin of=$@ bs=1
@@ -66,6 +79,7 @@ install-firmware: fw_bcmdhd.bin
 	adb shell 'su -c "mount -o rw,remount /system"' && \
 	adb push $< /sdcard/ && \
 	adb shell 'su -c "cp /sdcard/fw_bcmdhd.bin /vendor/firmware/fw_bcmdhd.bin"'
+	adb shell 'su -c "ifconfig wlan0 down"'
 
 clean-firmware: FORCE
 	rm -f fw_bcmdhd.bin fw_bcmdhd.complete.bin fw_bcmdhd.complete.elf *.o patch.elf ucode_compressed.c ucode_compressed.bin *.generated.* wrapper.ld

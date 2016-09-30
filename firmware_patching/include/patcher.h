@@ -55,6 +55,22 @@
     __attribute__((naked)) void \
     b_ ## name(void) { asm("b " #func "\n"); }
 
+#define HookPatch4(name, func, inst) \
+    void b_ ## name(void); \
+    __attribute__((naked)) void \
+    hook_ ## name(void) \
+    { \
+        asm( \
+            "push {r0-r3,lr}\n" \
+            "bl " #func "\n" \
+            "pop {r0-r3,lr}\n" \
+            inst "\n" \
+            "b b_" #name " + 4\n" \
+            ); \
+    } \
+    __attribute__((naked)) void \
+    b_ ## name(void) { asm("b hook_" #name "\n"); }
+
 #define GenericPatch4(name, val) \
     const unsigned int gp4_ ## name = (unsigned int) (val);
 

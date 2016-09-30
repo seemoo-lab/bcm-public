@@ -221,49 +221,190 @@ handle_sdio_xmit_request_hook(void *sdio_hw, struct sk_buff *p)
 int
 wlc_ioctl_hook(void *wlc, int cmd, void *arg, int len, void *wlc_if)
 {
-//    if (cmd != 262 && cmd != 263) {
-//        printf("ioctl: %d\n", cmd);    
-//    }
-    
-    return wlc_ioctl(wlc, cmd, arg, len, wlc_if);
+    int ret;
+
+    switch(cmd) {
+        case 12:
+            //printf("WLC_GET_RATE");
+            break;
+        case 23:
+            //printf("WLC_GET_BSSID");
+            break;
+        case 49:
+            printf("WLC_SET_PASSIVE_SCAN %08x\n", *(int *) arg);
+            break;
+        case 127:
+            //printf("WLC_GET_RSSI");
+            break;
+        case 137:
+            //printf("WLC_GET_PKTCNTS");
+            break;
+        case 262:
+            //printf("get %s", (char *) arg);
+            break;
+        case 263:
+            //printf("set %s", (char *) arg);
+            break;
+        default:
+            //printf("ioctl: %d", cmd);
+            break;
+    }
+    //printf(" len %d\n", len);
+
+    ret = wlc_ioctl(wlc, cmd, arg, len, wlc_if);
+/*
+    if (cmd == 263 && !strncmp(arg, "escan", 5)) {
+        printf("escan %s %d\n", (char *) arg, len);
+        argi = (int *) arg;
+        for (i = 0; i < len / 4; i++) {
+            printf("%08x ", argi[i]);
+        }
+        printf("\n");
+    }
+*/
+
+    return ret;
 }
 
+void
+wlc_custom_scan_hook(void)
+{
+    printf("%s\n", __FUNCTION__);
+}
+
+void
+wlc_scan_hook(void *wlc_scan, int bss_type, char *bssid, int nssid, void *ssids)
+{
+    printf("%s: %d %d\n", __FUNCTION__, bss_type, nssid);
+}
+
+struct wlc_bss_info
+{
+    uint8       BSSID[6];    /* network BSSID */
+    uint16      flags;      /* flags for internal attributes */
+    uint8       SSID_len;   /* the length of SSID */
+    uint8       SSID[32];   /* SSID string */
+    int16       RSSI;       /* receive signal strength (in dBm) */
+    int16       SNR;        /* receive signal SNR in dB */
+    uint16      beacon_period;  /* units are Kusec */
+    uint16      atim_window;    /* units are Kusec */
+    uint16      chanspec;   /* Channel num, bw, ctrl_sb and band */
+    int8        infra;      /* 0=IBSS, 1=infrastructure, 2=unknown */
+    void        *rateset;    /* supported rates */
+    uint8       dtim_period;    /* DTIM period */
+    int8        phy_noise;  /* noise right after tx (in dBm) */
+    uint16      capability; /* Capability information */
+/*
+#ifdef WLSCANCACHE
+    uint32      timestamp;  // in ms since boot, OSL_SYSUPTIME()
+#endif
+    struct dot11_bcn_prb *bcn_prb; // beacon/probe response frame (ioctl na)
+    uint16      bcn_prb_len;    // beacon/probe response frame length (ioctl na)
+    uint8       wme_qosinfo;    // QoS Info from WME IE; valid if WLC_BSS_WME flag set
+    struct rsn_parms wpa;
+    struct rsn_parms wpa2;
+#ifdef BCMWAPI_WAI
+    struct rsn_parms wapi;
+#endif // BCMWAPI_WAI
+#if defined(WLP2P)
+    uint32      rx_tsf_l;   // usecs, rx time in local TSF
+#endif
+    uint16      qbss_load_aac;  // qbss load available admission capacity
+    // qbss_load_chan_free <- (0xff - channel_utilization of qbss_load_ie_t)
+    uint8       qbss_load_chan_free;    // indicates how free the channel is
+    uint8       mcipher;    // multicast cipher
+    uint8       wpacfg;     // wpa config index
+    uint16      mdid;       // mobility domain id
+    uint16      flags2;     // additional flags for internal attributes
+*/
+};
+
+struct wlc_bss_list {
+    unsigned int count;
+    unsigned char beacon;
+    struct wlc_bss_info *ptrs[64];
+};
+
+void
+test(void) {
+    printf("x\n");
+}
+
+__attribute__((naked)) void
+printf_hook(const char * format, ...) {
+  asm(
+    "push {r0-r3,lr}\n"
+    "bl test\n"
+    "pop {r0-r3,lr}\n"
+    "b printf\n"
+    );
+}
+
+void
+wlc_custom_scan_complete_hook(struct wlc_info *wlc, int status, void *cfg)
+{
+    struct wlc_bss_list *scan_results = (struct wlc_bss_list *) wlc->scan_results;
+    struct wlc_bss_list *custom_scan_results = (struct wlc_bss_list *) wlc->custom_scan_results;
+
+    wlc_custom_scan_complete(wlc, status, cfg);
+
+    printf_hook("%s %d %d %d\n", __FUNCTION__, status, scan_results->count, custom_scan_results->count);
+    printf_hook("   %08x %08x\n", (int) scan_results->ptrs[0], (int) scan_results->ptrs[1]);
+    printf_hook("   %08x %08x\n", (int) custom_scan_results->ptrs[0], (int) custom_scan_results->ptrs[1]);
+    printf_hook("   %08x %08x\n", (int) wlc->scan_results, (int) wlc->custom_scan_results);
+    printf_hook("   %08x %08x\n", *(int *) wlc->scan_results, *(int *) wlc->custom_scan_results);
+}
+
+// Replace address of wlc_custom_scan_complete in wlc_custom_scan
+__attribute__((at(0x19164C, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243)))
+__attribute__((at(0x19173C, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
+GenericPatch4(wlc_custom_scan_complete, wlc_custom_scan_complete_hook + 1);
+
+__attribute__((at(0x191438, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243)))
+__attribute__((at(0x191528, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
+HookPatch4(wlc_custom_scan, wlc_custom_scan_hook, "push {r4-r11,lr}");
+
+__attribute__((at(0x1C9884, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243)))
+__attribute__((at(0x1C9AD0, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
+HookPatch4(wlc_scan, wlc_scan_hook, "push {r4-r11,lr}");
+
 // Hook the call to wlc_ucode_write in wlc_ucode_download
-__attribute__((at("0x1F4F08", "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243)))
-__attribute__((at("0x1F4F14", "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
+__attribute__((at(0x1F4F08, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243)))
+__attribute__((at(0x1F4F14, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
 BLPatch(wlc_ucode_write_compressed, wlc_ucode_write_compressed);
 
 // Hook the call to wl_monitor in wlc_monitor
-__attribute__((at("0x18DA30", "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243)))
-__attribute__((at("0x18DB20", "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
+__attribute__((at(0x18DA30, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243)))
+__attribute__((at(0x18DB20, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
 BLPatch(wl_monitor_hook, wl_monitor_hook);
 
 // Hook the call to handle_sdio_xmit_request_hook in sdio_header_parsing_from_sk_buff
-__attribute__((at("0x182AAA", "", CHIP_VER_BCM4339, FW_VER_ALL)))
+__attribute__((at(0x182AAA, "", CHIP_VER_BCM4339, FW_VER_ALL)))
 BPatch(handle_sdio_xmit_request_hook, handle_sdio_xmit_request_hook);
 
 // Replace the entry in the function pointer table by handle_sdio_xmit_request_hook
-__attribute__((at("0x180BCC", "", CHIP_VER_BCM4339, FW_VER_ALL)))
+__attribute__((at(0x180BCC, "", CHIP_VER_BCM4339, FW_VER_ALL)))
 GenericPatch4(handle_sdio_xmit_request_hook, handle_sdio_xmit_request_hook + 1);
 
 // Replace address of wlc_ioctl in wlc_attach
-__attribute__((at("0x1F347C", "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243)))
-__attribute__((at("0x1F3488", "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
+__attribute__((at(0x1F347C, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243)))
+__attribute__((at(0x1F3488, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
 GenericPatch4(wlc_ioctl, wlc_ioctl_hook + 1);
 
 // Patch the "wl%d: Broadcom BCM%04x 802.11 Wireless Controller %s\n" string
-__attribute__((at("0x1FD31B", "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243)))
-__attribute__((at("0x1FD327", "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
+__attribute__((at(0x1FD31B, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243)))
+__attribute__((at(0x1FD327, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
 StringPatch(version_string, "nexmon (" __DATE__ " " __TIME__ ")\n");
 
 /**
  *  Just inserted to produce an error while linking, when we try to overwrite memory used by the original firmware
  */
-__attribute__((at("0x180800", "dummy_keep", CHIP_VER_BCM4339, FW_VER_ALL)))
+__attribute__((at(0x180800, "dummy_keep", CHIP_VER_BCM4339, FW_VER_ALL)))
 Dummy(0x180800);
 
 /**
  *  Just inserted to produce an error while linking, when we try to overwrite memory used by the original firmware
  */
-__attribute__((at("0x1AAEB4", "dummy_keep", CHIP_VER_BCM4339, FW_VER_ALL)))
+__attribute__((at(0x1AAEB4, "dummy_keep", CHIP_VER_BCM4339, FW_VER_ALL)))
 Dummy(0x1AAEB4);
+
