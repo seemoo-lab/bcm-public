@@ -199,7 +199,7 @@ inject_frame(struct wlc_info *wlc, struct sk_buff *p)
     // 2,4,11,22 => 802.11b
     // 12,18,24,36,48,72,96,108 => 802.11g
     ret = wlc_sendctl(wlc, p, wlc->active_queue, scb, 1, data_rate, 0);
-    printf("inj %d\n", ret);
+    //printf("inj %d %08x\n", ret, data_rate);
 
     return 0;
 }
@@ -405,16 +405,3 @@ GenericPatch4(handle_sdio_xmit_request_hook, handle_sdio_xmit_request_hook + 1);
 __attribute__((at(0x1FD31B, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243)))
 __attribute__((at(0x1FD327, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
 StringPatch(version_string, "nexmon (" __DATE__ " " __TIME__ ")\n");
-
-/**
- *  Just inserted to produce an error while linking, when we try to overwrite memory used by the original firmware
- */
-__attribute__((at(0x180800, "dummy_keep", CHIP_VER_BCM4339, FW_VER_ALL)))
-Dummy(0x180800);
-
-/**
- *  Just inserted to produce an error while linking, when we try to overwrite memory used by the original firmware
- */
-__attribute__((at(0x1AAEB4, "dummy_keep", CHIP_VER_BCM4339, FW_VER_ALL)))
-Dummy(0x1AAEB4);
-

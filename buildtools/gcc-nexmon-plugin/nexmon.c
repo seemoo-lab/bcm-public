@@ -3,6 +3,7 @@
 #include <print-tree.h>
 #include <stdio.h>
 #include <string.h>
+#include <arpa/inet.h>
 
 static tree handle_nexmon_place_at_attribute(tree *node, tree name, tree args, int flags, bool *no_add_attr);
 
@@ -15,6 +16,10 @@ static const char *makefile = "/dev/null";
 static unsigned int ramstart = 0x180000;
 static unsigned int chipver = 0;
 static unsigned int fwver = 0;
+static unsigned int fp_config_base = 0x1d2000;
+static unsigned int fp_data_base = 0x1D1800;
+static unsigned int fp_config_end = fp_config_base;
+static unsigned int fp_data_end = fp_data_base;
 
 static FILE *ld_fp, *make_fp;
 
@@ -44,8 +49,8 @@ handle_nexmon_place_at_attribute(tree *node, tree name, tree args, int flags, bo
 	const char *region = NULL;
 	unsigned int addr = 0;
 	bool is_dummy = false;
-	bool is_keep = false;
 	bool is_region = false;
+	bool is_flashpatch = false;
 	unsigned int chipver_local = 0;
 	unsigned int fwver_local = 0;
 
@@ -58,8 +63,8 @@ handle_nexmon_place_at_attribute(tree *node, tree name, tree args, int flags, bo
 
 	tmp_tree = TREE_CHAIN(args);
 	if(tmp_tree != NULL_TREE) {
-		is_dummy = !strcmp(TREE_STRING_POINTER(TREE_VALUE(tmp_tree)), "dummy");
-		is_keep = !strcmp(TREE_STRING_POINTER(TREE_VALUE(tmp_tree)), "dummy_keep");
+		is_dummy = strstr(TREE_STRING_POINTER(TREE_VALUE(tmp_tree)), "dummy");
+		is_flashpatch = strstr(TREE_STRING_POINTER(TREE_VALUE(tmp_tree)), "flashpatch");
 
 		tmp_tree = TREE_CHAIN(tmp_tree);
 		if(tmp_tree != NULL_TREE) {
@@ -93,18 +98,17 @@ handle_nexmon_place_at_attribute(tree *node, tree name, tree args, int flags, bo
 	if ((chipver == 0 || chipver_local == 0 || chipver == chipver_local) && (fwver == 0 || fwver_local == 0 || fwver == fwver_local)) {
 		if (is_region) {
 			asprintf(&str1, "%s.text.%s : { KEEP(%s (.*.%s)) } >%s\n", str1, region, objfile, decl_name, region);
-			//fprintf(ld_fp, ".text.%s : { KEEP(%s (.*.%s)) } >%s\n", region, objfile, decl_name, region);
+		} else if (is_flashpatch) {
+			fprintf(ld_fp, ".text.%s 0x%08x : { KEEP(%s (.*.%s)) }\n", decl_name, addr, objfile, decl_name);
+			fprintf(make_fp, "\t$(CC)objcopy -O binary -j .text.%s $< section.generated.bin && dd if=section.generated.bin of=$@ bs=1 conv=notrunc seek=$$((0x%08x))\n", decl_name, fp_data_end - ramstart);
+			fprintf(make_fp, "\tprintf %08x%08x%08x | xxd -r -p | dd of=$@ bs=1 conv=notrunc seek=$$((0x%08x))\n", htonl(addr), htonl(4), htonl(fp_data_end), fp_config_end - ramstart);
+			fp_config_end += 12;
+			fp_data_end += 8;
 		} else if (is_dummy) {
 			fprintf(ld_fp, ".text.dummy.%s 0x%08x : { %s (.*.%s) }\n", decl_name, addr, objfile, decl_name);
-		} else if (is_keep) {
-			fprintf(ld_fp, ".text.dummy.%s 0x%08x : { KEEP(%s (.*.%s)) }\n", decl_name, addr, objfile, decl_name);
 		} else {
 			fprintf(ld_fp, ".text.%s 0x%08x : { KEEP(%s (.*.%s)) }\n", decl_name, addr, objfile, decl_name);
-			if (addr < 0x180000) {
-				fprintf(make_fp, "\t$(CC)objcopy -O binary -j .text.%s $< section.generated.bin && dd if=section.generated.bin of=$@ bs=1 conv=notrunc seek=$$((0x%08x))\n", decl_name, 0x1d1e30 - ramstart);
-			} else {
-				fprintf(make_fp, "\t$(CC)objcopy -O binary -j .text.%s $< section.generated.bin && dd if=section.generated.bin of=$@ bs=1 conv=notrunc seek=$$((0x%08x))\n", decl_name, addr - ramstart);
-			}
+			fprintf(make_fp, "\t$(CC)objcopy -O binary -j .text.%s $< section.generated.bin && dd if=section.generated.bin of=$@ bs=1 conv=notrunc seek=$$((0x%08x))\n", decl_name, addr - ramstart);			
 		}
 	}
 
@@ -122,6 +126,11 @@ register_attributes(void *event_data, void *data)
 static void
 handle_plugin_finish(void *event_data, void *data)
 {
+	//fprintf(make_fp, "\tprintf %08x | xxd -r -p | dd of=$@ bs=1 conv=notrunc seek=$$((0x%08x))\n", htonl(fp_data_end), 0x1d9ae0 - ramstart);
+	//fprintf(make_fp, "\tprintf %08x | xxd -r -p | dd of=$@ bs=1 conv=notrunc seek=$$((0x%08x))\n", htonl(fp_config_base), 0x1ec610 - ramstart);
+	//fprintf(make_fp, "\tprintf %08x | xxd -r -p | dd of=$@ bs=1 conv=notrunc seek=$$((0x%08x))\n", htonl(fp_config_end), 0x1ec60c - ramstart);
+	//fprintf(make_fp, "\tprintf %08x | xxd -r -p | dd of=$@ bs=1 conv=notrunc seek=$$((0x%08x))\n", htonl(fp_config_base), 0x1ec8dc - ramstart);
+	//fprintf(make_fp, "\tprintf %08x | xxd -r -p | dd of=$@ bs=1 conv=notrunc seek=$$((0x%08x))\n", htonl(fp_config_end), 0x1ec8d8 - ramstart);
 	fprintf(make_fp, "\nFORCE:\n");
 	fprintf(ld_fp, "%s", str1);
 

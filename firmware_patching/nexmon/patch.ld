@@ -3,7 +3,9 @@ MEMORY
 	rom : ORIGIN = 0x0, LENGTH = 640K
 	ram : ORIGIN = 0x180000, LENGTH = 768K
 	patch : ORIGIN = 0x180020, LENGTH = 0x7e0
-	ucode : ORIGIN = 0x1FD82C, LENGTH = 0xb2e0 
+	/*fpconfig : ORIGIN = 0x1FD82C, LENGTH = 0xc00*/
+	/*ucode : ORIGIN = 0x1FE42C, LENGTH = 0xb2e0*/
+	ucode : ORIGIN = 0x1FD82C, LENGTH = 0xb2e0
 }
 /* 0x1FD820 on .40 firmware */
 
