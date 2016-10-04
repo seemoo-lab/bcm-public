@@ -372,7 +372,7 @@ nexmon_filter(struct sk_buff *skb) {
 /**
  * Main frame handling function
  */
-int wlc_bmac_recv(struct wlc_hw_info *wlc_hw, unsigned int fifo, int bound, int *processed_frame_cnt) {
+int wlc_bmac_recv_hook(struct wlc_hw_info *wlc_hw, unsigned int fifo, int bound, int *processed_frame_cnt) {
 
     struct wlc_pub *pub = wlc_hw->wlc->pub;
     sk_buff *p;

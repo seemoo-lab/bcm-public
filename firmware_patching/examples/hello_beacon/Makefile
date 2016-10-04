@@ -11,7 +11,7 @@ fw_bcmdhd.bin: patcher.py patch.elf text.bin $(FUNCTIONS_BIN)
 	./patcher.py
 
 patch.o: patch.c ../../include/*.h
-	$(CC)gcc -Wall -Wno-return-type -Werror -O2 -nostdlib -nostartfiles -ffreestanding -mthumb -march=armv7-r -ffunction-sections -fdata-sections -c $< -o $@
+	$(CC)gcc -Wall -Wno-return-type -Werror -O2 -nostdlib -nostartfiles -ffreestanding -mthumb -march=armv7-r -ffunction-sections -fdata-sections -I../../include -c $< -o $@
 
 ../../wrapper/wrapper.o: ../../include/wrapper.h
 	make -C ../../wrapper

@@ -92,11 +92,11 @@ boot.img: Makefile mkboot bootimg_src kernel/arch/arm/boot/zImage-dtb $(FWPATCH)
 	mkdir bootimg_tmp/ramdisk && \
 	   cd bootimg_tmp/ramdisk && \
 	   gzip -dc ../ramdisk.cpio.gz | cpio -i \
-	   && sed -i '/service wpa_supplicant/,+11 s/^/#/' init.hammerhead.rc \
-	   && sed -i '/service p2p_supplicant/,+14 s/^/#/' init.hammerhead.rc \
 	   && printf "none /nexmon/tmp/bin tmpfs size=1M defaults\n" >> fstab.hammerhead \
 	   && printf "none /system/bin aufs br:/nexmon/tmp/bin:/nexmon/bin:/system/bin defaults\n" >> fstab.hammerhead \
-	   && printf "\n\nservice su_daemon /nexmon/bin/su --daemon\n    oneshot\n    class late_start\n    user root\n" >> init.rc
+	   && printf "\n\nservice su_daemon /nexmon/bin/su --daemon\n    oneshot\n    class late_start\n    user root\n" >> init.rc \
+	   && sed -i '/service wpa_supplicant/,+11 s/^/#/' init.hammerhead.rc \
+	   && sed -i '/service p2p_supplicant/,+14 s/^/#/' init.hammerhead.rc
 	mkdir bootimg_tmp/ramdisk/nexmon
 	cp firmware_patching/$(FWPATCH)/bcmdhd/bcmdhd.ko bootimg_tmp/ramdisk/nexmon/
 	mkdir bootimg_tmp/ramdisk/nexmon/firmware
@@ -135,6 +135,11 @@ boot: boot.img
 	adb reboot bootloader
 	fastboot boot boot.img
 
+flash: boot.img
+	adb reboot bootloader
+	fastboot flash boot boot.img
+	fastboot reboot
+
 reboot: FORCE
 	adb reboot bootloader
 	fastboot boot boot.img	
@@ -143,6 +148,10 @@ reloadfirmware: $(FWPATCH)
 	adb push firmware_patching/$(FWPATCH)/fw_bcmdhd.bin /sdcard/
 	adb push firmware_patching/$(FWPATCH)/bcmdhd/bcmdhd.ko /sdcard/
 	adb shell "su -c 'ifconfig wlan0 down; rmmod bcmdhd; insmod /sdcard/bcmdhd.ko firmware_path=/sdcard/fw_bcmdhd.bin dhd_msg_level=$(MSGLEVEL)'"
+
+dumpram:
+	adb shell "dhdutil membytes -r 0x180000 786432 > /sdcard/ram.bin"
+	adb pull /sdcard/ram.bin
 
 setupnetwork:
 	adb shell "su -c 'ifconfig wlan0 down && ifconfig wlan0 up && wpa_supplicant -Dnl80211 -iwlan0 -c/data/misc/wifi/wpa_supplicant.conf -I/system/etc/wifi/wpa_supplicant_overlay.conf &'"

@@ -47,10 +47,15 @@
  *                                                                         *
  **************************************************************************/
 
-/**
- *  Contains ucode_compressed_bin and ucode_compressed_bin_len
- */
-#include "ucode-compressed.c"
+#include <firmware_version.h>   // definition of firmware version macros
+#include <debug.h>              // contains macros to access the debug hardware
+#include <wrapper.h>            // wrapper definitions for functions that already exist in the firmware
+#include <structs.h>            // structures that are used by the code in the firmware
+#include <helper.h>             // useful helper functions
+#include <patcher.h>            // macros used to craete patches such as BLPatch, BPatch, ...
+
+extern unsigned char ucode_compressed_bin[];
+extern unsigned int ucode_compressed_bin_len;
 
 void
 wlc_bmac_read_objmem32(struct wlc_hw_info *wlc_hw, unsigned int offset, unsigned int *val, int sel)

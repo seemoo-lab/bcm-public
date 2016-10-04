@@ -1,6 +1,17 @@
-CC=../../buildtools/arm-eabi-4.7/bin/arm-eabi-
-FUNCTIONS = wlc_bmac_recv_hook dma_attach_hook sdio_handler
-FUNCTIONS_BIN = $(FUNCTIONS:=.bin)
+SRCS=$(wildcard *.c) ucode_compressed.c
+OBJS=$(SRCS:.c=.o)
+
+NEXMON_CHIP=CHIP_VER_BCM4339
+NEXMON_FW_VERSION=FW_VER_6_37_32_RC23_34_43_r639704
+#NEXMON_FW_VERSION=FW_VER_6_37_32_RC23_34_40_r581243
+
+CC=../../buildtools/gcc-arm-none-eabi-5_4-2016q2/bin/arm-none-eabi-
+
+ifeq ($(NEXMON_FW_VERSION), FW_VER_6_37_32_RC23_34_43_r639704)
+	ORIG_FW=../../bootimg_src/firmware/fw_bcmdhd.6.37.32.RC23.34.43_r639704_hammerhead_mob30y.bin
+else
+	ORIG_FW=../../bootimg_src/firmware/fw_bcmdhd.orig.bin
+endif
 
 all: bcmdhd/bcmdhd.ko fw_bcmdhd.bin fw_bcmdhd.complete.elf
 
@@ -9,23 +20,47 @@ include ucode_compression_code.mk
 bcmdhd/bcmdhd.ko: check-nexmon-setup-env
 	make -C ../../kernel/ M=$$PWD/bcmdhd -j2
 
-fw_bcmdhd.bin: patcher.py patch.elf text.bin $(FUNCTIONS_BIN)
-	./patcher.py
+%.o: %.c ../include/*.h
+	$(CC)gcc \
+		-fplugin=../../buildtools/gcc-nexmon-plugin/nexmon.so \
+		-fplugin-arg-nexmon-objfile=$@ \
+		-fplugin-arg-nexmon-ldfile=$(basename $@).generated.ld \
+		-fplugin-arg-nexmon-makefile=$(basename $@).generated.mk \
+		-fplugin-arg-nexmon-chipver=`printf "#include \"../include/firmware_version.h\"\n%s\n" $(NEXMON_CHIP) | $(CC)gcc -E -x c - | tail -n 1` \
+		-fplugin-arg-nexmon-fwver=`printf "#include \"../include/firmware_version.h\"\n%s\n" $(NEXMON_FW_VERSION) | $(CC)gcc -E -x c - | tail -n 1` \
+		-DNEXMON_CHIP=$(NEXMON_CHIP) \
+		-DNEXMON_FW_VERSION=$(NEXMON_FW_VERSION) \
+		-Wall -Werror -O2 -nostdlib -nostartfiles -ffreestanding -mthumb -march=armv7-r -ffunction-sections -fdata-sections -I../include -c $< -o $@
 
-patch.o: patch.c ../include/*.h ucode-compressed.c
-	$(CC)gcc -Wall -Werror -O2 -nostdlib -nostartfiles -ffreestanding -mthumb -march=armv7-r -ffunction-sections -fdata-sections -c $< -o $@
+%.out: %.c ../include/*.h
+	$(CC)gcc \
+		-fplugin=../../buildtools/gcc-nexmon-plugin/nexmon.so \
+		-fplugin-arg-nexmon-objfile=$@ \
+		-fplugin-arg-nexmon-ldfile=$(basename $@).generated.ld \
+		-fplugin-arg-nexmon-makefile=$(basename $@).generated.mk \
+		-fplugin-arg-nexmon-chipver=`printf "#include \"../include/firmware_version.h\"\n%s\n" $(NEXMON_CHIP) | $(CC)gcc -E -x c - | tail -n 1` \
+		-fplugin-arg-nexmon-fwver=`printf "#include \"../include/firmware_version.h\"\n%s\n" $(NEXMON_FW_VERSION) | $(CC)gcc -E -x c - | tail -n 1` \
+		-DNEXMON_CHIP=$(NEXMON_CHIP) \
+		-DNEXMON_FW_VERSION=$(NEXMON_FW_VERSION) \
+		-E -Wall -Werror -O2 -nostdlib -nostartfiles -ffreestanding -mthumb -march=armv7-r -ffunction-sections -fdata-sections -I../include -c $< -o $@
 
-../wrapper/wrapper.o: ../include/wrapper.h
-	make -C ../wrapper
+wrapper.o: ../include/wrapper.c
+	make -C ../wrapper \
+		NEXMON_CHIP=$(NEXMON_CHIP) \
+		NEXMON_FW_VERSION=$(NEXMON_FW_VERSION) \
+		WRAPPER_LD_FILE=$(NEXMON_FIRMWARE_PATCHING)/nexmon/$(basename $@).generated.ld \
+		WRAPPER_OBJ_FILE=$(NEXMON_FIRMWARE_PATCHING)/nexmon/$@
 
-patch.elf: patch.ld patch.o ../wrapper/wrapper.o ucode_compression_code.ld
+patch.elf: patch.ld patch.o wrapper.o $(OBJS)
 	$(CC)ld -T $< -o $@ --gc-sections --print-gc-sections -M
 
-$(FUNCTIONS_BIN): patch.elf
-	$(CC)objcopy -O binary -j .text.$(basename $@) $< $@
-
-text.bin: patch.elf
-	$(CC)objcopy -O binary -j .text $< $@
+fw_bcmdhd.bin: patch.elf $(ORIG_FW)
+	cp $(ORIG_FW) $@
+	$(CC)objcopy -O binary -j .text.patch $< section.generated.bin && dd if=section.generated.bin of=$@ bs=1 conv=notrunc seek=$$((0x180020 - 0x180000))
+	$(CC)objcopy -O binary -j .text.ucode $< section.generated.bin && dd if=section.generated.bin of=$@ bs=1 conv=notrunc seek=$$((0x1FD82C - 0x180000)) # 0x1FD820 on .40 firmware
+	make -f patch.generated.mk
+	make -f radiotap.generated.mk
+	make -f flashpatch.generated.mk
 
 fw_bcmdhd.complete.bin : fw_bcmdhd.bin ../../bootimg_src/firmware/rom.bin
 	dd if=../../bootimg_src/firmware/rom.bin of=$@ bs=1
@@ -40,8 +75,16 @@ ifndef NEXMON_SETUP_ENV
 	$(error run 'source setup_env.sh' first)
 endif
 
-clean:
-	rm -f fw_bcmdhd.bin fw_bcmdhd.complete.bin fw_bcmdhd.complete.elf patch.o patch.elf text.bin $(FUNCTIONS_BIN) ucode-compressed.c ucode-compressed.bin
+install-firmware: fw_bcmdhd.bin
+	adb shell 'su -c "mount -o rw,remount /system"' && \
+	adb push $< /sdcard/ && \
+	adb shell 'su -c "cp /sdcard/fw_bcmdhd.bin /vendor/firmware/fw_bcmdhd.bin"'
+	adb shell 'su -c "ifconfig wlan0 down"'
+
+clean-firmware: FORCE
+	rm -f fw_bcmdhd.bin fw_bcmdhd.complete.bin fw_bcmdhd.complete.elf *.o patch.elf ucode_compressed.c ucode_compressed.bin *.generated.* wrapper.ld
+
+clean: clean-firmware
 	make -C ../../kernel/ M=$$PWD/bcmdhd clean
 
 FORCE:

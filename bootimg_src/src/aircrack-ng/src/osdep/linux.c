@@ -262,7 +262,12 @@ static char * wiToolsPath(const char * tool)
                 "/usr/bin",
                 "/usr/local/bin",
                 "/tmp",
-                "/nexmon"
+                "/nexmon",
+                "/system/bin",
+                "/system/xbin",
+                "/su/bin",
+                "/su/xbin",
+                "/vendor/bin"
         };
 
 	// Also search in other known location just in case we haven't found it yet

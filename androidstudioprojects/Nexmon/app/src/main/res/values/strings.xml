@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">Nexmon</string>
+    <string-array name="binInstallLocations">
+        <item>/system/bin</item>
+        <item>/system/xbin</item>
+        <item>/vendor/bin</item>
+        <item>/su/bin/</item>
+        <item>/su/xbin/</item>
+    </string-array>
+    <string-array name="libInstallLocations">
+        <item>/system/lib</item>
+        <item>/vendor/lib</item>
+        <item>/su/lib/</item>
+    </string-array>
+</resources>

@@ -10,6 +10,17 @@
 #define	PAD		_XSTR(__LINE__)
 #endif
 
+struct wl_rxsts {
+    uint8 PAD[8];
+    uint16 chanspec;
+    uint16 datarate;
+    uint8 PAD1[12];
+    uint16 unkn1; /* ??? */
+    uint16 unkn2; /* increases over time */
+    uint8 PAD2[4];
+    uint8 rssi;
+} __attribute__((packed));
+
 struct osl_info {
 	unsigned int pktalloced;
 	int PAD[1];
@@ -265,10 +276,10 @@ struct wlc_info {
     int PAD;                            /* 0x1EC */
     int PAD;                            /* 0x1F0 */
     int PAD;                            /* 0x1F4 */
-    int PAD;                            /* 0x1F8 */
-    int PAD;                            /* 0x1FC */
-    int PAD;                            /* 0x200 */
-    int PAD;                            /* 0x204 */
+    int monitor;                        /* 0x1F8 */
+    int bcnmisc_ibss;                   /* 0x1FC */
+    int bcnmisc_scan;                   /* 0x200 */
+    int bcnmisc_monitor;                /* 0x204 */
     int PAD;                            /* 0x208 */
     int PAD;                            /* 0x20C */
     int PAD;                            /* 0x210 */
@@ -348,9 +359,9 @@ struct wlc_info {
     int PAD;                            /* 0X330 */
     int PAD;                            /* 0X334 */
     int PAD;                            /* 0X338 */
-    int PAD;                            /* 0X33C */
+    void *scan_results;                            /* 0X33C */
     int PAD;                            /* 0X340 */
-    int PAD;                            /* 0X344 */
+    void *custom_scan_results;                            /* 0X344 */
     int PAD;                            /* 0X348 */
     int PAD;                            /* 0X34C */
     int PAD;                            /* 0X350 */
