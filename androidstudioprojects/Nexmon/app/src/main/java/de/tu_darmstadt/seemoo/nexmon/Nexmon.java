@@ -115,8 +115,12 @@ public class Nexmon extends AppCompatActivity {
 
     private void requestPermission(String permission) {
         if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{permission}, 0);
+            ActivityCompat.requestPermissions(this, new String[]{permission}, 23);
         }
+    }
+
+    private boolean checkPermission(String permission) {
+        return ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED;
     }
 
     @Override
@@ -128,16 +132,6 @@ public class Nexmon extends AppCompatActivity {
         initializeInstallLocationSpinners();
 
         linDisclaimerDependent.setVisibility(LinearLayout.GONE);
-
-        requestPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        requestPermission(Manifest.permission.READ_EXTERNAL_STORAGE);
-
-        if ((new File("/sdcard/fw_bcmdhd.orig.bin")).exists()) {
-            btnCreateFirmwareBackup.setEnabled(false);
-        } else {
-            btnRestoreFirmwareBackup.setEnabled(false);
-            btnInstallNexmonFirmware.setEnabled(false);
-        }
     }
 
     private void copyFile(InputStream in, OutputStream out) throws IOException {
@@ -163,6 +157,40 @@ public class Nexmon extends AppCompatActivity {
         }
     }
 
+    private void setContentVisibility() {
+        if ((new File("/sdcard/fw_bcmdhd.orig.bin")).exists()) {
+            btnCreateFirmwareBackup.setEnabled(false);
+        } else {
+            btnRestoreFirmwareBackup.setEnabled(false);
+            btnInstallNexmonFirmware.setEnabled(false);
+        }
+
+        if (disclaimerButtonState) {
+            linDisclaimerDependent.setVisibility(LinearLayout.GONE);
+            btnAgreeToDisclaimer.setText("I solemnly swear that I am up to no good");
+        } else {
+            linDisclaimerDependent.setVisibility(LinearLayout.VISIBLE);
+            btnAgreeToDisclaimer.setText("Mischief managed!");
+        }
+        disclaimerButtonState = !disclaimerButtonState;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        switch (requestCode) {
+            case 23:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    setContentVisibility();
+                } else {
+                    // Permission Denied
+                    toast("Sorry, but we need permission to write to external storage to install our tools.");
+                }
+                break;
+            default:
+                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
+    }
+
     public void onClickAgreeToDisclaimer(View v) {
         if (chkDisclaimer.isChecked()) {
             if (RootShell.isRootAvailable()) {
@@ -170,14 +198,12 @@ public class Nexmon extends AppCompatActivity {
                 if (RootShell.isAccessGiven()) {
                     rootAccess = true;
 
-                    if (disclaimerButtonState) {
-                        linDisclaimerDependent.setVisibility(LinearLayout.GONE);
-                        btnAgreeToDisclaimer.setText("I solemnly swear that I am up to no good");
+                    if (checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) && checkPermission(Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                        setContentVisibility();
                     } else {
-                        linDisclaimerDependent.setVisibility(LinearLayout.VISIBLE);
-                        btnAgreeToDisclaimer.setText("Mischief managed!");
+                        requestPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                        requestPermission(Manifest.permission.READ_EXTERNAL_STORAGE);
                     }
-                    disclaimerButtonState = !disclaimerButtonState;
                 } else {
                     Toast.makeText(getApplicationContext(), "Sorry, but to install and run the required tools, we require root access to your device.", Toast.LENGTH_SHORT).show();
                 }
@@ -349,7 +375,7 @@ public class Nexmon extends AppCompatActivity {
             toast("Installing fw_bcmdhd.bin ...");
             copyExtractedAsset("/vendor/firmware/", "fw_bcmdhd.bin");
 
-            Command command = new Command(0, "ifconfig wlan0 down") {
+            Command command = new Command(0, "ifconfig wlan0 down", "ifconfig wlan0 up") {
                 @Override
                 public void commandOutput(int id, String line) {
                     Toast.makeText(getApplicationContext(), line, Toast.LENGTH_SHORT).show();
