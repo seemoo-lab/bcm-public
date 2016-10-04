@@ -47,6 +47,8 @@
  *                                                                         *
  **************************************************************************/
 
+#pragma NEXMON targetregion "patch"
+
 #include <firmware_version.h>   // definition of firmware version macros
 #include <debug.h>              // contains macros to access the debug hardware
 #include <wrapper.h>            // wrapper definitions for functions that already exist in the firmware

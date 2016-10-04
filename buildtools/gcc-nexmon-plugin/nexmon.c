@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include <c-family/c-pragma.h>
 
 static tree handle_nexmon_place_at_attribute(tree *node, tree name, tree args, int flags, bool *no_add_attr);
 
@@ -13,13 +14,15 @@ static const char *objfile = "patch.o";
 static const char *fwfile = "fw_bcmdhd.bin";
 static const char *ldfile = "/dev/null";
 static const char *makefile = "/dev/null";
+static const char *targetregion = NULL;
 static unsigned int ramstart = 0x180000;
 static unsigned int chipver = 0;
 static unsigned int fwver = 0;
-static unsigned int fp_config_base = 0x1d2000;
+static unsigned int fp_config_base = 0x207F0C;
 static unsigned int fp_data_base = 0x1D1800;
 static unsigned int fp_config_end = fp_config_base;
 static unsigned int fp_data_end = fp_data_base;
+static bool fp_active = false;
 
 static FILE *ld_fp, *make_fp;
 
@@ -99,6 +102,7 @@ handle_nexmon_place_at_attribute(tree *node, tree name, tree args, int flags, bo
 		if (is_region) {
 			asprintf(&str1, "%s.text.%s : { KEEP(%s (.*.%s)) } >%s\n", str1, region, objfile, decl_name, region);
 		} else if (is_flashpatch) {
+			fp_active = true;
 			fprintf(ld_fp, ".text.%s 0x%08x : { KEEP(%s (.*.%s)) }\n", decl_name, addr, objfile, decl_name);
 			fprintf(make_fp, "\t$(CC)objcopy -O binary -j .text.%s $< section.generated.bin && dd if=section.generated.bin of=$@ bs=1 conv=notrunc seek=$$((0x%08x))\n", decl_name, fp_data_end - ramstart);
 			fprintf(make_fp, "\tprintf %08x%08x%08x | xxd -r -p | dd of=$@ bs=1 conv=notrunc seek=$$((0x%08x))\n", htonl(addr), htonl(4), htonl(fp_data_end), fp_config_end - ramstart);
@@ -124,15 +128,41 @@ register_attributes(void *event_data, void *data)
 }
 
 static void
+handle_pragma_targetregion(cpp_reader *dummy)
+{
+	tree message = 0;
+	if (pragma_lex(&message) != CPP_STRING) {
+      	printf ("<#pragma NEXMON targetregion> is not a string");
+      	return;
+    }
+
+ 	if (TREE_STRING_LENGTH (message) > 1)
+		targetregion = TREE_STRING_POINTER (message);
+}
+
+static void 
+register_pragmas(void *event_data, void *data)
+{
+	c_register_pragma("NEXMON", "targetregion", handle_pragma_targetregion);
+}
+
+static void
 handle_plugin_finish(void *event_data, void *data)
 {
-	//fprintf(make_fp, "\tprintf %08x | xxd -r -p | dd of=$@ bs=1 conv=notrunc seek=$$((0x%08x))\n", htonl(fp_data_end), 0x1d9ae0 - ramstart);
-	//fprintf(make_fp, "\tprintf %08x | xxd -r -p | dd of=$@ bs=1 conv=notrunc seek=$$((0x%08x))\n", htonl(fp_config_base), 0x1ec610 - ramstart);
-	//fprintf(make_fp, "\tprintf %08x | xxd -r -p | dd of=$@ bs=1 conv=notrunc seek=$$((0x%08x))\n", htonl(fp_config_end), 0x1ec60c - ramstart);
-	//fprintf(make_fp, "\tprintf %08x | xxd -r -p | dd of=$@ bs=1 conv=notrunc seek=$$((0x%08x))\n", htonl(fp_config_base), 0x1ec8dc - ramstart);
-	//fprintf(make_fp, "\tprintf %08x | xxd -r -p | dd of=$@ bs=1 conv=notrunc seek=$$((0x%08x))\n", htonl(fp_config_end), 0x1ec8d8 - ramstart);
+	if (fp_active) {
+		fprintf(make_fp, "\tprintf %08x | xxd -r -p | dd of=$@ bs=1 conv=notrunc seek=$$((0x%08x))\n", htonl(fp_data_end), 0x1d9ae0 - ramstart);
+		fprintf(make_fp, "\tprintf %08x | xxd -r -p | dd of=$@ bs=1 conv=notrunc seek=$$((0x%08x))\n", htonl(fp_config_base), 0x1ec610 - ramstart);
+		fprintf(make_fp, "\tprintf %08x | xxd -r -p | dd of=$@ bs=1 conv=notrunc seek=$$((0x%08x))\n", htonl(fp_config_end), 0x1ec60c - ramstart);
+		fprintf(make_fp, "\tprintf %08x | xxd -r -p | dd of=$@ bs=1 conv=notrunc seek=$$((0x%08x))\n", htonl(fp_config_base), 0x1ec8dc - ramstart);
+		fprintf(make_fp, "\tprintf %08x | xxd -r -p | dd of=$@ bs=1 conv=notrunc seek=$$((0x%08x))\n", htonl(fp_config_end), 0x1ec8d8 - ramstart);
+	}
+
 	fprintf(make_fp, "\nFORCE:\n");
+	
 	fprintf(ld_fp, "%s", str1);
+
+	if (targetregion)
+		fprintf(ld_fp, ".text.%s : { %s (.text .text.* .data .data.* .bss .bss.* .rodata .rodata.*) } >%s\n", targetregion, objfile, targetregion);
 
 	fclose(ld_fp);
 	fclose(make_fp);
@@ -180,6 +210,7 @@ plugin_init(struct plugin_name_args *info, struct plugin_gcc_version *ver)
 	fprintf(make_fp, "%s: patch.elf FORCE\n", fwfile);
 
 	register_callback("nexmon", PLUGIN_ATTRIBUTES, register_attributes, NULL);
+	register_callback("nexmon", PLUGIN_PRAGMAS, register_pragmas, NULL);
 	register_callback("nexmon", PLUGIN_FINISH, handle_plugin_finish, NULL);
 
 	return 0;
