@@ -4,6 +4,12 @@
 #include "types.h"
 #include "bcmdhd/bcmcdc.h"
 
+/* band types */
+#define WLC_BAND_AUTO       0   /* auto-select */
+#define WLC_BAND_5G     1   /* 5 Ghz */
+#define WLC_BAND_2G     2   /* 2.4 Ghz */
+#define WLC_BAND_ALL        3   /* all bands */
+
 #ifndef	PAD
 #define	_PADLINE(line)	pad ## line
 #define	_XSTR(line)	_PADLINE(line)
@@ -11,14 +17,24 @@
 #endif
 
 struct wl_rxsts {
-    uint8 PAD[8];
-    uint16 chanspec;
-    uint16 datarate;
-    uint8 PAD1[12];
-    uint16 unkn1; /* ??? */
-    uint16 unkn2; /* increases over time */
-    uint8 PAD2[4];
-    uint8 rssi;
+    uint32      pkterror;       /* error flags per pkt */
+    uint32      phytype;        /* 802.11 A/B/G ... */
+    uint16      chanspec;       /* channel spec */
+    uint16      datarate;       /* rate in 500kbps (0 for HT frame) */
+    uint8       mcs;            /* MCS for HT frame */
+    uint8       htflags;        /* HT modulation flags */
+    uint8       PAD;
+    uint8       PAD;
+    uint32      antenna;        /* antenna pkts received on */
+    uint32      pktlength;      /* pkt length minus bcm phy hdr */
+    uint32      mactime;        /* time stamp from mac, count per 1us */
+    uint32      sq;             /* signal quality */
+    int32       signal;         /* in dBm */
+    int32       noise;          /* in dBm */
+    uint32      preamble;       /* Unknown, short, long */
+    uint32      encoding;       /* Unknown, CCK, PBCC, OFDM, HT */
+    uint32      nfrmtype;       /* special 802.11n frames(AMPDU, AMSDU) */
+    void        *wlif;          /* wl interface */
 } __attribute__((packed));
 
 struct osl_info {
@@ -137,14 +153,16 @@ struct wlcband {
     void *pi;                           /* 0x010 */
     char abgphy_encore;                 /* 0x014 */
     char gmode;                         /* 0x015 */
-    int hwrs_scb;                       /* 0x016 */
-    int defrateset;                     /* 0x01A */
-    int rspec_override;                 /* 0x01E */
-    int mrspec_override;                /* 0x022 */
-    char band_stf_ss_mode;              /* 0x026 */
-    char band_stf_stbc_tx;              /* 0x027 */
-    int hw_rateset;                     /* 0x028 */
-    char basic_rate;                    /* 0x02C */
+    char PAD;                           /* 0x016 */
+    char PAD;                           /* 0x017 */
+    void *hwrs_scb;                     /* 0x018 */
+    int defrateset;                     /* 0x01C */
+    int rspec_override;                 /* 0x020 */
+    int mrspec_override;                /* 0x024 */
+    char band_stf_ss_mode;              /* 0x028 */
+    char band_stf_stbc_tx;              /* 0x029 */
+    int hw_rateset;                     /* 0x030 */
+    char basic_rate;                    /* 0x034 */
 } __attribute__((packed));
 
 struct wlc_info {

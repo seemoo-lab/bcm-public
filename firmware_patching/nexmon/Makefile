@@ -1,5 +1,6 @@
 SRCS=$(wildcard *.c) ucode_compressed.c
 OBJS=$(SRCS:.c=.o)
+Q=@
 
 NEXMON_CHIP=CHIP_VER_BCM4339
 NEXMON_FW_VERSION=FW_VER_6_37_32_RC23_34_43_r639704
@@ -13,7 +14,11 @@ else
 	ORIG_FW=../../bootimg_src/firmware/fw_bcmdhd.orig.bin
 endif
 
-all: bcmdhd/bcmdhd.ko fw_bcmdhd.bin fw_bcmdhd.complete.elf
+firmware: fw_bcmdhd.bin
+
+driver: bcmdhd/bcmdhd.ko
+
+all: firmware driver
 
 include ucode_compression_code.mk
 
@@ -21,7 +26,7 @@ bcmdhd/bcmdhd.ko: check-nexmon-setup-env
 	make -C ../../kernel/ M=$$PWD/bcmdhd -j2
 
 %.o: %.c ../include/*.h
-	$(CC)gcc \
+	$(Q)$(CC)gcc \
 		-fplugin=../../buildtools/gcc-nexmon-plugin/nexmon.so \
 		-fplugin-arg-nexmon-objfile=$@ \
 		-fplugin-arg-nexmon-ldfile=$(basename $@).generated.ld \
@@ -33,7 +38,7 @@ bcmdhd/bcmdhd.ko: check-nexmon-setup-env
 		-Wall -Werror -O2 -nostdlib -nostartfiles -ffreestanding -mthumb -march=armv7-r -ffunction-sections -fdata-sections -I../include -c $< -o $@
 
 %.out: %.c ../include/*.h
-	$(CC)gcc \
+	$(Q)$(CC)gcc \
 		-fplugin=../../buildtools/gcc-nexmon-plugin/nexmon.so \
 		-fplugin-arg-nexmon-objfile=$@ \
 		-fplugin-arg-nexmon-ldfile=$(basename $@).generated.ld \
@@ -52,19 +57,19 @@ wrapper.o: ../include/wrapper.c
 		WRAPPER_OBJ_FILE=$(NEXMON_FIRMWARE_PATCHING)/nexmon/$@
 
 patch.elf: patch.ld patch.o wrapper.o $(OBJS)
-	$(CC)ld -T $< -o $@ --gc-sections --print-gc-sections -M
+	$(Q)$(CC)ld -T $< -o $@ --gc-sections --print-gc-sections -M
 
 fw_bcmdhd.bin: patch.elf $(ORIG_FW)
 	cp $(ORIG_FW) $@
-	$(CC)objcopy -O binary -j .text.patch $< section.generated.bin && dd if=section.generated.bin of=$@ bs=1 conv=notrunc seek=$$((0x180020 - 0x180000))
-	$(CC)objcopy -O binary -j .text.ucode $< section.generated.bin && dd if=section.generated.bin of=$@ bs=1 conv=notrunc seek=$$((0x1FD82C - 0x180000)) # 0x1FD820 on .40 firmware
-	make -f patch.generated.mk
-	make -f radiotap.generated.mk
-	make -f flashpatch.generated.mk
+	$(CC)objcopy -O binary -j .text.patch $< section.generated.bin && dd if=section.generated.bin of=$@ bs=1 conv=notrunc status=none seek=$$((0x180020 - 0x180000))
+	$(CC)objcopy -O binary -j .text.ucode $< section.generated.bin && dd if=section.generated.bin of=$@ bs=1 conv=notrunc status=none seek=$$((0x1FD82C - 0x180000)) # 0x1FD820 on .40 firmware
+	$(Q)make -f patch.generated.mk Q=$(Q)
+	$(Q)make -f radiotap.generated.mk Q=$(Q)
+	$(Q)make -f flashpatch.generated.mk Q=$(Q)
 
 fw_bcmdhd.complete.bin : fw_bcmdhd.bin ../../bootimg_src/firmware/rom.bin
-	dd if=../../bootimg_src/firmware/rom.bin of=$@ bs=1
-	dd if=fw_bcmdhd.bin of=$@ bs=1 seek=1572864
+	dd if=../../bootimg_src/firmware/rom.bin status=none of=$@ bs=1
+	dd if=fw_bcmdhd.bin of=$@ bs=1 status=none seek=1572864
 
 fw_bcmdhd.complete.elf : fw_bcmdhd.complete.bin
 	$(CC)objcopy -O elf32-littlearm -Barm -I binary $< $@
@@ -80,6 +85,16 @@ install-firmware: fw_bcmdhd.bin
 	adb push $< /sdcard/ && \
 	adb shell 'su -c "cp /sdcard/fw_bcmdhd.bin /vendor/firmware/fw_bcmdhd.bin"'
 	adb shell 'su -c "ifconfig wlan0 down"'
+
+backup-firmware: FORCE
+	adb shell 'su -c "cp /vendor/firmware/fw_bcmdhd.bin /sdcard/fw_bcmdhd.orig.bin"'
+	adb pull /sdcard/fw_bcmdhd.orig.bin
+
+install-backup: fw_bcmdhd.orig.bin
+	adb shell 'su -c "mount -o rw,remount /system"' && \
+	adb push $< /sdcard/ && \
+	adb shell 'su -c "cp /sdcard/fw_bcmdhd.bin /vendor/firmware/fw_bcmdhd.bin"'
+	adb shell 'su -c "ifconfig wlan0 down && ifconfig wlan0 up"'
 
 clean-firmware: FORCE
 	rm -f fw_bcmdhd.bin fw_bcmdhd.complete.bin fw_bcmdhd.complete.elf *.o patch.elf ucode_compressed.c ucode_compressed.bin *.generated.* wrapper.ld

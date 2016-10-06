@@ -248,6 +248,10 @@ void
 wlc_custom_scan_complete(void *wlc, int status, void *cfg)
 VOID_DUMMY
 
+AT(CHIP_VER_BCM4339, FW_VER_ALL, 0x8C97C) 
+int 
+wlc_d11hdrs(void *wlc, void *p, void *scb, int short_preamble, unsigned int frag, unsigned int nfrag, unsigned int queue, int next_frag_len, int key, int rspec_override) 
+RETURN_DUMMY
 
 AT(CHIP_VER_BCM4339, FW_VER_ALL, 0x3352C) 
 void *
@@ -509,7 +513,7 @@ RETURN_DUMMY
 
 AT(CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243, 0x18C4C8) 
 int 
-wlc_d11hdrs(void *wlc, void *p, void *scb, int short_preamble, unsigned int frag, unsigned int nfrag, unsigned int queue, int next_frag_len, int key, int rspec_override) 
+wlc_d11hdrs_RAM(void *wlc, void *p, void *scb, int short_preamble, unsigned int frag, unsigned int nfrag, unsigned int queue, int next_frag_len, int key, int rspec_override) 
 RETURN_DUMMY
 
 AT(CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243, 0x199874) 
@@ -641,6 +645,7 @@ wlc_sendnulldata(void *wlc, void *bsscfg, unsigned int *ea, int datarate_maybe, 
 RETURN_DUMMY
 
 AT(CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243, 0x193744) 
+AT(CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704, 0x193834) 
 void 
 wlc_txfifo(void *wlc, int fifo, void *p, void *txh, unsigned char commit, char txpktpend) 
 VOID_DUMMY

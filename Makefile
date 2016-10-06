@@ -75,7 +75,7 @@ kernel/arch/arm/boot/zImage-dtb: kernel/.config check-nexmon-setup-env
 bcmdhd: kernel/drivers/net/wireless/bcmdhd/bcmdhd.ko
 
 $(FWPATCH): FORCE
-	cd firmware_patching/$(FWPATCH) && make
+	cd firmware_patching/$(FWPATCH) && make all
 
 su: su.img
 	adb push su.img /sdcard/

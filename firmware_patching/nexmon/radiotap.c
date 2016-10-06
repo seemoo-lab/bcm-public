@@ -9,7 +9,6 @@
 #include <bcmdhd/bcmcdc.h>
 #include "bcmdhd/include/bcmwifi_channels.h"
 #include "ieee80211_radiotap.h"
-#include "radiotap.h"
 #include "d11.h"
 
 inline uint16_t
