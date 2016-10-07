@@ -558,8 +558,8 @@ void
 wlc_phyreg_exit(void *pi) 
 VOID_DUMMY
 
-AT(CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704, 0x1C4D8C)
 AT(CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243, 0x1C4B40)
+AT(CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704, 0x1C4D8C)
 int 
 wlc_phy_channel2freq(unsigned int channel) 
 RETURN_DUMMY
@@ -567,6 +567,12 @@ RETURN_DUMMY
 AT(CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243, 0x1C4B36) 
 int 
 wlc_phy_chanspec_get(void *ppi) 
+RETURN_DUMMY
+
+AT(CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243, 0x1B39F8)
+AT(CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704, 0x1b3c44) 
+int 
+wlc_phy_chan2freq_acphy(void *pi, int chanspec, int *freq, void **chan_info_ptr) 
 RETURN_DUMMY
 
 AT(CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243, 0x1B39FE) 

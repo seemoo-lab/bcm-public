@@ -100,7 +100,9 @@ wl_monitor_hook(struct wl_info *wl, struct wl_rxsts *sts, struct sk_buff *p)
     void *sdio_info = *(*((void ***) 0x180e60) + 7);
     struct sk_buff *p_new = pkt_buf_get_skb(osh, p->len + sizeof(struct bdc_radiotap_header));
     struct bdc_radiotap_header *frame = (struct bdc_radiotap_header *) p_new->data;
-    
+    int freq = 0;
+    void *ci = 0;
+
     memset(p_new->data, 0, sizeof(struct bdc_radiotap_header));
 
     frame->bdc.flags = 0x20;
@@ -120,7 +122,8 @@ wl_monitor_hook(struct wl_info *wl, struct wl_rxsts *sts, struct sk_buff *p)
     frame->radiotap.tsf.tsf_l = sts->mactime;
     frame->radiotap.tsf.tsf_h = 0;
     frame->radiotap.flags = IEEE80211_RADIOTAP_F_FCS;
-    frame->radiotap.chan_freq = wlc_phy_channel2freq(CHSPEC_CHANNEL(sts->chanspec));
+    wlc_phy_chan2freq_acphy(wl->wlc->band->pi, CHSPEC_CHANNEL(sts->chanspec), &freq, &ci);
+    frame->radiotap.chan_freq = freq;
     frame->radiotap.chan_flags = 0;
     frame->radiotap.dbm_antsignal = sts->signal;
     frame->radiotap.dbm_antnoise = sts->noise;
@@ -179,8 +182,8 @@ inject_frame(struct wlc_info *wlc, struct sk_buff *p)
 
     if (wlc->band->bandtype == WLC_BAND_5G && data_rate < RATES_RATE_6M) {
         data_rate = RATES_RATE_6M;
-        data_rate = RATES_OVERRIDE_MODE | BW_160MHZ | RATES_ENCODE_HT;
-        printf("rate: %08x\n", data_rate);
+        //data_rate = RATES_OVERRIDE_MODE | BW_160MHZ | RATES_ENCODE_HT;
+        //printf("rate: %08x\n", data_rate);
     }
     
 
