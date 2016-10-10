@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Nexmon by seemoo-lab</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Nexmon</h1>
+      <h2 class="project-tagline">Monitor Mode and Firmware Patching Framework for the Google Nexus 5</h2>
+      <a href="https://github.com/seemoo-lab/bcm-public" class="btn">View on GitHub</a>
+      <a href="https://github.com/seemoo-lab/bcm-public/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/seemoo-lab/bcm-public/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <p><img src="https://github.com/seemoo-lab/bcm-public/raw/master/logo/nexmon-logo-color.png" alt="NexMon logo"></p>
+
+<h2>
+<a id="what-is-nexmon" class="anchor" href="#what-is-nexmon" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>What is NexMon?</h2>
+
+<p>NexMon is a firmware patching framework for the BCM4339 WiFi firmware of Nexus 5 smartphones. It's main intension was to enable monitor mode and frame injection, which is already working quite well. Nevertheless, we also publish many example patches that allow to dive into firmware reverse engineering and firmware patching. Especially, the ability to write firmware patches in C makes it easy to use, also for beginners.</p>
+
+<p>If you only intend to activate monitor mode on a device using the bcmdhd driver, take a look at the following commit: <a href="https://github.com/seemoo-lab/bcm-public/commit/ed11c18aa89cd0374a3ce7655337cc0e4d1cdd0a">ed11c18</a></p>
+
+<h2>
+<a id="news" class="anchor" href="#news" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>News</h2>
+
+<ul>
+<li>We moved to <strong><a href="https://github.com/seemoo-lab/bcm-public">GitHub!</a></strong>
+</li>
+<li>You can now follow us on twitter: <a href="https://twitter.com/nexmon_dev">@nexmon_dev</a>
+</li>
+</ul>
+
+<h2>
+<a id="related-projects" class="anchor" href="#related-projects" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Related Projects</h2>
+
+<ul>
+<li>Monitor Mode for the Raspberry Pi 3: <a href="http://rpi3.nexmon.org">rpi3.nexmon.org</a>
+</li>
+</ul>
+
+<h2>
+<a id="warning" class="anchor" href="#warning" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>WARNING</h2>
+
+<p>Our software may damage your hardware and may void your hardware’s warranty! You use our tools at your own risk and responsibility! If you don't like these terms, don't use nexmon!</p>
+
+<h2>
+<a id="what-this-repo-contains" class="anchor" href="#what-this-repo-contains" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>What this Repo contains</h2>
+
+<ul>
+<li>A bootable boot ROM for Android</li>
+<li>Everything needed to build the ROM by yourself</li>
+</ul>
+
+<h2>
+<a id="requirements" class="anchor" href="#requirements" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Requirements</h2>
+
+<ul>
+<li>Nexus 5 with bcm4339 chipset</li>
+<li>Your bootloader needs to be unlocked (no root required)</li>
+<li>Android 6.0 or 6.0.1</li>
+<li>Android Tools (adb + fastboot)</li>
+</ul>
+
+<h3>
+<a id="to-build-your-own-patches" class="anchor" href="#to-build-your-own-patches" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>To build your own patches</h3>
+
+<ul>
+<li>Xubuntu 14.04.4 64-Bit (do not use a different version to avoid compilation problems)</li>
+<li>set the environment variable <code>NDK_ROOT</code> to an installation of android-ndk-r11c (using exactly this version allows to build all tools without problems)</li>
+</ul>
+
+<h2>
+<a id="steps-needed-to-run-the-bootimg-on-your-phone" class="anchor" href="#steps-needed-to-run-the-bootimg-on-your-phone" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Steps needed to run the boot.img on your phone</h2>
+
+<ul>
+<li>Download the <a href="https://github.com/seemoo-lab/bcm-public/raw/master/boot.img">boot.img</a> (this project is still in heavy development, the monitor mode should work on the boot.img in this commit though: <a href="https://github.com/seemoo-lab/bcm-public/raw/2c3982518c89eb9580f868b2337c944d8405bf4a/boot.img">2c39825</a>)</li>
+<li><code>adb reboot bootloader</code></li>
+<li>
+<code>fastboot boot boot.img</code>
+
+<ul>
+<li>without the <code>flash</code> parameter, this boot image will be reset to the previous one on the next reboot</li>
+</ul>
+</li>
+<li><code>fastboot reboot</code></li>
+<li><code>adb shell</code></li>
+<li><code>su</code></li>
+<li><code>insmod /nexmon/bcmdhd.ko</code></li>
+<li><code>ifconfig wlan0 up</code></li>
+<li>
+<code>nexutil -m true</code> this tells the firmware to activate monitor mode</li>
+<li>do whatever you want, e.g. run tcpdump: <code>/nexmon/bin/tcpdump -i wlan0 -s0</code>
+</li>
+</ul>
+
+<h2>
+<a id="steps-to-build-your-own-bootimg" class="anchor" href="#steps-to-build-your-own-bootimg" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Steps to build your own boot.img</h2>
+
+<ul>
+<li><code>source setup_env.sh</code></li>
+<li><code>make cleanboot</code></li>
+<li><code>make boot.img</code></li>
+</ul>
+
+<h2>
+<a id="steps-to-create-your-own-firmware-patches" class="anchor" href="#steps-to-create-your-own-firmware-patches" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Steps to create your own firmware patches</h2>
+
+<ul>
+<li>see the <a href="https://github.com/seemoo-lab/bcm-public/tree/master/firmware_patching">firmware patching folder</a>
+</li>
+</ul>
+
+<h2>
+<a id="caveats" class="anchor" href="#caveats" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Caveats</h2>
+
+<ul>
+<li>
+<del>The current patch is unable to handle aggregated frames (A-MSDU's). This makes it impossible to receive frames in an 802.11n/802.11ac enabled environment.</del>
+
+<ul>
+<li>Current Monitor Mode was tested and works for 802.11n with 20MHz wide channels (2.4 as well as 5GHz), <del>40MHz channels seems to be a problem. We keep working on it ;-)</del>
+</li>
+<li>Using this <a href="https://github.com/seemoo-lab/bcm-public/blob/90bed6e1c3ad70ddc23ccf44033b152e0db300b6/kernel_patches/40mhz_channels_5GHz.patch">patch</a> should enalbe <code>iw</code> to set 40MHz channels. It currently only works for 5GHz frequencies. 
+Capturing WiFi packets which use mutliple spatial streams is still not possible, this is caused by a hardware limitation of the Nexus 5</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="read-our-papers" class="anchor" href="#read-our-papers" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Read our papers</h2>
+
+<p>Feel free to read and reference our papers on the development of this project </p>
+
+<ul>
+<li>M. Schulz, D. Wegemer and M. Hollick. <a href="http://arxiv.org/abs/1601.07077">NexMon: A Cookbook for Firmware 
+Modifications on Smartphones to Enable Monitor Mode</a>, CoRR, vol. abs/1601.07077, December 2015. 
+<a href="http://dblp.uni-trier.de/rec/bibtex/journals/corr/SchulzWH16">bibtex</a>
+</li>
+<li>M. Schulz, D. Wegemer, M. Hollick. <a href="https://dl.acm.org/citation.cfm?id=2942419">DEMO: Using NexMon, the C-based WiFi 
+firmware modification framework</a>, 
+Proceedings of the 9th ACM Conference on Security and Privacy in Wireless and 
+Mobile Networks, WiSec 2016, July 2016.</li>
+</ul>
+
+<h2>
+<a id="contact" class="anchor" href="#contact" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Contact</h2>
+
+<ul>
+<li>
+<a href="https://seemoo.tu-darmstadt.de/mschulz">Matthias Schulz</a> <a href="mailto:mschulz@seemoo.tu-darmstadt.de">mschulz@seemoo.tu-darmstadt.de</a>
+</li>
+<li>Daniel Wegemer <a href="mailto:dwegemer@seemoo.tu-darmstadt.de">dwegemer@seemoo.tu-darmstadt.de</a>
+</li>
+</ul>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/seemoo-lab/bcm-public">Nexmon</a> is maintained by <a href="https://github.com/seemoo-lab">seemoo-lab</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
+</html>
