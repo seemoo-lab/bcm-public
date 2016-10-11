@@ -8,4 +8,5 @@ ucode_compressed.bin: ucode.bin
 	cat $< | zlib-flate -compress > $@
 
 ucode_compressed.c: ucode_compressed.bin
-	xxd -i $< > $@
+	printf "#pragma NEXMON targetregion \"ucode\"\n\n" > $@
+	xxd -i $< >> $@

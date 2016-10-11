@@ -128,7 +128,19 @@ void *
 handle_sdio_xmit_request(void *sdio_hw, void *p) 
 RETURN_DUMMY
 
-AT(CHIP_VER_BCM4339, FW_VER_ALL, 0x8C3DC) 
+AT(CHIP_VER_BCM4339, FW_VER_ALL, 0x1654C)
+void *
+hndrte_add_timer(void *t, int ms, int periodic)
+RETURN_DUMMY
+
+AT(CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243, 0x1814f4)
+AT(CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704, 0x1814f4)
+//AT(CHIP_VER_BCM4339, FW_VER_ALL, 0x1673C) 
+void *
+malloc(unsigned int size, char alignment) 
+RETURN_DUMMY
+
+AT(CHIP_VER_BCM4339, FW_VER_ALL, 0x8C3DC)
 int 
 memcpy(void *dst, void *src, int len) 
 RETURN_DUMMY
@@ -136,6 +148,11 @@ RETURN_DUMMY
 AT(CHIP_VER_BCM4339, FW_VER_ALL, 0x1269C) 
 void *
 memset(void *dst, int value, int len) 
+RETURN_DUMMY
+
+AT(CHIP_VER_BCM4339, FW_VER_ALL, 0x1673C) 
+void *
+osl_malloc(void *osh, unsigned int size) 
 RETURN_DUMMY
 
 AT(CHIP_VER_BCM4339, FW_VER_ALL, 0x8C70C) 
@@ -357,11 +374,6 @@ AT(CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243, 0x183798)
 AT(CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704, 0x183798)
 void *
 handle_sdio_xmit_request_ram(void *sdio_hw, void *p) 
-RETURN_DUMMY
-
-AT(CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243, 0x1814F4) 
-void *
-malloc(unsigned int size, char x) 
 RETURN_DUMMY
 
 AT(CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243, 0x181418) 

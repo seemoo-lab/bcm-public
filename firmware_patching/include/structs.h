@@ -1431,6 +1431,29 @@ struct d11regs {
     unsigned short PAD[0x380]; /* 0x800 - 0xEFE */
 } __attribute__((packed));
 
+typedef void (*to_fun_t)(void *arg);
+
+typedef struct _ctimeout {
+    struct _ctimeout *next;
+    uint32 ms;
+    to_fun_t fun;
+    void *arg;
+    bool expired;
+} ctimeout_t;
+
+struct hndrte_timer
+{
+    uint32  *context;       /* first field so address of context is timer struct ptr */
+    void    *data;
+    void    (*mainfn)(struct hndrte_timer *);
+    void    (*auxfn)(void *context);
+    ctimeout_t t;
+    int interval;
+    int set;
+    int periodic;
+    bool    _freedone;
+} __attribute__((packed));
+
 /*== maccontrol register ==*/
 #define MCTL_GMODE      (1U << 31)
 #define MCTL_DISCARD_PMQ    (1 << 30)
