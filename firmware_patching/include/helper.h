@@ -9,6 +9,9 @@ skb_push(sk_buff *p, unsigned int len);
 void *
 skb_pull(sk_buff *p, unsigned int len);
 
+struct hndrte_timer *
+hndrte_init_timer(void *context, void *data, void (*mainfn)(struct hndrte_timer *), void (*auxfn)(void*));
+
 // somehow the strings are not removed during optimization, so that they end up in the binary, hence, move the functions somewhere else, where they are only included if they are needed.
 inline uint16
 htons(uint16 a)

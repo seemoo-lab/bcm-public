@@ -88,3 +88,21 @@ skb_pull(sk_buff *p, unsigned int len)
 
     return p->data;
 }
+
+struct hndrte_timer *
+hndrte_init_timer(void *context, void *data, void (*mainfn)(struct hndrte_timer *), void (*auxfn)(void*))
+{
+    struct hndrte_timer *t = (struct hndrte_timer *) malloc(sizeof(struct hndrte_timer), 0);
+
+    if (t) {
+        memset(t, 0, sizeof(struct hndrte_timer));
+        t->context = context;
+        t->mainfn = mainfn;
+        t->auxfn = auxfn;
+        t->data = data;
+        t->set = 0;
+        t->periodic = 0;
+    }
+
+    return t;
+}
