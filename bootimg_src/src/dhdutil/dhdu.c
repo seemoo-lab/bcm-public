@@ -110,7 +110,7 @@ static char *buf = (char*) &bufstruct_dhd.bufdata;
 static uint8 int_fmt;
 
 #define DEBUG_INFO_PTRS_END 0xffffffff
-const uint32 debug_info_ptrs[] = {0xf8, 0x878, DEBUG_INFO_PTRS_END};
+const uint32 debug_info_ptrs[] = {0xf8, 0x878, 0x74, DEBUG_INFO_PTRS_END};
 
 typedef struct {
 	uint value;
