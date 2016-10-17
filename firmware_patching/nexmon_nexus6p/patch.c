@@ -47,28 +47,31 @@
  *                                                                         *
  **************************************************************************/
 
-#ifndef STRUCTS_H
-#define STRUCTS_H
+#pragma NEXMON targetregion "patch"
 
-/* band types */
-#define WLC_BAND_AUTO       0   /* auto-select */
-#define WLC_BAND_5G     1   /* 5 Ghz */
-#define WLC_BAND_2G     2   /* 2.4 Ghz */
-#define WLC_BAND_ALL        3   /* all bands */
+#include <firmware_version.h>   // definition of firmware version macros
+#include <debug.h>              // contains macros to access the debug hardware
+#include <wrapper.h>            // wrapper definitions for functions that already exist in the firmware
+#include <structs.h>            // structures that are used by the code in the firmware
+#include <helper.h>             // useful helper functions
+#include <patcher.h>            // macros used to craete patches such as BLPatch, BPatch, ...
+#include <rates.h>              // rates used to build the ratespec for frame injection
 
-#ifndef	PAD
-#define	_PADLINE(line)	pad ## line
-#define	_XSTR(line)	_PADLINE(line)
-#define	PAD		_XSTR(__LINE__)
-#endif
+// Normally the former space of the flash patching config will be freed and added to the
+// heap. We intend to place our "patch" memory region there, so that we can store our
+// patch code, hence, we nop the call to the function that adds the fp config space to the heap
+__attribute__((at(0x18AA58, "", CHIP_VER_BCM4358, FW_VER_7_112_200_17)))
+GenericPatch4(nop_freeing_fp_config, 0x00000000);
 
-/* Depending on the firmware, some structs may change, here we decide which 
- * include file to use for a particular chip 
- */
-#if NEXMON_CHIP == CHIP_VER_BCM4339
-#include <structs.bcm4339.h>
-#elif NEXMON_CHIP == CHIP_VER_BCM4358
-#include <structs.bcm4358.h>
-#endif
+// Hook the call to wlc_ucode_write in wlc_ucode_download
+__attribute__((at(0x1F4F08, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243)))
+__attribute__((at(0x1F4F14, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
+__attribute__((at(0x1F485C, "", CHIP_VER_BCM4358, FW_VER_7_112_200_17)))
+BLPatch(wlc_ucode_write_compressed, wlc_ucode_write_compressed);
 
-#endif /*STRUCTS_H */
+
+// Patch the "wl%d: Broadcom BCM%04x 802.11 Wireless Controller %s\n" string
+__attribute__((at(0x1FD31B, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243)))
+__attribute__((at(0x1FD327, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
+__attribute__((at(0x201551, "", CHIP_VER_BCM4358, FW_VER_7_112_200_17)))
+StringPatch(version_string, "nexmon (" __DATE__ " " __TIME__ ")\n");

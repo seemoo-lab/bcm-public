@@ -141,11 +141,13 @@ malloc(unsigned int size, char alignment)
 RETURN_DUMMY
 
 AT(CHIP_VER_BCM4339, FW_VER_ALL, 0x8C3DC)
+AT(CHIP_VER_BCM4358, FW_VER_ALL, 0x35F8)
 int 
 memcpy(void *dst, void *src, int len) 
 RETURN_DUMMY
 
-AT(CHIP_VER_BCM4339, FW_VER_ALL, 0x1269C) 
+AT(CHIP_VER_BCM4339, FW_VER_ALL, 0x1269C)
+AT(CHIP_VER_BCM4358, FW_VER_ALL, 0x3700)
 void *
 memset(void *dst, int value, int len) 
 RETURN_DUMMY
@@ -156,16 +158,19 @@ osl_malloc(void *osh, unsigned int size)
 RETURN_DUMMY
 
 AT(CHIP_VER_BCM4339, FW_VER_ALL, 0x8C70C) 
+AT(CHIP_VER_BCM4358, FW_VER_ALL, 0x8FD2C)
 void *
 pkt_buf_get_skb(void *osh, unsigned int len) 
 RETURN_DUMMY
 
-AT(CHIP_VER_BCM4339, FW_VER_ALL, 0x8C71C) 
+AT(CHIP_VER_BCM4339, FW_VER_ALL, 0x8C71C)
+AT(CHIP_VER_BCM4358, FW_VER_ALL, 0x8FD1C) 
 void *
 pkt_buf_free_skb(void *osh, void *p, int send) 
 RETURN_DUMMY
 
-AT(CHIP_VER_BCM4339, FW_VER_ALL, 0x126f0) 
+AT(CHIP_VER_BCM4339, FW_VER_ALL, 0x126f0)
+AT(CHIP_VER_BCM4358, FW_VER_ALL, 0x374C)
 int 
 printf(const char *format, ...) 
 RETURN_DUMMY
@@ -300,12 +305,23 @@ int
 wlc_sendctl(void *wlc, void *p, void *qi, void *scb, unsigned int fifo, unsigned int rate_override, char enq_only) 
 RETURN_DUMMY
 
+AT(CHIP_VER_BCM4358, FW_VER_ALL, 0x90AEC)
+void
+wl_sendup(void *wl, void *wlif, void *p)
+VOID_DUMMY
+
+AT(CHIP_VER_BCM4358, FW_VER_ALL, 0x18628)
+void
+wl_monitor(void *wl, void *sts, void *p)
+VOID_DUMMY
+
 AT(CHIP_VER_BCM4339, FW_VER_ALL, 0x399FC) 
 void 
 wlc_set_chanspec(void *wlc, unsigned short chanspec) 
 VOID_DUMMY
 
-AT(CHIP_VER_BCM4339, FW_VER_ALL, 0x4E0C8) 
+AT(CHIP_VER_BCM4339, FW_VER_ALL, 0x4E0C8)
+AT(CHIP_VER_BCM4358, FW_VER_ALL, 0x42B94)
 void 
 wlc_ucode_write(void *wlc_hw, const int ucode[], const unsigned int nbytes) 
 VOID_DUMMY
@@ -556,6 +572,7 @@ RETURN_DUMMY
 
 AT(CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243, 0x18D648)
 AT(CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704, 0x18D738)
+AT(CHIP_VER_BCM4358, FW_VER_7_112_200_17, 0x1ECC4)
 void *
 wlc_monitor(void *wlc, void * wrxh, void *p, int wlc_if) 
 RETURN_DUMMY
@@ -582,7 +599,8 @@ wlc_phy_chanspec_get(void *ppi)
 RETURN_DUMMY
 
 AT(CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243, 0x1B39F8)
-AT(CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704, 0x1b3c44) 
+AT(CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704, 0x1b3c44)
+AT(CHIP_VER_BCM4358, FW_VER_7_112_200_17, 0x1BB96A)
 int 
 wlc_phy_chan2freq_acphy(void *pi, int chanspec, int *freq, void **chan_info_ptr) 
 RETURN_DUMMY

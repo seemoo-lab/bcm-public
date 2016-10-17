@@ -47,28 +47,21 @@
  *                                                                         *
  **************************************************************************/
 
-#ifndef STRUCTS_H
-#define STRUCTS_H
+#include <firmware_version.h>   // definition of firmware version macros
+#include <patcher.h>            // macros used to craete patches such as BLPatch, BPatch, ...
 
-/* band types */
-#define WLC_BAND_AUTO       0   /* auto-select */
-#define WLC_BAND_5G     1   /* 5 Ghz */
-#define WLC_BAND_2G     2   /* 2.4 Ghz */
-#define WLC_BAND_ALL        3   /* all bands */
+__attribute__((at(0x1E9418, "", CHIP_VER_BCM4358, FW_VER_7_112_200_17)))
+__attribute__((naked))
+void
+patch_console_size_1(void)
+{
+	asm("mov r0, 0x800\n");
+}
 
-#ifndef	PAD
-#define	_PADLINE(line)	pad ## line
-#define	_XSTR(line)	_PADLINE(line)
-#define	PAD		_XSTR(__LINE__)
-#endif
-
-/* Depending on the firmware, some structs may change, here we decide which 
- * include file to use for a particular chip 
- */
-#if NEXMON_CHIP == CHIP_VER_BCM4339
-#include <structs.bcm4339.h>
-#elif NEXMON_CHIP == CHIP_VER_BCM4358
-#include <structs.bcm4358.h>
-#endif
-
-#endif /*STRUCTS_H */
+__attribute__((at(0x1E9434, "", CHIP_VER_BCM4358, FW_VER_7_112_200_17)))
+__attribute__((naked))
+void
+patch_console_size_2(void)
+{
+	asm("mov r2, 0x800\n");
+}
