@@ -58,7 +58,6 @@
 #include <rates.h>              // rates used to build the ratespec for frame injection
 #include <bcmdhd/bcmsdpcm.h>
 #include <bcmdhd/bcmcdc.h>
-#include "bcmdhd/include/bcmwifi_channels.h"
 #include "ieee80211_radiotap.h"
 #include "d11.h"
 

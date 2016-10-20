@@ -89,6 +89,7 @@ skb_pull(sk_buff *p, unsigned int len)
     return p->data;
 }
 
+/*
 struct hndrte_timer *
 hndrte_init_timer(void *context, void *data, void (*mainfn)(struct hndrte_timer *), void (*auxfn)(void*))
 {
@@ -106,3 +107,4 @@ hndrte_init_timer(void *context, void *data, void (*mainfn)(struct hndrte_timer 
 
     return t;
 }
+*/
