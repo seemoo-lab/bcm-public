@@ -47,44 +47,21 @@
  *                                                                         *
  **************************************************************************/
 
-#pragma NEXMON targetregion "patch"
-
 #include <firmware_version.h>   // definition of firmware version macros
-#include <debug.h>              // contains macros to access the debug hardware
-#include <wrapper.h>            // wrapper definitions for functions that already exist in the firmware
-#include <structs.h>            // structures that are used by the code in the firmware
-#include <helper.h>             // useful helper functions
 #include <patcher.h>            // macros used to craete patches such as BLPatch, BPatch, ...
-#include <rates.h>              // rates used to build the ratespec for frame injection
-#include <bcmdhd/bcmsdpcm.h>
-#include <bcmdhd/bcmcdc.h>
-#include "bcmdhd/include/bcmwifi_channels.h"
-#include "ieee80211_radiotap.h"
-#include "d11.h"
 
-/**
- *  add data to the start of a buffer
- */
-void *
-skb_push(sk_buff *p, unsigned int len)
+__attribute__((at(0x1E9418, "", CHIP_VER_BCM4358, FW_VER_7_112_200_17)))
+__attribute__((naked))
+void
+patch_console_size_1(void)
 {
-    p->data -= len;
-    p->len += len;
-
-    if (p->data < p->head)
-        printf("%s: failed", __FUNCTION__);
-
-    return p->data;
+	asm("mov r0, 0x800\n");
 }
 
-/**
- *  remove data from the start of a buffer
- */
-void *
-skb_pull(sk_buff *p, unsigned int len)
+__attribute__((at(0x1E9434, "", CHIP_VER_BCM4358, FW_VER_7_112_200_17)))
+__attribute__((naked))
+void
+patch_console_size_2(void)
 {
-    p->data += len;
-    p->len -= len;
-
-    return p->data;
+	asm("mov r2, 0x800\n");
 }

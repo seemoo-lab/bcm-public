@@ -5,5 +5,5 @@ MEMORY
 
 SECTIONS
 {
-	INCLUDE nexmon.generated.ld
+	INCLUDE flashpatches.generated.ld
 }

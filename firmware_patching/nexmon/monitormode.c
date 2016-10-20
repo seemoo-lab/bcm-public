@@ -56,59 +56,49 @@
 #include <helper.h>             // useful helper functions
 #include <patcher.h>            // macros used to craete patches such as BLPatch, BPatch, ...
 #include <rates.h>              // rates used to build the ratespec for frame injection
-#include <bcmdhd/bcmsdpcm.h>
-#include <bcmdhd/bcmcdc.h>
-#include "bcmdhd/include/bcmwifi_channels.h"
 #include "ieee80211_radiotap.h"
-#include "d11.h"
-
-struct bdc_radiotap_header {
-    struct bdc_header bdc;
-    struct nexmon_radiotap_header radiotap;
-} __attribute__((packed));
+#include <bcmwifi_channels.h>
 
 void
 wl_monitor_hook(struct wl_info *wl, struct wl_rxsts *sts, struct sk_buff *p)
 {
     struct osl_info *osh = wl->wlc->osh;
-    void *sdio_info = *(*((void ***) 0x180e60) + 7);
-    struct sk_buff *p_new = pkt_buf_get_skb(osh, p->len + sizeof(struct bdc_radiotap_header));
-    struct bdc_radiotap_header *frame = (struct bdc_radiotap_header *) p_new->data;
+    struct sk_buff *p_new = pkt_buf_get_skb(osh, p->len + sizeof(struct nexmon_radiotap_header));
+    struct nexmon_radiotap_header *frame = (struct nexmon_radiotap_header *) p_new->data;
     int freq = 0;
     void *ci = 0;
 
-    memset(p_new->data, 0, sizeof(struct bdc_radiotap_header));
+    memset(p_new->data, 0, sizeof(struct nexmon_radiotap_header));
 
-    frame->bdc.flags = 0x20;
-    frame->bdc.priority = 0;
-    frame->bdc.flags2 = 0;
-    frame->bdc.dataOffset = 0;
-
-    frame->radiotap.header.it_version = 0;
-    frame->radiotap.header.it_pad = 0;
-    frame->radiotap.header.it_len = sizeof(struct nexmon_radiotap_header);
-    frame->radiotap.header.it_present = 
+    frame->header.it_version = 0;
+    frame->header.it_pad = 0;
+    frame->header.it_len = sizeof(struct nexmon_radiotap_header);
+    frame->header.it_present = 
           (1<<IEEE80211_RADIOTAP_TSFT) 
         | (1<<IEEE80211_RADIOTAP_FLAGS)
         | (1<<IEEE80211_RADIOTAP_CHANNEL)
         | (1<<IEEE80211_RADIOTAP_DBM_ANTSIGNAL)
         | (1<<IEEE80211_RADIOTAP_DBM_ANTNOISE);
-    frame->radiotap.tsf.tsf_l = sts->mactime;
-    frame->radiotap.tsf.tsf_h = 0;
-    frame->radiotap.flags = IEEE80211_RADIOTAP_F_FCS;
+    frame->tsf.tsf_l = sts->mactime;
+    frame->tsf.tsf_h = 0;
+    frame->flags = IEEE80211_RADIOTAP_F_FCS;
     wlc_phy_chan2freq_acphy(wl->wlc->band->pi, CHSPEC_CHANNEL(sts->chanspec), &freq, &ci);
-    frame->radiotap.chan_freq = freq;
-    frame->radiotap.chan_flags = 0;
-    frame->radiotap.dbm_antsignal = sts->signal;
-    frame->radiotap.dbm_antnoise = sts->noise;
+    frame->chan_freq = freq;
+    frame->chan_flags = 0;
+    frame->dbm_antsignal = sts->signal;
+    frame->dbm_antnoise = sts->noise;
 
-    memcpy(p_new->data + sizeof(struct bdc_radiotap_header), p->data + 6, p->len - 6);
+    memcpy(p_new->data + sizeof(struct nexmon_radiotap_header), p->data + 6, p->len - 6);
     p_new->len -= 6;
 
-    dngl_sendpkt(sdio_info, p_new, SDPCM_DATA_CHANNEL);
+    wl_sendup(wl, 0, p_new);
 }
 
 // Hook the call to wl_monitor in wlc_monitor
 __attribute__((at(0x18DA30, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243)))
 __attribute__((at(0x18DB20, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
+__attribute__((at(0x1f0a6, "flashpatch", CHIP_VER_BCM4358, FW_VER_7_112_200_17)))
 BLPatch(wl_monitor_hook, wl_monitor_hook);
+
+__attribute__((at(0x739DC, "flashpatch", CHIP_VER_BCM4358, FW_VER_7_112_200_17)))
+GenericPatch4(xxxx, 0x0);

@@ -56,17 +56,22 @@
 #include <helper.h>             // useful helper functions
 #include <patcher.h>            // macros used to craete patches such as BLPatch, BPatch, ...
 #include <rates.h>              // rates used to build the ratespec for frame injection
-#include <bcmdhd/bcmsdpcm.h>
-#include <bcmdhd/bcmcdc.h>
-#include "ieee80211_radiotap.h"
-#include "d11.h"
+
+// Normally the former space of the flash patching config will be freed and added to the
+// heap. We intend to place our "patch" memory region there, so that we can store our
+// patch code, hence, we nop the call to the function that adds the fp config space to the heap
+__attribute__((at(0x18AA58, "", CHIP_VER_BCM4358, FW_VER_7_112_200_17)))
+GenericPatch4(nop_freeing_fp_config, 0x00000000);
 
 // Hook the call to wlc_ucode_write in wlc_ucode_download
 __attribute__((at(0x1F4F08, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243)))
 __attribute__((at(0x1F4F14, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
+__attribute__((at(0x1F485C, "", CHIP_VER_BCM4358, FW_VER_7_112_200_17)))
 BLPatch(wlc_ucode_write_compressed, wlc_ucode_write_compressed);
+
 
 // Patch the "wl%d: Broadcom BCM%04x 802.11 Wireless Controller %s\n" string
 __attribute__((at(0x1FD31B, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_40_r581243)))
 __attribute__((at(0x1FD327, "", CHIP_VER_BCM4339, FW_VER_6_37_32_RC23_34_43_r639704)))
+__attribute__((at(0x201551, "", CHIP_VER_BCM4358, FW_VER_7_112_200_17)))
 StringPatch(version_string, "nexmon (" __DATE__ " " __TIME__ ")\n");
