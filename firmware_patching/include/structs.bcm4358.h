@@ -104,14 +104,16 @@ struct osl_info {
 } __attribute__((packed));
 
 typedef struct sk_buff {
-	struct sk_buff *next;       /* 0x00 */
-	struct sk_buff *prev;       /* 0x04 */
+	int field0;                    /* 0x00 */
+	int field4;                    /* 0x04 */
 	void *data;                 /* 0x08 */
 	short len;                  /* 0x0C */
-    short PAD;                  // 0x0E
-    int PAD;                    // 0x10
-    int PAD;                    // 0x14
-    int PAD;                    // 0x18
+    short fieldE;                  // 0x0E
+    int field10;                    // 0x10
+    unsigned short next;                 // 0x14
+    unsigned short prev;                // 0x16
+    unsigned short prev2;                // 0x18
+    unsigned short prev3;                // 0x1A
     int PAD;                    // 0x1C
     char byte20;                   // 0x20
     char PAD;                   // 0x21
@@ -1514,3 +1516,67 @@ struct hndrte_timer
 #define MCTL_PSM_JMP_0      (1 <<  2)
 #define MCTL_PSM_RUN        (1 <<  1)
 #define MCTL_EN_MAC     (1 <<  0)
+
+struct ethernet_header {
+    uint8 dst[6];
+    uint8 src[6];
+    uint16 type;
+} __attribute__((packed));
+
+struct ipv6_header {
+    uint32 version_traffic_class_flow_label;
+    uint16 payload_length;
+    uint8 next_header;
+    uint8 hop_limit;
+    uint8 src_ip[16];
+    uint8 dst_ip[16];
+} __attribute__((packed));
+
+struct ip_header {
+    uint8 version_ihl;
+    uint8 dscp_ecn;
+    uint16 total_length;
+    uint16 identification;
+    uint16 flags_fragment_offset;
+    uint8 ttl;
+    uint8 protocol;
+    uint16 header_checksum;
+    union {
+        uint32 integer;
+        uint8 array[4];
+    } src_ip;
+    union {
+        uint32 integer;
+        uint8 array[4];
+    } dst_ip;
+} __attribute__((packed));
+
+struct udp_header {
+    uint16 src_port;
+    uint16 dst_port;
+    union {
+        uint16 length;          /* UDP: length of UDP header and payload */
+        uint16 checksum_coverage;   /* UDPLITE: checksum_coverage */
+    } len_chk_cov;
+    uint16 checksum;
+} __attribute__((packed));
+
+struct ethernet_ip_udp_header {
+    struct ethernet_header ethernet;
+    struct ip_header ip;
+    struct udp_header udp;
+} __attribute__((packed));
+
+struct ethernet_ipv6_udp_header {
+    struct ethernet_header ethernet;
+    struct ipv6_header ipv6;
+    struct udp_header udp;
+    uint8 payload[1];
+} __attribute__((packed));
+
+struct nexmon_header {
+    uint32 hooked_fct;
+    uint32 args[3];
+    uint8 payload[1];
+} __attribute__((packed));
+

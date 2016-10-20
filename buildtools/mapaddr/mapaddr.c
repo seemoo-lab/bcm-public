@@ -174,8 +174,10 @@ get_name(unsigned int addr, char **sym_name, unsigned int *sym_addr)
 	unsigned int lastaddr = 0;
 
 	for (current = start; current; current = current->next) {
-		/* in th first part are no meanigful funtions, also not outside of ROM or RAM. As we are in thumb code, the target instruction address needs to have the last bit set. */
+		/* in the first part are no meanigful funtions, also not outside of ROM or RAM. As we are in thumb code, the target instruction address needs to have the last bit set. */
 		if(addr < 0x800 || (addr > ROM_SIZE && addr < RAM_START) || addr > RAM_START + RAM_SIZE) {
+			if (sym_name) *sym_name = "";
+			if (sym_addr) *sym_addr = 0x0;
 			return 0;
 		}
 		if(addr == current->addr) {

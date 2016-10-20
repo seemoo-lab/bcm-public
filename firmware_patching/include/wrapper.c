@@ -305,10 +305,11 @@ int
 wlc_sendctl(void *wlc, void *p, void *qi, void *scb, unsigned int fifo, unsigned int rate_override, char enq_only) 
 RETURN_DUMMY
 
-AT(CHIP_VER_BCM4358, FW_VER_ALL, 0x90AEC)
-void
+//AT(CHIP_VER_BCM4358, FW_VER_ALL, 0x90AEC)
+AT(CHIP_VER_BCM4358, FW_VER_7_112_200_17, 0x1997A6)
+int
 wl_sendup(void *wl, void *wlif, void *p)
-VOID_DUMMY
+RETURN_DUMMY
 
 AT(CHIP_VER_BCM4358, FW_VER_ALL, 0x18628)
 void
