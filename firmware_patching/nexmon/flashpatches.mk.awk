@@ -14,7 +14,7 @@ BEGIN {
 	fp_data_end = fp_data_base;
 	fp_config_end = fp_config_base;
 	
-	printf "fw_bcmdhd.bin: flashpatches.elf FORCE\n";
+	printf "fw_bcmdhd.bin: patch.elf FORCE\n";
 }
 {
 	if ($2 == "FLASHPATCH") {

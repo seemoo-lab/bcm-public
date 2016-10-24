@@ -47,30 +47,54 @@
  *                                                                         *
  **************************************************************************/
 
-#ifndef STRUCTS_H
-#define STRUCTS_H
+#include <firmware_version.h>   // definition of firmware version macros
+#include <debug.h>              // contains macros to access the debug hardware
+#include <wrapper.h>            // wrapper definitions for functions that already exist in the firmware
+#include <structs.h>            // structures that are used by the code in the firmware
+#include <helper.h>             // useful helper functions
+#include <patcher.h>            // macros used to craete patches such as BLPatch, BPatch, ...
+#include <rates.h>              // rates used to build the ratespec for frame injection
 
-/* band types */
-#define WLC_BAND_AUTO       0   /* auto-select */
-#define WLC_BAND_5G     1   /* 5 Ghz */
-#define WLC_BAND_2G     2   /* 2.4 Ghz */
-#define WLC_BAND_ALL        3   /* all bands */
+struct hndrte_debug {
+	uint32	magic;
+#define HNDRTE_DEBUG_MAGIC 0x47424544	/* 'DEBG' */
 
-#ifndef	PAD
-#define	_PADLINE(line)	pad ## line
-#define	_XSTR(line)	_PADLINE(line)
-#define	PAD		_XSTR(__LINE__)
-#endif
+	uint32	version;		/* Debug struct version */
+#define HNDRTE_DEBUG_VERSION 1
 
-/* Depending on the firmware, some structs may change, here we decide which 
- * include file to use for a particular chip 
- */
-#if NEXMON_CHIP == CHIP_VER_BCM4339
-	#include <structs.bcm4339.h>
-#elif NEXMON_CHIP == CHIP_VER_BCM4358
-	#include <structs.bcm4358.h>
-#elif NEXMON_CHIP == CHIP_VER_BCM4330
-	#include <structs.bcm4330.h>
-#endif
+	uint32	fwid;			/* 4 bytes of fw info */
+	char	epivers[32];
 
-#endif /*STRUCTS_H */
+	uint32  trap_ptr;		/* trap_t data struct */
+	uint32  console;		/* Console  */
+
+	uint32	ram_base;
+	uint32	ram_size;
+
+	uint32	rom_base;
+	uint32	rom_size;
+
+	uint32  event_log_top;
+
+};
+
+__attribute__((at(0x94, "", CHIP_VER_BCM4330, FW_VER_5_90_100_41)))
+struct hndrte_debug dbg = {
+	.magic = HNDRTE_DEBUG_MAGIC,
+	.version = HNDRTE_DEBUG_VERSION,
+	.fwid = 0,
+	.epivers = { 0 },
+	.trap_ptr = 0,
+	.console = 0x459cc,
+	.ram_base = 0x0,
+	.ram_size = 288 * 1024,
+	.rom_base = 0x800000,
+	.rom_size = 512 * 1024,
+	.event_log_top = 0x0
+};
+
+__attribute__((at(0x8c, "", CHIP_VER_BCM4330, FW_VER_5_90_100_41)))
+GenericPatch4(dbpp, 0x50504244);
+
+__attribute__((at(0x90, "", CHIP_VER_BCM4330, FW_VER_5_90_100_41)))
+GenericPatch4(dbppptr, &dbg);

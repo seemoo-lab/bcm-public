@@ -6,3 +6,4 @@
 *.elf
 *.bin
 *.generated.*
+ucode_compressed.c

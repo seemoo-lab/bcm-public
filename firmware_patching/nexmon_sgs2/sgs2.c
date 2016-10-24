@@ -47,30 +47,36 @@
  *                                                                         *
  **************************************************************************/
 
-#ifndef STRUCTS_H
-#define STRUCTS_H
+#pragma NEXMON targetregion "patch"
 
-/* band types */
-#define WLC_BAND_AUTO       0   /* auto-select */
-#define WLC_BAND_5G     1   /* 5 Ghz */
-#define WLC_BAND_2G     2   /* 2.4 Ghz */
-#define WLC_BAND_ALL        3   /* all bands */
+#include <firmware_version.h>   // definition of firmware version macros
+#include <debug.h>              // contains macros to access the debug hardware
+#include <wrapper.h>            // wrapper definitions for functions that already exist in the firmware
+#include <structs.h>            // structures that are used by the code in the firmware
+#include <helper.h>             // useful helper functions
+#include <patcher.h>            // macros used to craete patches such as BLPatch, BPatch, ...
+#include <rates.h>              // rates used to build the ratespec for frame injection
 
-#ifndef	PAD
-#define	_PADLINE(line)	pad ## line
-#define	_XSTR(line)	_PADLINE(line)
-#define	PAD		_XSTR(__LINE__)
-#endif
+void
+hndrte_reclaim_hook_in_c(void)
+{
+	printf("test\n");
+}
 
-/* Depending on the firmware, some structs may change, here we decide which 
- * include file to use for a particular chip 
- */
-#if NEXMON_CHIP == CHIP_VER_BCM4339
-	#include <structs.bcm4339.h>
-#elif NEXMON_CHIP == CHIP_VER_BCM4358
-	#include <structs.bcm4358.h>
-#elif NEXMON_CHIP == CHIP_VER_BCM4330
-	#include <structs.bcm4330.h>
-#endif
+__attribute__((naked))
+void
+hndrte_reclaim_hook(void)
+{
+	asm(
+		"push {r0-r3,lr}\n"
+		"bl hndrte_reclaim_hook_in_c\n"
+		"pop {r0-r3,lr}\n"
+		"b 0x81AB96\n"
+	);
+}
 
-#endif /*STRUCTS_H */
+__attribute__((at(0x8188E8, "flashpatch")))
+GenericPatch4(hndrte_reclaim_hook, hndrte_reclaim_hook+1);
+
+__attribute__((at(0xB008, "", CHIP_VER_BCM4330, FW_VER_5_90_100_41)))
+GenericPatch4(hndrte_reclaim_0_end, 0x341EC);

@@ -59,17 +59,18 @@
 #define FW_VER_ALL                          0
 
 // for CHIP_VER_BCM4339
-#define FW_VER_6_37_32_RC23_34_40_r581243   1
-#define FW_VER_6_37_32_RC23_34_43_r639704   2
+#define FW_VER_6_37_32_RC23_34_40_r581243   10
+#define FW_VER_6_37_32_RC23_34_43_r639704   11
 
 // for CHIP_VER_BCM4330
-#define FW_VER_5_90_195_114                 3
+#define FW_VER_5_90_195_114                 20
+#define FW_VER_5_90_100_41                  21
 
 // for CHIP_VER_BCM4358
-#define FW_VER_7_112_200_17                 4
+#define FW_VER_7_112_200_17                 30
 
 // for CHIP_VER_BCM43438
-#define FW_VER_7_45_41_26_r640327           5
+#define FW_VER_7_45_41_26_r640327           40
 
 
 #endif /*FIRMWARE_VERSION_H*/
